@@ -17,6 +17,8 @@ data class CountRow(
     val totalBuyIn: Money = Money.ZERO,
     val net: Money? = null,
     val error: String? = null,
+    /** Blank, but the other stacks already account for every chip, so this one must be empty. */
+    val countedAsZero: Boolean = false,
 ) {
     val isCounted: Boolean get() = chips != null
 }
@@ -32,11 +34,18 @@ data class ReconciliationSummary(
     val differenceCash: Money,
     val chipRemainder: Money,
     val uncountedCount: Int,
+    val uncountedAreImpliedZero: Boolean,
     val headline: String,
 ) {
     val hasUncounted: Boolean get() = uncountedCount > 0
     val hasDiscrepancy: Boolean get() = !differenceChips.isZero || !chipRemainder.isZero
     val isClean: Boolean get() = !hasUncounted && !hasDiscrepancy
+
+    /** Nothing left to count, either because it was counted or because it must be zero. */
+    val isComplete: Boolean get() = !hasUncounted || uncountedAreImpliedZero
+
+    /** Green treatment: the chips add up, whether or not every field was filled in. */
+    val addsUp: Boolean get() = !hasDiscrepancy && isComplete
 }
 
 /**
@@ -47,6 +56,12 @@ data class ReconciliationSummary(
  * usually means a rebuy was never recorded.
  */
 fun Reconciliation.headline(): String = when {
+    uncountedAreImpliedZero && uncountedSeatIds.size == 1 ->
+        "Every chip is accounted for — 1 empty stack recorded as 0"
+
+    uncountedAreImpliedZero ->
+        "Every chip is accounted for — ${uncountedSeatIds.size} empty stacks recorded as 0"
+
     hasUncountedSeats && uncountedSeatIds.size == 1 -> "1 player still needs a chip count"
     hasUncountedSeats -> "${uncountedSeatIds.size} players still need a chip count"
     !chipRemainder.isZero ->
@@ -68,6 +83,7 @@ fun Reconciliation.toSummary(): ReconciliationSummary = ReconciliationSummary(
     differenceCash = differenceCash,
     chipRemainder = chipRemainder,
     uncountedCount = uncountedSeatIds.size,
+    uncountedAreImpliedZero = uncountedAreImpliedZero,
     headline = headline(),
 )
 
@@ -85,13 +101,18 @@ data class EndGameUiState(
     val isFinishing: Boolean = false,
 ) {
     /**
-     * A game cannot be ended with a stack still uncounted: booking an unknown stack as zero
-     * would quietly hand that player's money to everyone else. A discrepancy, by contrast, only
-     * needs the host to confirm they mean it.
+     * A game cannot be ended while a stack is genuinely unknown, because booking it as zero would
+     * quietly hand that player's money to everyone else. A blank stack is only unknown while the
+     * chips do not already add up; once they do, it is provably empty and the game can end. A
+     * discrepancy, by contrast, only needs the host to confirm they mean it.
      */
     val canFinish: Boolean
         get() = !isFinishing && !alreadyFinished && counts.isNotEmpty() &&
-            reconciliation?.hasUncounted == false
+            reconciliation?.isComplete == true
+
+    /** Seats to record as zero on finishing, in the order they are shown. */
+    val seatsCountedAsZero: List<Long>
+        get() = counts.filter { it.countedAsZero }.map { it.seatId }
 }
 
 sealed interface EndGameEvent {

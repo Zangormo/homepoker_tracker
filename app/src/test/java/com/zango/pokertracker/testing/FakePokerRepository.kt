@@ -106,9 +106,20 @@ class FakePokerRepository(private val clock: TestClock = TestClock()) : PokerRep
         updateSeat(gamePlayerId) { it.copy(finalChips = chips) }
     }
 
+    /** Mirrors the cascade: the game leaves the list and its snapshot goes with it. */
+    override suspend fun deleteGame(gameId: Long) {
+        writes += "deleteGame($gameId)"
+        summaries.update { list -> list.filterNot { it.game.id == gameId } }
+        if (game.value?.game?.id == gameId) game.value = null
+    }
+
     /** Mirrors the real repository: only seats with a counted stack are closed out. */
-    override suspend fun endGame(gameId: Long) {
+    override suspend fun endGame(gameId: Long, seatsCountedAsZero: List<Long>) {
         writes += "endGame($gameId)"
+        seatsCountedAsZero.forEach { seatId ->
+            writes += "setFinalChipCount($seatId, 0)"
+            updateSeat(seatId) { it.copy(finalChips = Chips.ZERO) }
+        }
         game.update { snapshot ->
             snapshot?.copy(
                 game = snapshot.game.copy(status = GameStatus.FINISHED, endedAt = clock.now),

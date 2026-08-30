@@ -3,6 +3,7 @@ package com.zango.pokertracker.ui.history
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,21 +11,35 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
@@ -36,6 +51,7 @@ import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.ui.common.CashAmountText
 import com.zango.pokertracker.ui.common.ChipAmountText
+import com.zango.pokertracker.ui.common.MinTouchTarget
 import com.zango.pokertracker.ui.common.SectionLabel
 import com.zango.pokertracker.ui.theme.PokerTheme
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
@@ -49,6 +65,15 @@ fun HistoryScreen(
     viewModel: HistoryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is HistoryEvent.Message -> snackbarHostState.showSnackbar(event.text)
+            }
+        }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -67,6 +92,7 @@ fun HistoryScreen(
                 text = { Text("New game") },
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         when {
             state.isLoading -> Centered(Modifier.padding(padding)) { CircularProgressIndicator() }
@@ -75,9 +101,18 @@ fun HistoryScreen(
                 state = state,
                 onResumeGame = onResumeGame,
                 onOpenSettlement = onOpenSettlement,
+                onDeleteRequested = viewModel::onDeleteRequested,
                 modifier = Modifier.padding(padding),
             )
         }
+    }
+
+    state.pendingDeletion?.let { row ->
+        DeleteGameDialog(
+            row = row,
+            onConfirm = viewModel::onConfirmDelete,
+            onDismiss = viewModel::onDismissDelete,
+        )
     }
 }
 
@@ -112,6 +147,7 @@ private fun HistoryList(
     state: HistoryUiState,
     onResumeGame: (Long) -> Unit,
     onOpenSettlement: (Long) -> Unit,
+    onDeleteRequested: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -122,15 +158,21 @@ private fun HistoryList(
         if (state.inProgress.isNotEmpty()) {
             item { SectionLabel("Still running") }
             items(state.inProgress, key = { it.gameId }) { row ->
-                GameRow(row = row, onClick = { onResumeGame(row.gameId) })
+                GameRow(
+                    row = row,
+                    onClick = { onResumeGame(row.gameId) },
+                    onDelete = { onDeleteRequested(row.gameId) },
+                )
             }
         }
         if (state.finished.isNotEmpty()) {
-            item {
-                SectionLabel("Finished", modifier = Modifier.padding(top = 12.dp))
-            }
+            item { SectionLabel("Finished", modifier = Modifier.padding(top = 12.dp)) }
             items(state.finished, key = { it.gameId }) { row ->
-                GameRow(row = row, onClick = { onOpenSettlement(row.gameId) })
+                GameRow(
+                    row = row,
+                    onClick = { onOpenSettlement(row.gameId) },
+                    onDelete = { onDeleteRequested(row.gameId) },
+                )
             }
         }
     }
@@ -142,7 +184,7 @@ private fun HistoryList(
  * the game actually being played.
  */
 @Composable
-private fun GameRow(row: HistoryRow, onClick: () -> Unit) {
+private fun GameRow(row: HistoryRow, onClick: () -> Unit, onDelete: () -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -156,77 +198,169 @@ private fun GameRow(row: HistoryRow, onClick: () -> Unit) {
             null
         },
     ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+        Row(
+            modifier = Modifier.padding(start = 14.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
+            verticalAlignment = Alignment.Top,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Text(
-                    row.name,
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                if (row.isInProgress) {
-                    Text(
-                        "RUNNING",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                } else {
-                    Text(
-                        row.durationLabel.orEmpty(),
-                        style = PokerTheme.type.numericSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-
-            Text(
-                row.dateLabel,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    buildString {
-                        append(row.playerCount)
-                        append(if (row.playerCount == 1) " player" else " players")
-                        append(" · ")
-                        append(row.buyInCount)
-                        append(if (row.buyInCount == 1) " buy-in" else " buy-ins")
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    CashAmountText(
-                        row.totalOnTable,
-                        style = PokerTheme.type.numericCaption,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    Text(
+                        row.name,
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.titleMedium,
                     )
-                    row.chipsOnTable?.let {
-                        ChipAmountText(
-                            it,
-                            style = PokerTheme.type.numericCaption,
+                    if (row.isInProgress) {
+                        Text(
+                            "RUNNING",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    } else {
+                        Text(
+                            row.durationLabel.orEmpty(),
+                            style = PokerTheme.type.numericSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
+
+                Text(
+                    row.dateLabel,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        buildString {
+                            append(row.playerCount)
+                            append(if (row.playerCount == 1) " player" else " players")
+                            append(" · ")
+                            append(row.buyInCount)
+                            append(if (row.buyInCount == 1) " buy-in" else " buy-ins")
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        CashAmountText(
+                            row.totalOnTable,
+                            style = PokerTheme.type.numericCaption,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        row.chipsOnTable?.let {
+                            ChipAmountText(
+                                it,
+                                style = PokerTheme.type.numericCaption,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
             }
+
+            RowMenu(gameName = row.name, onDelete = onDelete)
         }
     }
+}
+
+/**
+ * Deleting is rare and cannot be undone, so it sits behind a menu rather than on the row where a
+ * mis-tap while scrolling could reach it.
+ */
+@Composable
+private fun RowMenu(gameName: String, onDelete: () -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(
+            onClick = { expanded = true },
+            modifier = Modifier.size(MinTouchTarget),
+        ) {
+            Icon(
+                Icons.Filled.MoreVert,
+                contentDescription = "More options for $gameName",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        ) {
+            DropdownMenuItem(
+                text = { Text("Delete game", color = MaterialTheme.colorScheme.error) },
+                leadingIcon = {
+                    Icon(
+                        Icons.Filled.Delete,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                    )
+                },
+                onClick = {
+                    expanded = false
+                    onDelete()
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun DeleteGameDialog(row: HistoryRow, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        title = { Text("Delete ${row.name}?") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    if (row.isInProgress) {
+                        "This game is still running. Deleting it throws away the whole night."
+                    } else {
+                        "This removes the game and its results for good."
+                    },
+                )
+                Text(
+                    buildString {
+                        append(row.playerCount)
+                        append(if (row.playerCount == 1) " player and " else " players and ")
+                        append(row.buyInCount)
+                        append(if (row.buyInCount == 1) " buy-in" else " buy-ins")
+                        append(" go with it, along with ")
+                        append(row.totalOnTable.format())
+                        append(" of recorded results. The players stay on your roster.")
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    "This cannot be undone.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("Delete", color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Keep it") } },
+    )
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -273,7 +407,7 @@ private fun populated() = HistoryUiState(
 private fun HistoryPopulatedPreview() {
     PokerTrackerTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            HistoryList(populated(), {}, {})
+            HistoryList(populated(), {}, {}, {})
         }
     }
 }
@@ -288,12 +422,28 @@ private fun HistoryEmptyPreview() {
     }
 }
 
+@Preview(name = "History — confirm delete", showBackground = true, heightDp = 520)
+@Composable
+private fun DeleteFinishedGamePreview() {
+    PokerTrackerTheme {
+        DeleteGameDialog(populated().finished.first(), onConfirm = {}, onDismiss = {})
+    }
+}
+
+@Preview(name = "History — confirm delete, still running", showBackground = true, heightDp = 520)
+@Composable
+private fun DeleteRunningGamePreview() {
+    PokerTrackerTheme {
+        DeleteGameDialog(populated().inProgress.first(), onConfirm = {}, onDismiss = {})
+    }
+}
+
 @Preview(name = "History — 200% font", showBackground = true, fontScale = 2.0f, heightDp = 1000)
 @Composable
 private fun HistoryLargeFontPreview() {
     PokerTrackerTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            HistoryList(populated(), {}, {})
+            HistoryList(populated(), {}, {}, {})
         }
     }
 }

@@ -87,6 +87,9 @@ class HistoryViewModelTest {
 
     private suspend fun state() = HistoryViewModel(repository).uiState.first { !it.isLoading }
 
+    private suspend fun HistoryViewModel.stateWhere(predicate: (HistoryUiState) -> Boolean) =
+        uiState.first { !it.isLoading && predicate(it) }
+
     @Test
     fun `an empty history says so rather than showing a blank list`() = runTest {
         val state = state()
@@ -161,5 +164,80 @@ class HistoryViewModelTest {
         )
 
         assertNull(state().inProgress.single().chipsOnTable)
+    }
+
+    @Test
+    fun `asking to delete a game does not delete anything on its own`() = runTest {
+        repository.summaries.value = listOf(
+            summary(1, "Tonight", GameStatus.IN_PROGRESS),
+            summary(2, "Last week", GameStatus.FINISHED, endedAt = EVENING + 3 * HOUR),
+        )
+        val viewModel = HistoryViewModel(repository)
+        viewModel.stateWhere { it.finished.isNotEmpty() }
+
+        viewModel.onDeleteRequested(2)
+
+        val state = viewModel.stateWhere { it.pendingDeletion != null }
+        assertEquals("Last week", state.pendingDeletion?.name)
+        assertTrue(repository.writes.isEmpty())
+        assertEquals(2, state.inProgress.size + state.finished.size)
+    }
+
+    @Test
+    fun `backing out of the confirmation keeps the game`() = runTest {
+        repository.summaries.value = listOf(summary(2, "Last week", GameStatus.FINISHED))
+        val viewModel = HistoryViewModel(repository)
+        viewModel.stateWhere { it.finished.isNotEmpty() }
+
+        viewModel.onDeleteRequested(2)
+        viewModel.stateWhere { it.pendingDeletion != null }
+        viewModel.onDismissDelete()
+
+        val state = viewModel.stateWhere { it.pendingDeletion == null }
+        assertTrue(repository.writes.isEmpty())
+        assertEquals(1, state.finished.size)
+    }
+
+    @Test
+    fun `confirming removes the game and leaves the others alone`() = runTest {
+        repository.summaries.value = listOf(
+            summary(1, "Tonight", GameStatus.IN_PROGRESS),
+            summary(2, "Last week", GameStatus.FINISHED, endedAt = EVENING + 3 * HOUR),
+        )
+        val viewModel = HistoryViewModel(repository)
+        viewModel.stateWhere { it.finished.isNotEmpty() }
+
+        viewModel.onDeleteRequested(2)
+        viewModel.onConfirmDelete()
+
+        assertEquals(listOf("deleteGame(2)"), repository.writes)
+        val state = viewModel.stateWhere { it.finished.isEmpty() }
+        assertEquals(listOf("Tonight"), state.inProgress.map { it.name })
+        assertNull(state.pendingDeletion)
+    }
+
+    @Test
+    fun `a running game can be deleted too`() = runTest {
+        repository.summaries.value = listOf(summary(1, "Tonight", GameStatus.IN_PROGRESS))
+        val viewModel = HistoryViewModel(repository)
+        viewModel.stateWhere { it.inProgress.isNotEmpty() }
+
+        viewModel.onDeleteRequested(1)
+        assertTrue(viewModel.stateWhere { it.pendingDeletion != null }.pendingDeletion!!.isInProgress)
+
+        viewModel.onConfirmDelete()
+        assertEquals(listOf("deleteGame(1)"), repository.writes)
+        assertTrue(viewModel.stateWhere { it.isEmpty }.isEmpty)
+    }
+
+    @Test
+    fun `confirming with nothing pending does nothing`() = runTest {
+        repository.summaries.value = listOf(summary(2, "Last week", GameStatus.FINISHED))
+        val viewModel = HistoryViewModel(repository)
+        viewModel.stateWhere { it.finished.isNotEmpty() }
+
+        viewModel.onConfirmDelete()
+
+        assertTrue(repository.writes.isEmpty())
     }
 }

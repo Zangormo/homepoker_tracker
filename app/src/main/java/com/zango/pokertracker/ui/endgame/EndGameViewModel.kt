@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zango.pokertracker.core.money.Chips
+import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.data.repository.PokerRepository
 import com.zango.pokertracker.domain.model.GameSnapshot
 import com.zango.pokertracker.domain.model.reconcile
@@ -90,7 +91,8 @@ class EndGameViewModel @Inject constructor(
         if (screen.value.isFinishing) return
         screen.update { it.copy(isFinishing = true) }
         viewModelScope.launch {
-            runCatching { repository.endGame(gameId) }
+            val impliedZeros = uiState.value.seatsCountedAsZero
+            runCatching { repository.endGame(gameId, impliedZeros) }
                 .onSuccess { eventChannel.send(EndGameEvent.Finished(gameId)) }
                 .onFailure {
                     eventChannel.send(
@@ -122,6 +124,8 @@ class EndGameViewModel @Inject constructor(
         }
 
         val rate = snapshot.game.chipRate
+        val reconciliation = snapshot.reconcile().toSummary()
+        val impliedZero = reconciliation.uncountedAreImpliedZero
         val counts = snapshot.seats.map { seat ->
             val text = drafts[seat.id] ?: seat.finalChips?.count?.toString().orEmpty()
             val parsed = parseChipCount(text.trim(), CHIP_COUNT_LABEL, allowZero = true)
@@ -136,9 +140,25 @@ class EndGameViewModel @Inject constructor(
                 chips = parsed.chips,
                 cashOutValue = cashOut,
                 totalBuyIn = seat.totalBuyIn,
-                net = cashOut?.let { it - seat.totalBuyIn },
+                net = cashOut?.let { it - seat.totalBuyIn }
+                    ?: if (impliedZero) Money.ZERO - seat.totalBuyIn else null,
                 error = error,
+                countedAsZero = impliedZero && parsed.chips == null,
             )
+        }
+
+        // Show the results the host is about to commit, not blanks: an implied zero is what will
+        // actually be written, so the table reads the same before and after finishing.
+        val results = snapshot.toResultRows().map { row ->
+            if (impliedZero && row.finalChips == null) {
+                row.copy(
+                    finalChips = Chips.ZERO,
+                    cashOut = Money.ZERO,
+                    net = Money.ZERO - row.totalBuyIn,
+                )
+            } else {
+                row
+            }
         }
 
         return EndGameUiState(
@@ -149,8 +169,8 @@ class EndGameViewModel @Inject constructor(
             alreadyFinished = !snapshot.game.isInProgress,
             chipValueLabel = "1 chip = ${rate.chipValue.format()}",
             counts = counts,
-            results = snapshot.toResultRows(),
-            reconciliation = snapshot.reconcile().toSummary(),
+            results = results,
+            reconciliation = reconciliation,
             isConfirmingMismatch = screen.isConfirmingMismatch,
             isFinishing = screen.isFinishing,
         )

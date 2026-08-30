@@ -42,4 +42,11 @@ interface GameDao {
 
     @Query("UPDATE games SET status = :status, endedAt = :endedAt WHERE id = :id")
     suspend fun finish(id: Long, status: GameStatus, endedAt: Long)
+
+    /**
+     * Seats and buy-ins go with it: both cascade from their foreign keys. Roster players are
+     * untouched, because they belong to the roster rather than to any one game.
+     */
+    @Query("DELETE FROM games WHERE id = :id")
+    suspend fun delete(id: Long)
 }

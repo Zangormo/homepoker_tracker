@@ -44,6 +44,15 @@ interface PokerRepository {
 
     suspend fun setFinalChipCount(gamePlayerId: Long, chips: Chips?)
 
-    /** Marks the game finished and closes out everyone whose stack has been counted. */
-    suspend fun endGame(gameId: Long)
+    /**
+     * Marks the game finished and closes out everyone whose stack has been counted.
+     *
+     * [seatsCountedAsZero] are seats left blank whose stacks the counted totals prove must be
+     * empty. They are written as zero inside the same transaction, so a player is never left
+     * without a result and dropped out of the settlement.
+     */
+    suspend fun endGame(gameId: Long, seatsCountedAsZero: List<Long> = emptyList())
+
+    /** Erases a game and everything recorded against it. Not reversible. */
+    suspend fun deleteGame(gameId: Long)
 }

@@ -64,11 +64,39 @@ class ReconciliationHeadlineTest {
     }
 
     @Test
-    fun `uncounted players are reported before any arithmetic`() {
+    fun `a blank stack the totals prove is empty says so instead of asking`() {
+        // Anna holds every chip the table bought in, so Boris cannot be holding any.
+        val result = snapshot(
+            Fixture.seat(1, "Anna", finalChips = Chips(400)),
+            Fixture.seat(2, "Boris"),
+        ).reconcile()
+
+        assertTrue(result.uncountedAreImpliedZero)
+        assertEquals(
+            "Every chip is accounted for — 1 empty stack recorded as 0",
+            result.headline(),
+        )
+    }
+
+    @Test
+    fun `blanks are only provable while the counted chips add up`() {
+        // 12 chips short, so Boris might be holding them; nothing can be inferred.
+        val result = snapshot(
+            Fixture.seat(1, "Anna", finalChips = Chips(388)),
+            Fixture.seat(2, "Boris"),
+        ).reconcile()
+
+        assertFalse(result.uncountedAreImpliedZero)
+        assertEquals("1 player still needs a chip count", result.headline())
+    }
+
+    @Test
+    fun `uncounted players are reported while their stacks are still unknown`() {
+        // 300 of 400 counted, so Boris could be holding the rest: nothing can be inferred.
         assertEquals(
             "1 player still needs a chip count",
             snapshot(
-                Fixture.seat(1, "Anna", finalChips = Chips(400)),
+                Fixture.seat(1, "Anna", finalChips = Chips(300)),
                 Fixture.seat(2, "Boris"),
             ).reconcile().headline(),
         )
@@ -291,6 +319,58 @@ class EndGameViewModelTest {
         val state = viewModel.stateWhere { it.alreadyFinished }
         assertTrue(state.alreadyFinished)
         assertFalse(state.canFinish)
+    }
+
+    @Test
+    fun `a game can end with blanks once the counted chips add up`() = runTest {
+        val viewModel = viewModel()
+        viewModel.stateWhere()
+        // Anna scoops all 400 chips; Boris is left blank.
+        viewModel.onCountChange(1, "400")
+
+        val state = viewModel.stateWhere { it.canFinish }
+        assertTrue(state.reconciliation!!.uncountedAreImpliedZero)
+        assertTrue(state.reconciliation!!.addsUp)
+        assertEquals(listOf(2L), state.seatsCountedAsZero)
+        // The results already read the way they will once the game is finished.
+        val boris = state.results.first { it.name == "Boris" }
+        assertEquals(Chips.ZERO, boris.finalChips)
+        assertEquals(Money(-1_000_000), boris.net)
+    }
+
+    @Test
+    fun `finishing writes the provable zeros so nobody drops out of the settlement`() = runTest {
+        val viewModel = viewModel()
+        viewModel.stateWhere()
+        viewModel.onCountChange(1, "400")
+        viewModel.stateWhere { it.canFinish }
+
+        viewModel.events.test {
+            viewModel.onFinish()
+            assertEquals(EndGameEvent.Finished(GAME_ID), awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        assertTrue(repository.writes.contains("setFinalChipCount(2, 0)"))
+        assertEquals(
+            Chips.ZERO,
+            repository.game.value!!.seats.first { it.player.name == "Boris" }.finalChips,
+        )
+    }
+
+    @Test
+    fun `a blank stack still blocks the game while the chips do not add up`() = runTest {
+        val viewModel = viewModel()
+        viewModel.stateWhere()
+        // 300 of 400 counted: Boris might be holding the other 100.
+        viewModel.onCountChange(1, "300")
+
+        val state = viewModel.stateWhere { it.counts[0].isCounted }
+        assertFalse(state.canFinish)
+        assertFalse(state.reconciliation!!.uncountedAreImpliedZero)
+
+        viewModel.onFinish()
+        assertTrue(repository.writes.none { it.startsWith("endGame") })
     }
 
     @Test

@@ -22,6 +22,12 @@ data class HistoryUiState(
     val isLoading: Boolean = true,
     val inProgress: List<HistoryRow> = emptyList(),
     val finished: List<HistoryRow> = emptyList(),
+    /** The game the host has asked to delete, held until they confirm. */
+    val pendingDeletion: HistoryRow? = null,
 ) {
     val isEmpty: Boolean get() = !isLoading && inProgress.isEmpty() && finished.isEmpty()
+}
+
+sealed interface HistoryEvent {
+    data class Message(val text: String) : HistoryEvent
 }

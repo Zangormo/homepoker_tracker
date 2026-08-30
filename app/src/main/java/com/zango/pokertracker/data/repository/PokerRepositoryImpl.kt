@@ -150,9 +150,14 @@ class PokerRepositoryImpl @Inject constructor(
         gamePlayerDao.setFinalChipCount(gamePlayerId, chips?.count)
     }
 
-    override suspend fun endGame(gameId: Long) {
+    override suspend fun deleteGame(gameId: Long) {
+        gameDao.delete(gameId)
+    }
+
+    override suspend fun endGame(gameId: Long, seatsCountedAsZero: List<Long>) {
         val now = clock.nowMillis()
         database.withTransaction {
+            seatsCountedAsZero.forEach { gamePlayerDao.setFinalChipCount(it, 0) }
             gamePlayerDao.cashOutRemaining(gameId, now)
             gameDao.finish(gameId, GameStatus.FINISHED, now)
         }

@@ -190,13 +190,13 @@ private fun EndGameContent(
 private fun ReconciliationPanel(summary: ReconciliationSummary) {
     val container = when {
         summary.hasDiscrepancy -> MaterialTheme.colorScheme.errorContainer
-        summary.hasUncounted -> MaterialTheme.colorScheme.surfaceContainerHigh
-        else -> MaterialTheme.colorScheme.primaryContainer
+        summary.addsUp -> MaterialTheme.colorScheme.primaryContainer
+        else -> MaterialTheme.colorScheme.surfaceContainerHigh
     }
     val headlineColor = when {
         summary.hasDiscrepancy -> MaterialTheme.colorScheme.error
-        summary.hasUncounted -> MaterialTheme.colorScheme.onSurface
-        else -> MaterialTheme.colorScheme.primary
+        summary.addsUp -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.onSurface
     }
 
     Surface(
@@ -308,6 +308,12 @@ private fun CountCard(row: CountRow, enabled: Boolean, onCountChange: (String) -
                         cash = row.cashOutValue,
                         style = PokerTheme.type.numericSmall,
                     )
+                } else if (row.countedAsZero) {
+                    Text(
+                        "Empty — recorded as 0",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
                 } else {
                     Text(
                         "Not counted yet",
@@ -341,9 +347,9 @@ private fun FinishBar(
                         .height(MinTouchTarget),
                 ) { Text("View settlement") }
             } else {
-                if (state.reconciliation?.hasUncounted == true) {
+                if (state.reconciliation?.isComplete == false) {
                     Text(
-                        "Every stack needs a count before the game can end.",
+                        "Count the remaining stacks, or enter enough that the chips add up.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -449,16 +455,22 @@ private fun resultRow(id: Long, name: String, buyIn: Long, chips: Long?) = Resul
     net = chips?.let { PreviewRate.cashFor(Chips(it)) - Money(buyIn) },
 )
 
-private fun summary(expected: Long, counted: Long, uncounted: Int, headline: String) =
-    ReconciliationSummary(
-        expectedChips = Chips(expected),
-        countedChips = Chips(counted),
-        differenceChips = Chips(counted - expected),
-        differenceCash = PreviewRate.cashFor(Chips(counted - expected)),
-        chipRemainder = Money.ZERO,
-        uncountedCount = uncounted,
-        headline = headline,
-    )
+private fun summary(
+    expected: Long,
+    counted: Long,
+    uncounted: Int,
+    headline: String,
+    impliedZero: Boolean = false,
+) = ReconciliationSummary(
+    expectedChips = Chips(expected),
+    countedChips = Chips(counted),
+    differenceChips = Chips(counted - expected),
+    differenceCash = PreviewRate.cashFor(Chips(counted - expected)),
+    chipRemainder = Money.ZERO,
+    uncountedCount = uncounted,
+    uncountedAreImpliedZero = impliedZero,
+    headline = headline,
+)
 
 private fun balancedState() = EndGameUiState(
     isLoading = false,
@@ -495,6 +507,46 @@ private fun mismatchState() = EndGameUiState(
     ),
     reconciliation = summary(800, 788, 0, "12 chips unaccounted for — worth 0.06"),
 )
+
+private fun scoopedState() = EndGameUiState(
+    isLoading = false,
+    gameId = 1,
+    gameName = "Thursday",
+    chipValueLabel = "1 chip = 0.005",
+    counts = listOf(
+        countRow(1, "Anna", 2_000_000, 800),
+        countRow(2, "Boris", 1_000_000, null, text = "").copy(
+            countedAsZero = true,
+            net = Money(-1_000_000),
+        ),
+        countRow(3, "Chris", 1_000_000, null, text = "").copy(
+            countedAsZero = true,
+            net = Money(-1_000_000),
+        ),
+    ),
+    results = listOf(
+        resultRow(1, "Anna", 2_000_000, 800),
+        resultRow(2, "Boris", 1_000_000, 0),
+        resultRow(3, "Chris", 1_000_000, 0),
+    ),
+    reconciliation = summary(
+        expected = 800,
+        counted = 800,
+        uncounted = 2,
+        headline = "Every chip is accounted for — 2 empty stacks recorded as 0",
+        impliedZero = true,
+    ),
+)
+
+@Preview(name = "End game — one player scooped it", showBackground = true, heightDp = 1200)
+@Composable
+private fun EndGameScoopedPreview() {
+    PokerTrackerTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            EndGameContent(scoopedState(), { _, _ -> })
+        }
+    }
+}
 
 @Preview(name = "End game — balanced", showBackground = true, heightDp = 1200)
 @Composable

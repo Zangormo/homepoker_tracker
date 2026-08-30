@@ -22,6 +22,14 @@ data class Reconciliation(
 ) {
     val hasUncountedSeats: Boolean get() = uncountedSeatIds.isNotEmpty()
 
+    /**
+     * True when the stacks already counted account for every chip bought in, which leaves no
+     * chips for the uncounted ones to hold. Their stacks are not being guessed at: a chip count
+     * cannot be negative, so zero is the only value they can take.
+     */
+    val uncountedAreImpliedZero: Boolean
+        get() = hasUncountedSeats && differenceChips.isZero && chipRemainder.isZero
+
     val isBalanced: Boolean
         get() = differenceChips.isZero && chipRemainder.isZero && !hasUncountedSeats
 
