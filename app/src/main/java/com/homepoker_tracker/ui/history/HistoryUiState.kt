@@ -1,0 +1,27 @@
+package com.homepoker_tracker.ui.history
+
+import com.homepoker_tracker.core.money.Chips
+import com.homepoker_tracker.core.money.Money
+
+/** One game in the history list. */
+data class HistoryRow(
+    val gameId: Long,
+    val name: String,
+    val dateLabel: String,
+    val stakes: String,
+    val playerCount: Int,
+    val buyInCount: Int,
+    val totalOnTable: Money,
+    val chipsOnTable: Chips?,
+    /** How long the game ran. Null while it is still going. */
+    val durationLabel: String?,
+    val isInProgress: Boolean,
+)
+
+data class HistoryUiState(
+    val isLoading: Boolean = true,
+    val inProgress: List<HistoryRow> = emptyList(),
+    val finished: List<HistoryRow> = emptyList(),
+) {
+    val isEmpty: Boolean get() = !isLoading && inProgress.isEmpty() && finished.isEmpty()
+}
