@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "homepoker_tracker"
+rootProject.name = "PokerTracker"
 include(":app")
  

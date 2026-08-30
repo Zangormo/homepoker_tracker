@@ -7,15 +7,15 @@ plugins {
 }
 
 android {
-    namespace = "com.homepoker_tracker"
+    namespace = "com.zango.pokertracker"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.homepoker_tracker"
+        applicationId = "com.zango.pokertracker"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0"
+        versionName = "Beta 1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Mirrors Tokens.SurfaceBase, so the window behind Compose never flashes white on launch. -->
+    <!-- Mirrors Tokens.SurfaceBase. Used for the window behind Compose and the launch screen,
+         so neither flashes a colour the app never shows again. -->
     <color name="surface_base">#14171A</color>
 </resources>
