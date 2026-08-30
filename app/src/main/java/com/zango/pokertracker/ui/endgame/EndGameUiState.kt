@@ -15,6 +15,9 @@ data class CountRow(
     val chips: Chips? = null,
     val cashOutValue: Money? = null,
     val totalBuyIn: Money = Money.ZERO,
+    /** Chips this player already sold back to the bank during play. */
+    val returnedChips: Chips = Chips.ZERO,
+    val returnedCash: Money = Money.ZERO,
     val net: Money? = null,
     val error: String? = null,
     /** Blank, but the other stacks already account for every chip, so this one must be empty. */

@@ -1,6 +1,7 @@
 package com.zango.pokertracker.domain.model
 
 import com.zango.pokertracker.core.money.ChipRate
+import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
 
 enum class GameStatus { IN_PROGRESS, FINISHED }
@@ -15,6 +16,16 @@ data class Player(
 data class BuyIn(
     val id: Long,
     val amount: Money,
+    val createdAt: Long,
+)
+
+/**
+ * Chips sold back to the bank part-way through, while the player carries on. The cash they were
+ * paid is [Game.chipRate] applied to [chips].
+ */
+data class ChipReturn(
+    val id: Long,
+    val chips: Chips,
     val createdAt: Long,
 )
 

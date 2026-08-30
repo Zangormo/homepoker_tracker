@@ -6,6 +6,7 @@ import com.zango.pokertracker.core.time.Clock
 import com.zango.pokertracker.data.repository.CreatePlayerResult
 import com.zango.pokertracker.data.repository.PokerRepository
 import com.zango.pokertracker.domain.model.BuyIn
+import com.zango.pokertracker.domain.model.ChipReturn
 import com.zango.pokertracker.domain.model.GameSummary
 import com.zango.pokertracker.domain.model.GameSnapshot
 import com.zango.pokertracker.domain.model.GameStatus
@@ -67,6 +68,24 @@ class FakePokerRepository(private val clock: TestClock = TestClock()) : PokerRep
         updateSeat(gamePlayerId) { seat ->
             seat.copy(
                 buyIns = seat.buyIns + BuyIn(nextId++, amount, clock.now),
+            )
+        }
+    }
+
+    override suspend fun returnChips(gamePlayerId: Long, chips: Chips) {
+        writes += "returnChips($gamePlayerId, $chips)"
+        updateSeat(gamePlayerId) { seat ->
+            seat.copy(chipReturns = seat.chipReturns + ChipReturn(nextId++, chips, clock.now))
+        }
+    }
+
+    override suspend fun undoChipReturn(chipReturnId: Long) {
+        writes += "undoChipReturn($chipReturnId)"
+        game.update { snapshot ->
+            snapshot?.copy(
+                seats = snapshot.seats.map { seat ->
+                    seat.copy(chipReturns = seat.chipReturns.filterNot { it.id == chipReturnId })
+                },
             )
         }
     }

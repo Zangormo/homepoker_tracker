@@ -10,6 +10,8 @@ data class GamePlayerWithDetails(
     val player: PlayerEntity,
     @Relation(parentColumn = "id", entityColumn = "gamePlayerId")
     val buyIns: List<BuyInEntity>,
+    @Relation(parentColumn = "id", entityColumn = "gamePlayerId")
+    val chipReturns: List<ChipReturnEntity>,
 )
 
 /**

@@ -335,7 +335,7 @@ private fun result(name: String, buyIn: Long, chips: Long, out: Long, net: Long)
     seatId = name.hashCode().toLong(),
     name = name,
     totalBuyIn = Money(buyIn),
-    finalChips = Chips(chips),
+    chipsOut = Chips(chips),
     cashOut = Money(out),
     net = Money(net),
 )

@@ -38,7 +38,10 @@ data class Reconciliation(
 }
 
 /**
- * Compares the chips counted in front of the players against the chips their buy-ins paid for.
+ * Compares the chips counted in front of the players against the chips still in play.
+ *
+ * Chips sold back to the bank mid-game are no longer on the table, so they are excluded from the
+ * expected total; a player who returned chips is credited for them separately.
  *
  * Seats with no count yet are reported separately instead of being treated as zero, because a
  * missing count and a genuinely busted stack are very different situations for the host.

@@ -77,6 +77,31 @@ class LiveGameViewModel @Inject constructor(
         launchWrite("Could not add the buy-in") { repository.addBuyIn(dialog.seatId, amount) }
     }
 
+    fun onReturnChips(seatId: Long) {
+        draft.value = DialogDraft.ReturnChips(seatId, chips = "")
+    }
+
+    fun onReturnChipsChange(value: String) = draft.update {
+        (it as? DialogDraft.ReturnChips)?.copy(chips = value) ?: it
+    }
+
+    fun onConfirmReturnChips() {
+        val dialog = uiState.value.dialog as? LiveGameDialog.ReturnChips ?: return
+        val chips = dialog.chipCount?.takeIf { dialog.canConfirm } ?: return
+        draft.value = null
+        launchWrite("Could not record the chip return") {
+            repository.returnChips(dialog.seatId, chips)
+        }
+    }
+
+    /** Takes back the last return for a seat, for when the wrong figure went in. */
+    fun onUndoLastReturn(seatId: Long) {
+        val row = (uiState.value.activeSeats + uiState.value.cashedOutSeats)
+            .firstOrNull { it.seatId == seatId } ?: return
+        val returnId = row.lastReturnId ?: return
+        launchWrite("Could not undo the chip return") { repository.undoChipReturn(returnId) }
+    }
+
     fun onCashOut(seatId: Long) {
         draft.value = DialogDraft.CashOut(seatId, chips = "")
     }
@@ -191,6 +216,8 @@ class LiveGameViewModel @Inject constructor(
             isFinished = !game.isInProgress,
             totalOnTable = AmountPreview.of(snapshot.totalOnTable, rate),
             buyInCount = snapshot.totalBuyInCount,
+            returnedChips = snapshot.returnedChips,
+            returnedCash = snapshot.returnedCash,
             defaultBuyIn = game.defaultBuyIn,
             activeSeats = rows.filter { !it.isCashedOut },
             cashedOutSeats = rows.filter { it.isCashedOut },
@@ -209,6 +236,9 @@ class LiveGameViewModel @Inject constructor(
         finalChips = finalChips,
         cashOutValue = snapshot.cashOutValueOf(this),
         net = snapshot.netOf(this),
+        returnedChips = returnedChips,
+        returnedCash = snapshot.game.chipRate.cashFor(returnedChips),
+        lastReturnId = chipReturns.maxByOrNull { it.createdAt }?.id,
     )
 
     private fun DialogDraft.toDialog(
@@ -227,6 +257,26 @@ class LiveGameViewModel @Inject constructor(
                     amount = amount,
                     preview = if (chipError == null) AmountPreview.of(parsed.money, rate) else AmountPreview(),
                     error = parsed.error ?: chipError,
+                )
+            }
+
+            is DialogDraft.ReturnChips -> {
+                val seat = snapshot.seats.firstOrNull { it.id == seatId } ?: return null
+                val onTable = snapshot.chipsOnTable.exactOrNull()
+                val parsed = parseChipCount(chips, RETURN_LABEL, allowZero = false)
+                // A player cannot hand back chips the table does not hold. Their own stack is
+                // unknown -- winnings are never recorded -- so the table total is the only
+                // bound that can honestly be enforced.
+                val tooMany = parsed.chips != null && onTable != null && parsed.chips > onTable
+                LiveGameDialog.ReturnChips(
+                    seatId = seatId,
+                    playerName = seat.player.name,
+                    chips = chips,
+                    chipsOnTable = onTable,
+                    chipCount = parsed.chips?.takeIf { !tooMany },
+                    cashValue = parsed.chips?.takeIf { !tooMany }?.let { rate.cashFor(it) },
+                    error = parsed.error
+                        ?: "Only $onTable chips are on the table".takeIf { tooMany },
                 )
             }
 
@@ -266,6 +316,7 @@ class LiveGameViewModel @Inject constructor(
     private sealed interface DialogDraft {
         data class BuyIn(val seatId: Long, val amount: String) : DialogDraft
         data class CashOut(val seatId: Long, val chips: String) : DialogDraft
+        data class ReturnChips(val seatId: Long, val chips: String) : DialogDraft
         data class AddPlayer(
             val selectedPlayerId: Long?,
             val newPlayerName: String,
@@ -277,5 +328,6 @@ class LiveGameViewModel @Inject constructor(
         const val STOP_TIMEOUT_MILLIS = 5_000L
         const val BUY_IN_LABEL = "Buy-in"
         const val CHIP_COUNT_LABEL = "Chip count"
+        const val RETURN_LABEL = "Chips returned"
     }
 }

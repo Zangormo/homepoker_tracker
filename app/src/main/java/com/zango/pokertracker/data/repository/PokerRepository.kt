@@ -35,6 +35,15 @@ interface PokerRepository {
 
     suspend fun addBuyIn(gamePlayerId: Long, amount: Money)
 
+    /**
+     * Records chips sold back to the bank part-way through, while the player keeps their seat.
+     * They are credited the cash immediately, and the chips leave the table.
+     */
+    suspend fun returnChips(gamePlayerId: Long, chips: Chips)
+
+    /** Removes a chip return recorded by mistake. */
+    suspend fun undoChipReturn(chipReturnId: Long)
+
     /** Seats a roster player mid-game with their opening buy-in. Returns the new seat id. */
     suspend fun seatPlayer(gameId: Long, playerId: Long, initialBuyIn: Money): Long
 

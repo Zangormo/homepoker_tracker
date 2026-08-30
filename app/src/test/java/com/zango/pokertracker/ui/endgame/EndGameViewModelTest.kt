@@ -302,7 +302,7 @@ class EndGameViewModelTest {
 
         val anna = state.results.first { it.name == "Anna" }
         assertEquals(Money(1_000_000), anna.totalBuyIn)
-        assertEquals(Chips(300), anna.finalChips)
+        assertEquals(Chips(300), anna.chipsOut)
         assertEquals(Money(1_500_000), anna.cashOut)
         assertEquals(Money(500_000), anna.net)
 
@@ -334,7 +334,7 @@ class EndGameViewModelTest {
         assertEquals(listOf(2L), state.seatsCountedAsZero)
         // The results already read the way they will once the game is finished.
         val boris = state.results.first { it.name == "Boris" }
-        assertEquals(Chips.ZERO, boris.finalChips)
+        assertEquals(Chips.ZERO, boris.chipsOut)
         assertEquals(Money(-1_000_000), boris.net)
     }
 

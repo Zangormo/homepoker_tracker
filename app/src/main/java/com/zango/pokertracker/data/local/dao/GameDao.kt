@@ -33,7 +33,10 @@ interface GameDao {
                 WHERE gpb.gameId = g.id) AS buyInCount,
             (SELECT COALESCE(SUM(b.amountMicros), 0) FROM buy_ins b
                 JOIN game_players gps ON b.gamePlayerId = gps.id
-                WHERE gps.gameId = g.id) AS totalBuyInMicros
+                WHERE gps.gameId = g.id)
+            - (SELECT COALESCE(SUM(r.chips), 0) * g.chipValueMicros FROM chip_returns r
+                JOIN game_players gpr ON r.gamePlayerId = gpr.id
+                WHERE gpr.gameId = g.id) AS totalBuyInMicros
         FROM games g
         ORDER BY g.startedAt DESC
         """

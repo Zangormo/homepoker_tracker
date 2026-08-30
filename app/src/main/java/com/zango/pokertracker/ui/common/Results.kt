@@ -29,7 +29,12 @@ data class ResultRow(
     val seatId: Long,
     val name: String,
     val totalBuyIn: Money,
-    val finalChips: Chips?,
+    /**
+     * Every chip the player took out of the game: sold back to the bank mid-game plus held at
+     * the end. Keeping the total here is what makes [cashOut] equal chips times the chip value
+     * on every row, however many times the player went back to the bank.
+     */
+    val chipsOut: Chips?,
     val cashOut: Money?,
     val net: Money?,
 )
@@ -39,7 +44,7 @@ fun GameSnapshot.toResultRows(): List<ResultRow> = seats.map { seat ->
         seatId = seat.id,
         name = seat.player.name,
         totalBuyIn = seat.totalBuyIn,
-        finalChips = seat.finalChips,
+        chipsOut = seat.chipsOut,
         cashOut = cashOutValueOf(seat),
         net = netOf(seat),
     )
@@ -93,7 +98,7 @@ fun ResultsTable(rows: List<ResultRow>, modifier: Modifier = Modifier) {
                     showIcon = false,
                 )
                 ChipAmountText(
-                    row.finalChips,
+                    row.chipsOut,
                     modifier = Modifier.weight(CHIP_WEIGHT),
                     style = PokerTheme.type.numericSmall,
                     showIcon = false,

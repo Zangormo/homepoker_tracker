@@ -17,7 +17,14 @@ data class SeatRow(
     val finalChips: Chips? = null,
     val cashOutValue: Money? = null,
     val net: Money? = null,
-)
+    /** Chips sold back to the bank mid-game. Already paid for, so no longer in play. */
+    val returnedChips: Chips = Chips.ZERO,
+    val returnedCash: Money = Money.ZERO,
+    /** The most recent return, so a mistaken one can be taken back. */
+    val lastReturnId: Long? = null,
+) {
+    val hasReturns: Boolean get() = !returnedChips.isZero
+}
 
 /**
  * Only one of these is ever open. Each carries its own draft text plus the live preview and
@@ -33,6 +40,22 @@ sealed interface LiveGameDialog {
         val error: String? = null,
     ) : LiveGameDialog {
         val canConfirm: Boolean get() = error == null && !preview.isEmpty
+    }
+
+    /**
+     * Selling chips back to the bank without leaving the table, for when the physical chips run
+     * out and the next buy-in has to be paid out of somebody's stack.
+     */
+    data class ReturnChips(
+        val seatId: Long,
+        val playerName: String,
+        val chips: String,
+        val chipsOnTable: Chips?,
+        val chipCount: Chips? = null,
+        val cashValue: Money? = null,
+        val error: String? = null,
+    ) : LiveGameDialog {
+        val canConfirm: Boolean get() = error == null && cashValue != null
     }
 
     data class CashOut(
@@ -74,6 +97,9 @@ data class LiveGameUiState(
     val isFinished: Boolean = false,
     val totalOnTable: AmountPreview = AmountPreview(),
     val buyInCount: Int = 0,
+    /** Chips bought back by the bank across the whole table, and what they cost it. */
+    val returnedChips: Chips = Chips.ZERO,
+    val returnedCash: Money = Money.ZERO,
     /** The game's standard buy-in, used to prefill the rebuy and add-player dialogs. */
     val defaultBuyIn: Money? = null,
     val activeSeats: List<SeatRow> = emptyList(),
@@ -81,6 +107,8 @@ data class LiveGameUiState(
     val dialog: LiveGameDialog? = null,
 ) {
     val playerCount: Int get() = activeSeats.size + cashedOutSeats.size
+
+    val hasReturns: Boolean get() = !returnedChips.isZero
 
     val canEndGame: Boolean get() = !isFinished && playerCount > 0
 }

@@ -153,7 +153,7 @@ class SettlementViewModelTest {
 
         val anna = state().results.first { it.name == "Anna" }
         assertEquals(Money(2_000_000), anna.totalBuyIn)
-        assertEquals(Chips(500), anna.finalChips)
+        assertEquals(Chips(500), anna.chipsOut)
         assertEquals(Money(2_500_000), anna.cashOut)
         assertEquals(Money(500_000), anna.net)
     }

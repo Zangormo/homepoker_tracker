@@ -6,10 +6,12 @@ import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.core.time.Clock
 import com.zango.pokertracker.data.local.PokerDatabase
 import com.zango.pokertracker.data.local.dao.BuyInDao
+import com.zango.pokertracker.data.local.dao.ChipReturnDao
 import com.zango.pokertracker.data.local.dao.GameDao
 import com.zango.pokertracker.data.local.dao.GamePlayerDao
 import com.zango.pokertracker.data.local.dao.PlayerDao
 import com.zango.pokertracker.data.local.entity.BuyInEntity
+import com.zango.pokertracker.data.local.entity.ChipReturnEntity
 import com.zango.pokertracker.data.local.entity.GameEntity
 import com.zango.pokertracker.data.local.entity.GamePlayerEntity
 import com.zango.pokertracker.data.local.entity.PlayerEntity
@@ -31,6 +33,7 @@ class PokerRepositoryImpl @Inject constructor(
     private val gameDao: GameDao,
     private val gamePlayerDao: GamePlayerDao,
     private val buyInDao: BuyInDao,
+    private val chipReturnDao: ChipReturnDao,
     private val clock: Clock,
 ) : PokerRepository {
 
@@ -113,6 +116,21 @@ class PokerRepositoryImpl @Inject constructor(
                 createdAt = clock.nowMillis(),
             ),
         )
+    }
+
+    override suspend fun returnChips(gamePlayerId: Long, chips: Chips) {
+        require(chips.isPositive) { "A chip return must be greater than zero" }
+        chipReturnDao.insert(
+            ChipReturnEntity(
+                gamePlayerId = gamePlayerId,
+                chips = chips.count,
+                createdAt = clock.nowMillis(),
+            ),
+        )
+    }
+
+    override suspend fun undoChipReturn(chipReturnId: Long) {
+        chipReturnDao.delete(chipReturnId)
     }
 
     override suspend fun seatPlayer(gameId: Long, playerId: Long, initialBuyIn: Money): Long {

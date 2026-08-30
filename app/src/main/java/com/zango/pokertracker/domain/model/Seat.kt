@@ -8,8 +8,8 @@ import com.zango.pokertracker.core.money.sum
 /**
  * One player's participation in one game.
  *
- * [totalBuyIn] is always recomputed from [buyIns] rather than cached, so the displayed total and
- * the underlying transaction list cannot drift apart.
+ * [totalBuyIn] and [returnedChips] are always recomputed from their rows rather than cached, so
+ * the displayed totals and the underlying transactions cannot drift apart.
  */
 data class Seat(
     val id: Long,
@@ -18,16 +18,28 @@ data class Seat(
     val cashedOutAt: Long?,
     val finalChips: Chips?,
     val buyIns: List<BuyIn>,
+    val chipReturns: List<ChipReturn> = emptyList(),
 ) {
     val totalBuyIn: Money get() = buyIns.map { it.amount }.sum()
 
     val buyInCount: Int get() = buyIns.size
+
+    /** Chips sold back to the bank mid-game. Already paid for in cash, so no longer in play. */
+    val returnedChips: Chips get() = chipReturns.map { it.chips }.sum()
+
+    val hasReturns: Boolean get() = chipReturns.isNotEmpty()
 
     val isActive: Boolean get() = cashedOutAt == null
 
     val isCashedOut: Boolean get() = cashedOutAt != null
 
     val hasChipCount: Boolean get() = finalChips != null
+
+    /**
+     * Every chip this player takes out of the game: what they sold back along the way plus what
+     * is in front of them at the end. Null until the final stack is counted.
+     */
+    val chipsOut: Chips? get() = finalChips?.let { it + returnedChips }
 }
 
 /**
@@ -42,14 +54,27 @@ data class GameSnapshot(
 
     val cashedOutSeats: List<Seat> get() = seats.filter { it.isCashedOut }
 
-    /** Sum of every buy-in row across every player: the money physically on the table. */
-    val totalOnTable: Money get() = seats.map { it.totalBuyIn }.sum()
+    /** Every buy-in ever paid in, whether or not the chips are still out there. */
+    val totalBuyIns: Money get() = seats.map { it.totalBuyIn }.sum()
+
+    /** Chips sold back to the bank mid-game, across everyone. */
+    val returnedChips: Chips get() = seats.map { it.returnedChips }.sum()
+
+    val returnedCash: Money get() = game.chipRate.cashFor(returnedChips)
+
+    val hasReturns: Boolean get() = !returnedChips.isZero
+
+    /**
+     * The money the bank is actually holding: everything paid in, less what has been paid back
+     * out for returned chips. This is what the remaining chips on the table are worth.
+     */
+    val totalOnTable: Money get() = totalBuyIns - returnedCash
 
     val totalBuyInCount: Int get() = seats.sumOf { it.buyInCount }
 
     /**
-     * The money on the table expressed in chips. Inexact when some buy-in was not a whole
-     * number of chips, which is itself worth surfacing rather than hiding.
+     * The chips still in play, expressed from the cash side. Inexact when some buy-in was not a
+     * whole number of chips, which is itself worth surfacing rather than hiding.
      */
     val chipsOnTable: ChipConversion get() = game.chipRate.chipsFor(totalOnTable)
 
@@ -57,8 +82,9 @@ data class GameSnapshot(
 
     val seatsAwaitingCount: List<Seat> get() = seats.filter { !it.hasChipCount }
 
+    /** What the player leaves with: their returned chips plus their final stack, in cash. */
     fun cashOutValueOf(seat: Seat): Money? =
-        seat.finalChips?.let { game.chipRate.cashFor(it) }
+        seat.chipsOut?.let { game.chipRate.cashFor(it) }
 
     /** Profit or loss for a seat: what they took off the table minus what they put on it. */
     fun netOf(seat: Seat): Money? =

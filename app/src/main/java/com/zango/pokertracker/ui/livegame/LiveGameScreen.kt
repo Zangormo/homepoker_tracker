@@ -121,6 +121,8 @@ fun LiveGameScreen(
             else -> LiveGameContent(
                 state = state,
                 onAddBuyIn = viewModel::onAddBuyIn,
+                onReturnChips = viewModel::onReturnChips,
+                onUndoLastReturn = viewModel::onUndoLastReturn,
                 onCashOut = viewModel::onCashOut,
                 onUndoCashOut = viewModel::onUndoCashOut,
                 modifier = Modifier.padding(padding),
@@ -133,6 +135,13 @@ fun LiveGameScreen(
             dialog = dialog,
             onAmountChange = viewModel::onBuyInAmountChange,
             onConfirm = viewModel::onConfirmBuyIn,
+            onDismiss = viewModel::onDismissDialog,
+        )
+
+        is LiveGameDialog.ReturnChips -> ReturnChipsDialog(
+            dialog = dialog,
+            onChipsChange = viewModel::onReturnChipsChange,
+            onConfirm = viewModel::onConfirmReturnChips,
             onDismiss = viewModel::onDismissDialog,
         )
 
@@ -171,6 +180,8 @@ private fun Centered(modifier: Modifier = Modifier, content: @Composable () -> U
 private fun LiveGameContent(
     state: LiveGameUiState,
     onAddBuyIn: (Long) -> Unit,
+    onReturnChips: (Long) -> Unit,
+    onUndoLastReturn: (Long) -> Unit,
     onCashOut: (Long) -> Unit,
     onUndoCashOut: (Long) -> Unit,
     modifier: Modifier = Modifier,
@@ -189,6 +200,8 @@ private fun LiveGameContent(
                     seat = seat,
                     enabled = !state.isFinished,
                     onAddBuyIn = { onAddBuyIn(seat.seatId) },
+                    onReturnChips = { onReturnChips(seat.seatId) },
+                    onUndoLastReturn = { onUndoLastReturn(seat.seatId) },
                     onCashOut = { onCashOut(seat.seatId) },
                 )
             }
@@ -242,6 +255,14 @@ private fun HeadlinePanel(state: LiveGameUiState) {
                 style = PokerTheme.type.numericMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            if (state.hasReturns) {
+                Text(
+                    "${state.returnedChips} chips bought back by the bank · " +
+                        "${state.returnedCash.format()} paid out",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
 
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 12.dp),
@@ -289,6 +310,8 @@ private fun ActiveSeatRow(
     seat: SeatRow,
     enabled: Boolean,
     onAddBuyIn: () -> Unit,
+    onReturnChips: () -> Unit,
+    onUndoLastReturn: () -> Unit,
     onCashOut: () -> Unit,
 ) {
     Surface(
@@ -317,6 +340,28 @@ private fun ActiveSeatRow(
                 chips = seat.buyInChips,
                 style = PokerTheme.type.numericMedium,
             )
+            if (seat.hasReturns) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        SectionLabel("Sold back")
+                        ChipsToCashRow(
+                            chips = seat.returnedChips,
+                            cash = seat.returnedCash,
+                            style = PokerTheme.type.numericSmall,
+                        )
+                    }
+                    if (enabled) {
+                        TextButton(onClick = onUndoLastReturn) { Text("Undo last") }
+                    }
+                }
+            }
             if (enabled) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(
@@ -332,6 +377,10 @@ private fun ActiveSeatRow(
                             .height(MinTouchTarget),
                     ) { Text("Cash out") }
                 }
+                TextButton(
+                    onClick = onReturnChips,
+                    modifier = Modifier.height(MinTouchTarget),
+                ) { Text("Sell chips back to the bank") }
             }
         }
     }
@@ -446,6 +495,49 @@ private fun AddBuyInDialog(
             imeAction = ImeAction.Done,
         )
         CashToChipsRow(cash = dialog.preview.cash, chips = dialog.preview.chips)
+    }
+}
+
+/**
+ * For when the physical chips run out: a player hands some back and takes the cash, so the next
+ * buy-in can be paid out in them. They keep their seat, and the cash counts towards their result.
+ */
+@Composable
+private fun ReturnChipsDialog(
+    dialog: LiveGameDialog.ReturnChips,
+    onChipsChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    PokerDialog(
+        title = "${dialog.playerName} sells chips back",
+        onDismiss = onDismiss,
+        confirmLabel = "Record",
+        confirmEnabled = dialog.canConfirm,
+        onConfirm = onConfirm,
+    ) {
+        Text(
+            "They hand the chips to the bank and take the cash for them. They keep playing, and " +
+                "the cash counts towards their result.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        ChipAmountField(
+            value = dialog.chips,
+            onValueChange = onChipsChange,
+            label = "Chips returned",
+            required = true,
+            error = dialog.error,
+            forceShowError = true,
+            supporting = dialog.chipsOnTable?.let { "$it chips are on the table" },
+            imeAction = ImeAction.Done,
+        )
+        HorizontalDivider(color = PokerTheme.colors.divider)
+        ChipsToCashRow(
+            chips = dialog.chipCount,
+            cash = dialog.cashValue,
+            style = PokerTheme.type.numericLarge,
+        )
     }
 }
 
@@ -593,9 +685,15 @@ private fun liveState() = LiveGameUiState(
     buyInCount = 5,
     defaultBuyIn = Money(1_000_000),
     activeSeats = listOf(
-        seat(1, "Anna", 2_000_000, buyIns = 2),
+        seat(1, "Anna", 2_000_000, buyIns = 2).copy(
+            returnedChips = Chips(200),
+            returnedCash = PreviewRate.cashFor(Chips(200)),
+            lastReturnId = 9,
+        ),
         seat(2, "Boris", 1_000_000),
     ),
+    returnedChips = Chips(200),
+    returnedCash = PreviewRate.cashFor(Chips(200)),
     cashedOutSeats = listOf(
         seat(3, "Chris", 1_000_000, finalChips = 340),
         seat(4, "Dina", 1_000_000, finalChips = 60),
@@ -607,7 +705,7 @@ private fun liveState() = LiveGameUiState(
 private fun LiveGameRunningPreview() {
     PokerTrackerTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            LiveGameContent(liveState(), {}, {}, {})
+            LiveGameContent(liveState(), {}, {}, {}, {}, {})
         }
     }
 }
@@ -653,6 +751,45 @@ private fun CashOutFilledPreview() {
     }
 }
 
+@Preview(name = "Live game — selling chips back", showBackground = true, heightDp = 620)
+@Composable
+private fun ReturnChipsPreview() {
+    PokerTrackerTheme {
+        ReturnChipsDialog(
+            dialog = LiveGameDialog.ReturnChips(
+                seatId = 1,
+                playerName = "Anna",
+                chips = "200",
+                chipsOnTable = Chips(800),
+                chipCount = Chips(200),
+                cashValue = PreviewRate.cashFor(Chips(200)),
+            ),
+            onChipsChange = {},
+            onConfirm = {},
+            onDismiss = {},
+        )
+    }
+}
+
+@Preview(name = "Live game — selling back more than exists", showBackground = true, heightDp = 620)
+@Composable
+private fun ReturnChipsErrorPreview() {
+    PokerTrackerTheme {
+        ReturnChipsDialog(
+            dialog = LiveGameDialog.ReturnChips(
+                seatId = 1,
+                playerName = "Anna",
+                chips = "900",
+                chipsOnTable = Chips(800),
+                error = "Only 800 chips are on the table",
+            ),
+            onChipsChange = {},
+            onConfirm = {},
+            onDismiss = {},
+        )
+    }
+}
+
 @Preview(name = "Live game — add player", showBackground = true, heightDp = 700)
 @Composable
 private fun AddPlayerPreview() {
@@ -683,7 +820,7 @@ private fun AddPlayerPreview() {
 private fun LiveGameLargeFontPreview() {
     PokerTrackerTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            LiveGameContent(liveState(), {}, {}, {})
+            LiveGameContent(liveState(), {}, {}, {}, {}, {})
         }
     }
 }

@@ -131,7 +131,8 @@ class EndGameViewModel @Inject constructor(
             val parsed = parseChipCount(text.trim(), CHIP_COUNT_LABEL, allowZero = true)
             // A blank field is "not counted yet", not an error to shout about.
             val error = if (text.isBlank()) null else parsed.error
-            val cashOut = parsed.chips?.let { rate.cashFor(it) }
+            val soldBack = rate.cashFor(seat.returnedChips)
+            val cashOut = parsed.chips?.let { rate.cashFor(it) + soldBack }
             CountRow(
                 seatId = seat.id,
                 name = seat.player.name,
@@ -140,8 +141,10 @@ class EndGameViewModel @Inject constructor(
                 chips = parsed.chips,
                 cashOutValue = cashOut,
                 totalBuyIn = seat.totalBuyIn,
+                returnedChips = seat.returnedChips,
+                returnedCash = rate.cashFor(seat.returnedChips),
                 net = cashOut?.let { it - seat.totalBuyIn }
-                    ?: if (impliedZero) Money.ZERO - seat.totalBuyIn else null,
+                    ?: if (impliedZero) soldBack - seat.totalBuyIn else null,
                 error = error,
                 countedAsZero = impliedZero && parsed.chips == null,
             )
@@ -150,11 +153,12 @@ class EndGameViewModel @Inject constructor(
         // Show the results the host is about to commit, not blanks: an implied zero is what will
         // actually be written, so the table reads the same before and after finishing.
         val results = snapshot.toResultRows().map { row ->
-            if (impliedZero && row.finalChips == null) {
+            if (impliedZero && row.chipsOut == null) {
+                val seat = snapshot.seats.first { it.id == row.seatId }
                 row.copy(
-                    finalChips = Chips.ZERO,
-                    cashOut = Money.ZERO,
-                    net = Money.ZERO - row.totalBuyIn,
+                    chipsOut = seat.returnedChips,
+                    cashOut = rate.cashFor(seat.returnedChips),
+                    net = rate.cashFor(seat.returnedChips) - row.totalBuyIn,
                 )
             } else {
                 row

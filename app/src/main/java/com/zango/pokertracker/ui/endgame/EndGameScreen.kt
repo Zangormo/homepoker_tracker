@@ -161,7 +161,8 @@ private fun EndGameContent(
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 SectionLabel("Chip counts")
                 Text(
-                    "Count the chips in front of each player. ${state.chipValueLabel}.",
+                    "Count the chips still in front of each player. Anything already sold " +
+                        "back to the bank is credited on top. ${state.chipValueLabel}.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -301,6 +302,16 @@ private fun CountCard(row: CountRow, enabled: Boolean, onCountChange: (String) -
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     SectionLabel("In for")
                     CashAmountText(row.totalBuyIn, style = PokerTheme.type.numericSmall)
+                }
+                if (!row.returnedChips.isZero) {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        SectionLabel("Sold back")
+                        ChipsToCashRow(
+                            chips = row.returnedChips,
+                            cash = row.returnedCash,
+                            style = PokerTheme.type.numericSmall,
+                        )
+                    }
                 }
                 if (row.chips != null) {
                     ChipsToCashRow(
@@ -450,7 +461,7 @@ private fun resultRow(id: Long, name: String, buyIn: Long, chips: Long?) = Resul
     seatId = id,
     name = name,
     totalBuyIn = Money(buyIn),
-    finalChips = chips?.let { Chips(it) },
+    chipsOut = chips?.let { Chips(it) },
     cashOut = chips?.let { PreviewRate.cashFor(Chips(it)) },
     net = chips?.let { PreviewRate.cashFor(Chips(it)) - Money(buyIn) },
 )
