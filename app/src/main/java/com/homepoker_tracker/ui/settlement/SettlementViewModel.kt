@@ -8,7 +8,6 @@ import com.homepoker_tracker.data.repository.PokerRepository
 import com.homepoker_tracker.domain.model.GameSnapshot
 import com.homepoker_tracker.domain.settlement.notes
 import com.homepoker_tracker.domain.settlement.settle
-import com.homepoker_tracker.domain.settlement.toSentence
 import com.homepoker_tracker.domain.settlement.toShareText
 import com.homepoker_tracker.ui.common.toResultRows
 import com.homepoker_tracker.ui.navigation.Routes
@@ -55,8 +54,11 @@ class SettlementViewModel @Inject constructor(
             gameId = snapshot.game.id,
             gameName = snapshot.game.name,
             isFinished = !snapshot.game.isInProgress,
-            payments = settlement.payments.map { it.toSentence() },
+            payments = settlement.payments.map {
+                PaymentLine(from = it.from.name, to = it.to.name, amount = it.amount)
+            },
             notes = settlement.notes(),
+            hasProblem = !settlement.isBalanced,
             results = snapshot.toResultRows(),
             totalMoved = settlement.payments.map { it.amount }.sum(),
             shareText = settlement.toShareText(snapshot.game.name),

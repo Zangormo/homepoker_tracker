@@ -216,6 +216,7 @@ class CreateGameViewModel @Inject constructor(
             newPlayerError = editing.newPlayerError,
             derivedChipValue = if (form.deriveChipValue) rate?.chipValue else null,
             defaultBuyInPreview = AmountPreview.of(defaultBuyIn, rate),
+            defaultBuyInBigBlinds = defaultBuyIn.inBigBlinds(validation.bigBlind),
             totalOnTable = AmountPreview.of(total, rate),
             overrideEditor = editing.editor?.toUiModel(validation),
             isStarting = editing.isStarting,

@@ -40,6 +40,8 @@ sealed interface LiveGameDialog {
         val playerName: String,
         val totalBuyIn: Money,
         val chips: String,
+        /** The typed count, once it parses. Kept so the view never parses anything itself. */
+        val chipCount: Chips? = null,
         val cashValue: Money? = null,
         val net: Money? = null,
         val error: String? = null,

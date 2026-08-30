@@ -239,6 +239,7 @@ class LiveGameViewModel @Inject constructor(
                     playerName = seat.player.name,
                     totalBuyIn = seat.totalBuyIn,
                     chips = chips,
+                    chipCount = parsed.chips,
                     cashValue = cash,
                     net = cash?.let { it - seat.totalBuyIn },
                     error = parsed.error,

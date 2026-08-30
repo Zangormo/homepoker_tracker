@@ -37,6 +37,8 @@ data class CreateGameUiState(
     val newPlayerError: String? = null,
     val derivedChipValue: Money? = null,
     val defaultBuyInPreview: AmountPreview = AmountPreview(),
+    /** The default buy-in as a whole multiple of the big blind, when it is one. */
+    val defaultBuyInBigBlinds: Long? = null,
     val totalOnTable: AmountPreview = AmountPreview(),
     val overrideEditor: OverrideEditor? = null,
     val isStarting: Boolean = false,

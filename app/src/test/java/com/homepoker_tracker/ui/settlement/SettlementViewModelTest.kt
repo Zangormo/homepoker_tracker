@@ -53,6 +53,10 @@ class SettlementViewModelTest {
 
     private suspend fun state() = viewModel().uiState.first { !it.isLoading }
 
+    /** Renders the structured payments back into sentences, so assertions stay readable. */
+    private fun SettlementUiState.sentences(): List<String> =
+        payments.map { "${it.from} pays ${it.to} ${it.amount.format()}" }
+
     @Test
     fun `payments read as plain instructions`() = runTest {
         // Anna is down 1.50, Boris up 1.20, Chris up 0.30.
@@ -66,7 +70,7 @@ class SettlementViewModelTest {
 
         assertEquals(
             listOf("Anna pays Boris 1.20", "Anna pays Chris 0.30"),
-            state.payments,
+            state.sentences(),
         )
         assertEquals(Money(1_500_000), state.totalMoved)
         assertTrue(state.notes.isEmpty())
@@ -117,7 +121,7 @@ class SettlementViewModelTest {
             listOf("Rounded to the nearest 0.01. Chris absorbed 0.01."),
             state.notes,
         )
-        assertEquals(listOf("Chris pays Anna 0.01", "Chris pays Boris 0.01"), state.payments)
+        assertEquals(listOf("Chris pays Anna 0.01", "Chris pays Boris 0.01"), state.sentences())
     }
 
     @Test
@@ -128,7 +132,8 @@ class SettlementViewModelTest {
         )
 
         val state = state()
-        assertEquals(listOf("Boris pays Anna 0.25"), state.payments)
+        assertEquals(listOf("Boris pays Anna 0.25"), state.sentences())
+        assertTrue(state.hasProblem)
         assertEquals(
             listOf(
                 "Chip counts came out 0.06 short of the buy-ins, " +
