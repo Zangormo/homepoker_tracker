@@ -1,15 +1,21 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
+# Gradle
+.gradle/
 /build
+/app/build
 /captures
+
+# Kotlin 2.x build session data
+.kotlin/
+
+# IDE
+*.iml
+/.idea/
+
+# Local machine configuration; holds the SDK path and must not be shared
+/local.properties
+
+# Native build
 .externalNativeBuild
 .cxx
-local.properties
+
+.DS_Store

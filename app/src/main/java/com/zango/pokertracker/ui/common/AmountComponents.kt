@@ -80,7 +80,7 @@ fun ChipAmountField(
     imeAction = imeAction,
     icon = PokerChip,
     iconDescription = CHIPS_DESCRIPTION,
-    iconTint = { PokerTheme.colors.chip },
+    iconTint = PokerTheme.colors.chip,
     keyboardType = KeyboardType.Number,
 )
 
@@ -110,7 +110,7 @@ fun CashAmountField(
     imeAction = imeAction,
     icon = Icons.Filled.AttachMoney,
     iconDescription = CASH_DESCRIPTION,
-    iconTint = { PokerTheme.colors.cash },
+    iconTint = PokerTheme.colors.cash,
     keyboardType = KeyboardType.Decimal,
 )
 
@@ -140,7 +140,7 @@ fun PokerTextField(
     imeAction = imeAction,
     icon = null,
     iconDescription = null,
-    iconTint = { Color.Unspecified },
+    iconTint = Color.Unspecified,
     keyboardType = KeyboardType.Text,
     textStyle = null,
 )
@@ -159,7 +159,7 @@ private fun AmountField(
     imeAction: ImeAction,
     icon: ImageVector?,
     iconDescription: String?,
-    iconTint: @Composable () -> Color,
+    iconTint: Color,
     keyboardType: KeyboardType,
     textStyle: TextStyle? = PokerTheme.type.numericMedium,
 ) {
@@ -188,7 +188,7 @@ private fun AmountField(
                 Icon(
                     imageVector = it,
                     contentDescription = iconDescription,
-                    tint = iconTint(),
+                    tint = iconTint,
                     modifier = Modifier.size(20.dp),
                 )
             }

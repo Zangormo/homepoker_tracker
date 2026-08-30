@@ -44,6 +44,23 @@ android {
     buildFeatures {
         compose = true
     }
+    lint {
+        // Everything the IDE would flag is treated as a build concern, so warnings cannot
+        // accumulate unnoticed between sessions.
+        checkAllWarnings = true
+        warningsAsErrors = true
+        disable += setOf(
+            // Guards against an extension being shadowed by a member added later in a
+            // dependency. It only bites a library published against an older runtime; this app
+            // compiles as one unit, and the calls it flags are plain Long and Map members.
+            "MemberExtensionConflict",
+            // Dependency currency is a deliberate decision, not something a build should fail on.
+            "GradleDependency",
+            "NewerVersionAvailable",
+            "AndroidGradlePluginVersion",
+        )
+    }
+
     testOptions {
         unitTests {
             isReturnDefaultValues = true

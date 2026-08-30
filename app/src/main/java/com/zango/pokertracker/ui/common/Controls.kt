@@ -146,7 +146,6 @@ fun SelectableCard(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    contentDescription: String? = null,
     content: @Composable () -> Unit,
 ) {
     Surface(
