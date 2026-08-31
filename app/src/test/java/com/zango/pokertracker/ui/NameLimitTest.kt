@@ -1,6 +1,8 @@
 package com.zango.pokertracker.ui
 
 import androidx.lifecycle.SavedStateHandle
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.domain.model.Fixture
 import com.zango.pokertracker.domain.model.GameSnapshot
 import com.zango.pokertracker.domain.model.NameRules
@@ -54,7 +56,8 @@ class NameLimitTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private val expectedMessage = NameRules.tooLongMessage("A name")
+    private val expectedMessage =
+        NameRules.tooLongMessage(UiText.of(R.string.error_name_label_player))
 
     // -----------------------------------------------------------------------------------------
     // The game's own name
@@ -63,7 +66,10 @@ class NameLimitTest {
     @Test
     fun `a game name over the limit is refused on the setup form`() {
         val validation = CreateGameForm(name = TOO_LONG).validate()
-        assertEquals(NameRules.tooLongMessage("A game name"), validation.nameError)
+        assertEquals(
+            NameRules.tooLongMessage(UiText.of(R.string.error_name_label_game)),
+            validation.nameError,
+        )
     }
 
     @Test

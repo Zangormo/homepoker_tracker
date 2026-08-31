@@ -17,8 +17,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.zango.pokertracker.R
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.GameSnapshot
@@ -72,11 +74,11 @@ fun ResultsTable(rows: List<ResultRow>, modifier: Modifier = Modifier) {
                 .padding(bottom = 6.dp),
             verticalAlignment = Alignment.Bottom,
         ) {
-            HeaderCell("Player", NAME_WEIGHT, align = TextAlign.Start)
-            HeaderCell("In", CASH_WEIGHT, icon = Icons.Filled.AttachMoney, iconTint = PokerTheme.colors.cash)
-            HeaderCell("Chips", CHIP_WEIGHT, icon = PokerChip, iconTint = PokerTheme.colors.chip)
-            HeaderCell("Out", CASH_WEIGHT, icon = Icons.Filled.AttachMoney, iconTint = PokerTheme.colors.cash)
-            HeaderCell("Net", NET_WEIGHT)
+            HeaderCell(stringResource(R.string.results_column_player), NAME_WEIGHT, align = TextAlign.Start)
+            HeaderCell(stringResource(R.string.results_column_in), CASH_WEIGHT, icon = Icons.Filled.AttachMoney, iconTint = PokerTheme.colors.cash)
+            HeaderCell(stringResource(R.string.results_column_chips), CHIP_WEIGHT, icon = PokerChip, iconTint = PokerTheme.colors.chip)
+            HeaderCell(stringResource(R.string.results_column_out), CASH_WEIGHT, icon = Icons.Filled.AttachMoney, iconTint = PokerTheme.colors.cash)
+            HeaderCell(stringResource(R.string.results_column_net), NET_WEIGHT)
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
         rows.forEach { row ->

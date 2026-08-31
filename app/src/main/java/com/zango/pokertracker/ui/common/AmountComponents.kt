@@ -25,6 +25,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.TextStyle
@@ -32,7 +33,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.zango.pokertracker.R
 import com.zango.pokertracker.core.money.Chips
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.ui.theme.PokerTheme
 
@@ -61,11 +64,11 @@ fun ChipAmountField(
     onValueChange: (String) -> Unit,
     label: String,
     modifier: Modifier = Modifier,
-    error: String? = null,
+    error: UiText? = null,
     enabled: Boolean = true,
     required: Boolean = false,
     forceShowError: Boolean = false,
-    supporting: String? = null,
+    supporting: UiText? = null,
     imeAction: ImeAction = ImeAction.Next,
 ) = AmountField(
     value = value,
@@ -79,7 +82,7 @@ fun ChipAmountField(
     supporting = supporting,
     imeAction = imeAction,
     icon = PokerChip,
-    iconDescription = CHIPS_DESCRIPTION,
+    iconDescription = stringResource(R.string.amount_chips_unit),
     iconTint = PokerTheme.colors.chip,
     keyboardType = KeyboardType.Number,
 )
@@ -91,11 +94,11 @@ fun CashAmountField(
     onValueChange: (String) -> Unit,
     label: String,
     modifier: Modifier = Modifier,
-    error: String? = null,
+    error: UiText? = null,
     enabled: Boolean = true,
     required: Boolean = false,
     forceShowError: Boolean = false,
-    supporting: String? = null,
+    supporting: UiText? = null,
     imeAction: ImeAction = ImeAction.Next,
 ) = AmountField(
     value = value,
@@ -109,7 +112,7 @@ fun CashAmountField(
     supporting = supporting,
     imeAction = imeAction,
     icon = Icons.Filled.AttachMoney,
-    iconDescription = CASH_DESCRIPTION,
+    iconDescription = stringResource(R.string.amount_cash_unit),
     iconTint = PokerTheme.colors.cash,
     keyboardType = KeyboardType.Decimal,
 )
@@ -121,11 +124,11 @@ fun PokerTextField(
     onValueChange: (String) -> Unit,
     label: String,
     modifier: Modifier = Modifier,
-    error: String? = null,
+    error: UiText? = null,
     enabled: Boolean = true,
     required: Boolean = false,
     forceShowError: Boolean = false,
-    supporting: String? = null,
+    supporting: UiText? = null,
     imeAction: ImeAction = ImeAction.Next,
 ) = AmountField(
     value = value,
@@ -151,11 +154,11 @@ private fun AmountField(
     onValueChange: (String) -> Unit,
     label: String,
     modifier: Modifier,
-    error: String?,
+    error: UiText?,
     enabled: Boolean,
     required: Boolean,
     forceShowError: Boolean,
-    supporting: String?,
+    supporting: UiText?,
     imeAction: ImeAction,
     icon: ImageVector?,
     iconDescription: String?,
@@ -182,7 +185,7 @@ private fun AmountField(
         singleLine = true,
         isError = showError,
         textStyle = textStyle ?: LocalTextStyle.current,
-        label = { Text(if (required) "$label *" else label) },
+        label = { Text(if (required) stringResource(R.string.field_required, label) else label) },
         leadingIcon = icon?.let {
             {
                 Icon(
@@ -195,11 +198,11 @@ private fun AmountField(
         },
         supportingText = when {
             showError -> {
-                { Text(error!!) }
+                { Text(error!!.resolve()) }
             }
 
             supporting != null -> {
-                { Text(supporting) }
+                { Text(supporting.resolve()) }
             }
 
             else -> null
@@ -244,7 +247,9 @@ fun ChipAmountText(
     showIcon: Boolean = true,
 ) = AmountText(
     text = chips?.count?.toString()?.typographicMinus() ?: NO_VALUE,
-    semantic = chips?.let { "$it $CHIPS_DESCRIPTION" } ?: "no chip count",
+    semantic = chips?.let {
+        stringResource(R.string.amount_spoken, it.count, stringResource(R.string.amount_chips_unit))
+    } ?: stringResource(R.string.amount_no_chips),
     icon = PokerChip.takeIf { showIcon },
     iconTint = PokerTheme.colors.chip,
     style = style,
@@ -263,7 +268,9 @@ fun CashAmountText(
 ) = AmountText(
     text = money?.let { if (signed) it.formatSigned().typographicMinus() else it.format() }
         ?: NO_VALUE,
-    semantic = money?.let { "${it.format()} $CASH_DESCRIPTION" } ?: "no amount",
+    semantic = money?.let {
+        stringResource(R.string.amount_spoken, it.format(), stringResource(R.string.amount_cash_unit))
+    } ?: stringResource(R.string.amount_no_cash),
     icon = Icons.Filled.AttachMoney.takeIf { showIcon },
     iconTint = PokerTheme.colors.cash,
     style = style,
@@ -338,7 +345,11 @@ fun CashToChipsRow(
     style: TextStyle = PokerTheme.type.numericMedium,
 ) = ConversionRow(
     modifier = modifier,
-    description = "${cash?.format() ?: NO_VALUE} cash converts to ${chips?.count ?: NO_VALUE} chips",
+    description = stringResource(
+        R.string.amount_cash_to_chips,
+        cash?.format() ?: NO_VALUE,
+        chips?.count?.toString() ?: NO_VALUE,
+    ),
     left = { CashAmountText(cash, style = style) },
     right = { ChipAmountText(chips, style = style) },
 )
@@ -352,7 +363,11 @@ fun ChipsToCashRow(
     style: TextStyle = PokerTheme.type.numericMedium,
 ) = ConversionRow(
     modifier = modifier,
-    description = "${chips?.count ?: NO_VALUE} chips converts to ${cash?.format() ?: NO_VALUE} cash",
+    description = stringResource(
+        R.string.amount_chips_to_cash,
+        chips?.count?.toString() ?: NO_VALUE,
+        cash?.format() ?: NO_VALUE,
+    ),
     left = { ChipAmountText(chips, style = style) },
     right = { CashAmountText(cash, style = style) },
 )
@@ -379,6 +394,3 @@ private fun ConversionRow(
         right()
     }
 }
-
-private const val CHIPS_DESCRIPTION = "chips"
-private const val CASH_DESCRIPTION = "cash amount"

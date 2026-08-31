@@ -173,7 +173,9 @@ class PokerRepositoryImpl @Inject constructor(
 
     override suspend fun createGame(setup: NewGameSetup): Long {
         require(setup.name.isNotBlank()) { "A game needs a name" }
-        require(!NameRules.isTooLong(setup.name)) { NameRules.tooLongMessage("A game name") }
+        require(!NameRules.isTooLong(setup.name)) {
+            "A game name must be at most ${NameRules.MAX_LENGTH} characters"
+        }
         require(setup.smallBlind.isPositive) { "Small blind must be greater than zero" }
         require(setup.smallBlind < setup.bigBlind) { "Small blind must be below the big blind" }
         require(setup.payoutRounding.isPositive) { "Payout rounding unit must be positive" }

@@ -1,5 +1,6 @@
 package com.zango.pokertracker.ui.creategame
 
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.Player
@@ -14,7 +15,7 @@ data class RosterRow(
     val buyIn: Money? = null,
     val chips: Chips? = null,
     val isOverridden: Boolean = false,
-    val error: String? = null,
+    val error: UiText? = null,
 )
 
 /** The state of the "give this player a different buy-in" dialog. */
@@ -25,7 +26,7 @@ data class OverrideEditor(
     val bigBlinds: String,
     val cash: String,
     val preview: AmountPreview = AmountPreview(),
-    val error: String? = null,
+    val error: UiText? = null,
 ) {
     val canApply: Boolean get() = error == null && !preview.isEmpty
 }
@@ -38,7 +39,7 @@ data class CreateGameUiState(
     val validation: CreateGameValidation = CreateGameValidation(),
     val roster: List<RosterRow> = emptyList(),
     val newPlayerName: String = "",
-    val newPlayerError: String? = null,
+    val newPlayerError: UiText? = null,
     val derivedChipValue: Money? = null,
     val defaultBuyInPreview: AmountPreview = AmountPreview(),
     /** The default buy-in as a whole multiple of the big blind, when it is one. */
@@ -60,5 +61,5 @@ data class CreateGameUiState(
 /** One-shot outcomes the screen reacts to but should not re-run on recomposition. */
 sealed interface CreateGameEvent {
     data class GameStarted(val gameId: Long) : CreateGameEvent
-    data class Message(val text: String) : CreateGameEvent
+    data class Message(val text: UiText) : CreateGameEvent
 }

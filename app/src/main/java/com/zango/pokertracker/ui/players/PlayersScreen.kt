@@ -45,18 +45,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.ui.common.CashAmountText
 import com.zango.pokertracker.ui.common.MinTouchTarget
 import com.zango.pokertracker.ui.common.NetCashText
 import com.zango.pokertracker.ui.common.PokerTextField
 import com.zango.pokertracker.ui.common.SectionLabel
+import com.zango.pokertracker.ui.common.resolve
 import com.zango.pokertracker.ui.theme.PokerTheme
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
 
@@ -74,10 +80,12 @@ fun PlayersScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val context = LocalContext.current
+
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
-                is PlayersEvent.Message -> snackbarHostState.showSnackbar(event.text)
+                is PlayersEvent.Message -> snackbarHostState.showSnackbar(event.text.resolve(context))
             }
         }
     }
@@ -86,10 +94,10 @@ fun PlayersScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Players") },
+                title = { Text(stringResource(R.string.players_title)) },
                 navigationIcon = {
                     IconButton(onClick = onOpenMenu) {
-                        Icon(Icons.Filled.Menu, contentDescription = "Open menu")
+                        Icon(Icons.Filled.Menu, contentDescription = stringResource(R.string.action_open_menu))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -101,7 +109,7 @@ fun PlayersScreen(
             ExtendedFloatingActionButton(
                 onClick = viewModel::onAddRequested,
                 icon = { Icon(Icons.Filled.PersonAdd, contentDescription = null) },
-                text = { Text("Add player") },
+                text = { Text(stringResource(R.string.players_add)) },
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -165,9 +173,9 @@ private fun EmptyRoster() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text("No players yet", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.players_empty_title), style = MaterialTheme.typography.titleMedium)
         Text(
-            "Add the regulars here, or as you set up a game.",
+            stringResource(R.string.players_empty_body),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -199,7 +207,7 @@ private fun PlayerList(
         }
         if (state.archived.isNotEmpty()) {
             item {
-                SectionLabel("Hidden", modifier = Modifier.padding(top = 12.dp))
+                SectionLabel(stringResource(R.string.players_section_hidden), modifier = Modifier.padding(top = 12.dp))
             }
             items(state.archived, key = { it.playerId }) { row ->
                 PlayerCard(
@@ -270,7 +278,10 @@ private fun PlayerCard(
                         NetCashText(row.netProfit, style = PokerTheme.type.numericSmall)
                     } else {
                         Text(
-                            if (row.hasPlayed) "No results yet" else "Never played",
+                            stringResource(
+                                if (row.hasPlayed) R.string.players_no_results_yet
+                                else R.string.players_never_played,
+                            ),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -283,12 +294,11 @@ private fun PlayerCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        buildString {
-                            append(row.gamesPlayed)
-                            append(if (row.gamesPlayed == 1) " game · " else " games · ")
-                            append(row.buyInCount)
-                            append(if (row.buyInCount == 1) " buy-in" else " buy-ins")
-                        },
+                        stringResource(
+                            R.string.players_row_counts,
+                            pluralStringResource(R.plurals.game_count, row.gamesPlayed, row.gamesPlayed),
+                            pluralStringResource(R.plurals.buy_in_count, row.buyInCount, row.buyInCount),
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -301,17 +311,17 @@ private fun PlayerCard(
 
                 if (row.isArchived) {
                     Text(
-                        "Hidden from new games",
+                        stringResource(R.string.players_hidden_note),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 } else if (row.openGames > 0) {
                     Text(
-                        if (row.openGames == 1) {
-                            "1 game still to be settled"
-                        } else {
-                            "${row.openGames} games still to be settled"
-                        },
+                        pluralStringResource(
+                            R.plurals.games_to_settle,
+                            row.openGames,
+                            row.openGames,
+                        ),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                     )
@@ -347,7 +357,7 @@ private fun RowMenu(
         ) {
             Icon(
                 Icons.Filled.MoreVert,
-                contentDescription = "More options for ${row.name}",
+                contentDescription = stringResource(R.string.players_row_menu, row.name),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -357,7 +367,7 @@ private fun RowMenu(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         ) {
             DropdownMenuItem(
-                text = { Text("Rename") },
+                text = { Text(stringResource(R.string.players_rename)) },
                 leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
                 onClick = {
                     expanded = false
@@ -366,7 +376,7 @@ private fun RowMenu(
             )
             if (row.isArchived) {
                 DropdownMenuItem(
-                    text = { Text("Show in new games") },
+                    text = { Text(stringResource(R.string.players_restore)) },
                     leadingIcon = { Icon(Icons.Filled.PersonAdd, contentDescription = null) },
                     onClick = {
                         expanded = false
@@ -377,7 +387,10 @@ private fun RowMenu(
                 DropdownMenuItem(
                     text = {
                         Text(
-                            if (row.hasPlayed) "Remove from roster" else "Delete player",
+                            stringResource(
+                                if (row.hasPlayed) R.string.players_remove_from_roster
+                                else R.string.players_delete,
+                            ),
                             color = MaterialTheme.colorScheme.error,
                         )
                     },
@@ -401,7 +414,7 @@ private fun RowMenu(
 @Composable
 private fun AddPlayerDialog(
     name: String,
-    error: String?,
+    error: UiText?,
     onNameChange: (String) -> Unit,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
@@ -409,21 +422,25 @@ private fun AddPlayerDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        title = { Text("Add player") },
+        title = { Text(stringResource(R.string.players_add_title)) },
         text = {
             PokerTextField(
                 value = name,
                 onValueChange = onNameChange,
-                label = "Name",
+                label = stringResource(R.string.players_name_field),
                 error = error,
                 forceShowError = error != null,
                 imeAction = ImeAction.Done,
             )
         },
         confirmButton = {
-            TextButton(onClick = onConfirm, enabled = name.isNotBlank()) { Text("Add") }
+            TextButton(onClick = onConfirm, enabled = name.isNotBlank()) {
+                Text(stringResource(R.string.action_add))
+            }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        },
     )
 }
 
@@ -437,28 +454,32 @@ private fun RenamePlayerDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        title = { Text("Rename ${editor.originalName}") },
+        title = { Text(stringResource(R.string.players_rename_title, editor.originalName)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 PokerTextField(
                     value = editor.name,
                     onValueChange = onNameChange,
-                    label = "Name",
+                    label = stringResource(R.string.players_name_field),
                     error = editor.error,
                     forceShowError = editor.error != null,
                     imeAction = ImeAction.Done,
                 )
                 Text(
-                    "Past games show the new name too — it is the same person.",
+                    stringResource(R.string.players_rename_note),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         },
         confirmButton = {
-            TextButton(onClick = onConfirm, enabled = editor.canSave) { Text("Rename") }
+            TextButton(onClick = onConfirm, enabled = editor.canSave) {
+                Text(stringResource(R.string.players_rename))
+            }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        },
     )
 }
 
@@ -479,9 +500,9 @@ private fun DeletePlayerDialog(
         title = {
             Text(
                 if (editor.hasHistory) {
-                    "Remove ${editor.name} from the roster?"
+                    stringResource(R.string.players_remove_title, editor.name)
                 } else {
-                    "Delete ${editor.name}?"
+                    stringResource(R.string.players_delete_title, editor.name)
                 },
             )
         },
@@ -489,24 +510,25 @@ private fun DeletePlayerDialog(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (editor.hasHistory) {
                     Text(
-                        buildString {
-                            append(editor.name)
-                            append(" has played ")
-                            append(editor.gamesPlayed)
-                            append(if (editor.gamesPlayed == 1) " game" else " games")
-                            append(", so those results stay exactly as they are.")
-                        },
+                        stringResource(
+                            R.string.players_remove_body,
+                            editor.name,
+                            pluralStringResource(
+                                R.plurals.game_count,
+                                editor.gamesPlayed,
+                                editor.gamesPlayed,
+                            ),
+                        ),
                     )
                     Text(
-                        "They stop appearing when you set up a new game. You can bring them " +
-                            "back from the Hidden list at any time.",
+                        stringResource(R.string.players_remove_detail),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 } else {
-                    Text("They have never played a game, so nothing else goes with them.")
+                    Text(stringResource(R.string.players_delete_body))
                     Text(
-                        "This cannot be undone.",
+                        stringResource(R.string.players_delete_irreversible),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -516,12 +538,17 @@ private fun DeletePlayerDialog(
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(
-                    if (editor.hasHistory) "Hide" else "Delete",
+                    stringResource(
+                        if (editor.hasHistory) R.string.players_remove_confirm
+                        else R.string.players_delete_confirm,
+                    ),
                     color = MaterialTheme.colorScheme.error,
                 )
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Keep") } },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.players_keep)) }
+        },
     )
 }
 

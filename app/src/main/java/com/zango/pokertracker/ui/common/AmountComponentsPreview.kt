@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.ui.theme.PokerTheme
@@ -108,14 +109,14 @@ private fun AmountComponentSpecimen() {
                     onValueChange = {},
                     label = "Final chips",
                     required = true,
-                    error = "Enter a whole number of chips",
+                    error = UiText.Raw("Enter a whole number of chips"),
                     forceShowError = true,
                 )
                 ChipAmountField(
                     value = "250.5",
                     onValueChange = {},
                     label = "Final chips",
-                    error = "Enter a whole number of chips",
+                    error = UiText.Raw("Enter a whole number of chips"),
                     forceShowError = true,
                 )
                 ChipAmountField(value = "1200", onValueChange = {}, label = "Final chips")
@@ -131,13 +132,13 @@ private fun AmountComponentSpecimen() {
                     onValueChange = {},
                     label = "Small blind",
                     required = true,
-                    supporting = "As little as 0.001",
+                    supporting = UiText.Raw("As little as 0.001"),
                 )
                 CashAmountField(
                     value = "0.02",
                     onValueChange = {},
                     label = "Small blind",
-                    error = "Small blind must be smaller than big blind",
+                    error = UiText.Raw("Small blind must be smaller than big blind"),
                     forceShowError = true,
                 )
                 CashAmountField(value = "1.00", onValueChange = {}, label = "Buy-in")
@@ -146,7 +147,7 @@ private fun AmountComponentSpecimen() {
                     onValueChange = {},
                     label = "Game name",
                     required = true,
-                    error = "Give the game a name",
+                    error = UiText.Raw("Give the game a name"),
                     forceShowError = true,
                 )
 
@@ -199,7 +200,7 @@ private fun AmountComponentsLargeFont() {
                     onValueChange = {},
                     label = "Final chips",
                     required = true,
-                    error = "Enter a whole number of chips",
+                    error = UiText.Raw("Enter a whole number of chips"),
                     forceShowError = true,
                 )
                 CashAmountField(value = "1.00", onValueChange = {}, label = "Buy-in")

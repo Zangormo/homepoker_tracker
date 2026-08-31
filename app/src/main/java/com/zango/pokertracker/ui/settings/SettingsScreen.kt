@@ -3,11 +3,13 @@ package com.zango.pokertracker.ui.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -35,16 +37,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.Stakes
 import com.zango.pokertracker.ui.common.CashAmountField
 import com.zango.pokertracker.ui.common.MinTouchTarget
 import com.zango.pokertracker.ui.common.SectionLabel
+import com.zango.pokertracker.ui.common.resolve
 import com.zango.pokertracker.ui.theme.PokerTheme
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
 
@@ -62,13 +69,16 @@ fun SettingsScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val undoLabel = stringResource(R.string.action_undo)
 
-    LaunchedEffect(viewModel) {
+    val context = LocalContext.current
+
+    LaunchedEffect(viewModel, undoLabel) {
         viewModel.events.collect { event ->
             when (event) {
-                is SettingsEvent.Message -> snackbarHostState.showSnackbar(event.text)
+                is SettingsEvent.Message -> snackbarHostState.showSnackbar(event.text.resolve(context))
                 is SettingsEvent.Removed -> {
-                    val result = snackbarHostState.showSnackbar(event.text, actionLabel = "Undo")
+                    val result = snackbarHostState.showSnackbar(event.text.resolve(context), actionLabel = undoLabel)
                     if (result == SnackbarResult.ActionPerformed) {
                         viewModel.onUndoRemove(event.stakes)
                     }
@@ -81,10 +91,10 @@ fun SettingsScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(R.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -142,9 +152,9 @@ private fun SettingsContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            SectionLabel("Blind sizes")
+            SectionLabel(stringResource(R.string.settings_section_blind_sizes))
             Text(
-                "${state.count} of ${Stakes.MAX_PRESETS}",
+                stringResource(R.string.settings_blind_count, state.count, Stakes.MAX_PRESETS),
                 style = PokerTheme.type.numericCaption,
                 color = if (state.isFull) {
                     MaterialTheme.colorScheme.primary
@@ -154,8 +164,7 @@ private fun SettingsContent(
             )
         }
         Text(
-            "The levels offered when you set up a game. Playing a game on new blinds adds them " +
-                "here too, so this is where a one-off night gets tidied away.",
+            stringResource(R.string.settings_blind_sizes_body),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 4.dp),
@@ -163,7 +172,7 @@ private fun SettingsContent(
 
         if (state.isEmpty) {
             Text(
-                "No levels left. Add the ones you play.",
+                stringResource(R.string.settings_blind_sizes_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(vertical = 12.dp),
@@ -182,7 +191,8 @@ private fun SettingsContent(
                 .defaultMinSize(minHeight = MinTouchTarget),
         ) {
             Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-            Text("  Add blinds")
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.settings_add_blinds))
         }
     }
 }
@@ -212,7 +222,7 @@ private fun StakeRowItem(row: StakeRow, onRemove: () -> Unit) {
             IconButton(onClick = onRemove, modifier = Modifier.size(MinTouchTarget)) {
                 Icon(
                     Icons.Filled.Close,
-                    contentDescription = "Remove ${row.label}",
+                    contentDescription = stringResource(R.string.settings_remove_blinds, row.label),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -231,23 +241,23 @@ private fun AddStakesDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        title = { Text("Add blinds") },
+        title = { Text(stringResource(R.string.settings_add_blinds_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 CashAmountField(
                     value = editor.smallBlind,
                     onValueChange = onSmallBlindChange,
-                    label = "Small blind",
+                    label = stringResource(R.string.create_small_blind),
                 )
                 CashAmountField(
                     value = editor.bigBlind,
                     onValueChange = onBigBlindChange,
-                    label = "Big blind",
+                    label = stringResource(R.string.create_big_blind),
                     imeAction = ImeAction.Done,
                 )
                 if (editor.error != null) {
                     Text(
-                        editor.error,
+                        editor.error.resolve(),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -255,9 +265,9 @@ private fun AddStakesDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onConfirm, enabled = editor.canAdd) { Text("Add") }
+            TextButton(onClick = onConfirm, enabled = editor.canAdd) { Text(stringResource(R.string.action_add)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 
@@ -301,7 +311,7 @@ private fun SettingsEmptyPreview() {
 private fun AddStakesPreview() {
     PokerTrackerTheme {
         AddStakesDialog(
-            editor = StakesEditor("0.02", "0.01", "Big blind must be larger than the small blind"),
+            editor = StakesEditor("0.02", "0.01", UiText.Raw("Big blind must be larger than the small blind")),
             onSmallBlindChange = {},
             onBigBlindChange = {},
             onConfirm = {},

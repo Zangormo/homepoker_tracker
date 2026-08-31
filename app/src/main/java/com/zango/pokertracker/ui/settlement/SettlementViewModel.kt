@@ -9,7 +9,7 @@ import com.zango.pokertracker.domain.model.GameSnapshot
 import com.zango.pokertracker.domain.model.SettledPayment
 import com.zango.pokertracker.domain.settlement.notes
 import com.zango.pokertracker.domain.settlement.settle
-import com.zango.pokertracker.domain.settlement.toShareText
+import com.zango.pokertracker.domain.settlement.shareLines
 import com.zango.pokertracker.ui.common.toResultRows
 import com.zango.pokertracker.ui.navigation.Routes
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -117,7 +117,7 @@ class SettlementViewModel @Inject constructor(
             durationLabel = snapshot.game.endedAt
                 ?.let { formatElapsed(it - snapshot.game.startedAt) },
             totalOnTable = snapshot.totalOnTable,
-            shareText = settlement.toShareText(snapshot.game.name),
+            shareLines = settlement.shareLines(snapshot.game.name),
         )
     }
 

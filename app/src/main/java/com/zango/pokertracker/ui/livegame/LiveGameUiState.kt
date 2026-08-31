@@ -1,5 +1,6 @@
 package com.zango.pokertracker.ui.livegame
 
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.Player
@@ -37,7 +38,7 @@ sealed interface LiveGameDialog {
         val playerName: String,
         val amount: String,
         val preview: AmountPreview = AmountPreview(),
-        val error: String? = null,
+        val error: UiText? = null,
     ) : LiveGameDialog {
         val canConfirm: Boolean get() = error == null && !preview.isEmpty
     }
@@ -53,7 +54,7 @@ sealed interface LiveGameDialog {
         val chipsOnTable: Chips?,
         val chipCount: Chips? = null,
         val cashValue: Money? = null,
-        val error: String? = null,
+        val error: UiText? = null,
     ) : LiveGameDialog {
         val canConfirm: Boolean get() = error == null && cashValue != null
     }
@@ -67,7 +68,7 @@ sealed interface LiveGameDialog {
         val chipCount: Chips? = null,
         val cashValue: Money? = null,
         val net: Money? = null,
-        val error: String? = null,
+        val error: UiText? = null,
     ) : LiveGameDialog {
         val canConfirm: Boolean get() = error == null && cashValue != null
     }
@@ -78,9 +79,9 @@ sealed interface LiveGameDialog {
         val newPlayerName: String,
         val buyIn: String,
         val preview: AmountPreview = AmountPreview(),
-        val error: String? = null,
+        val error: UiText? = null,
         /** A problem with the typed name, kept apart so it shows on the right field. */
-        val nameError: String? = null,
+        val nameError: UiText? = null,
     ) : LiveGameDialog {
         val hasSubject: Boolean get() = selectedPlayerId != null || newPlayerName.isNotBlank()
         val canConfirm: Boolean
@@ -94,7 +95,7 @@ data class LiveGameUiState(
     val gameId: Long = 0,
     val gameName: String = "",
     val stakes: String = "",
-    val chipValueLabel: String = "",
+    val chipValueLabel: UiText? = null,
     /** "2h 47m", recomputed from the stored start time rather than counted. */
     val elapsed: String = "",
     val isFinished: Boolean = false,
@@ -118,5 +119,5 @@ data class LiveGameUiState(
 
 sealed interface LiveGameEvent {
     data class EndGame(val gameId: Long) : LiveGameEvent
-    data class Message(val text: String) : LiveGameEvent
+    data class Message(val text: UiText) : LiveGameEvent
 }

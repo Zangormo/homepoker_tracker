@@ -1,5 +1,7 @@
 package com.zango.pokertracker.ui.creategame
 
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.Player
@@ -209,7 +211,7 @@ class CreateGameViewModelTest {
         viewModel.onOverrideCashChange("1.002")
 
         val editor = viewModel.stateWhere { it.overrideEditor?.error != null }.overrideEditor!!
-        assertEquals("Not a whole number of chips", editor.error)
+        assertEquals(UiText.of(R.string.error_not_whole_chips_short), editor.error)
         assertFalse(editor.canApply)
     }
 
@@ -304,7 +306,10 @@ class CreateGameViewModelTest {
         viewModel.onNewPlayerNameChange("   ")
         viewModel.onAddNewPlayer()
 
-        assertEquals("Enter a name", viewModel.stateWhere { it.newPlayerError != null }.newPlayerError)
+        assertEquals(
+            UiText.of(R.string.error_name_required),
+            viewModel.stateWhere { it.newPlayerError != null }.newPlayerError,
+        )
     }
 
     // -----------------------------------------------------------------------------------------
@@ -361,7 +366,10 @@ class CreateGameViewModelTest {
 
         val event = viewModel.events.first()
         assertTrue(event is CreateGameEvent.Message)
-        assertEquals("Disk is full", (event as CreateGameEvent.Message).text)
+        assertEquals(
+            UiText.of(R.string.error_could_not_start),
+            (event as CreateGameEvent.Message).text,
+        )
         // Not left spinning: the host can fix the problem and try again.
         assertFalse(viewModel.stateWhere { !it.isStarting }.isStarting)
         assertTrue(viewModel.stateWhere().canStart)

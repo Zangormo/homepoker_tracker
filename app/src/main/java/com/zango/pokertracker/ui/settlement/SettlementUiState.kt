@@ -1,5 +1,6 @@
 package com.zango.pokertracker.ui.settlement
 
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.ui.common.ResultRow
 
@@ -31,7 +32,7 @@ data class SettlementUiState(
     val isFinished: Boolean = false,
     val payments: List<PaymentLine> = emptyList(),
     /** Rounding and mismatch caveats, shown under the payments. */
-    val notes: List<String> = emptyList(),
+    val notes: List<UiText> = emptyList(),
     /** True when the chip counts never balanced, so the payments cannot square everyone up. */
     val hasProblem: Boolean = false,
     val results: List<ResultRow> = emptyList(),
@@ -41,8 +42,11 @@ data class SettlementUiState(
     val durationLabel: String? = null,
     /** What the bank was holding at the end: everything paid in, less chips bought back. */
     val totalOnTable: Money = Money.ZERO,
-    /** Exactly what the share and copy buttons hand over. */
-    val shareText: String = "",
+    /**
+     * Exactly what the share and copy buttons hand over, one line at a time. The screen joins
+     * them, because only the screen knows what language to say them in.
+     */
+    val shareLines: List<UiText> = emptyList(),
 ) {
     val hasPayments: Boolean get() = payments.isNotEmpty()
 

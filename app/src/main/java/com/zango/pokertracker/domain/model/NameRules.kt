@@ -1,5 +1,8 @@
 package com.zango.pokertracker.domain.model
 
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
+
 /**
  * What a player or a game may be called.
  *
@@ -18,6 +21,10 @@ object NameRules {
 
     fun isTooLong(name: String): Boolean = name.trim().length > MAX_LENGTH
 
-    /** One sentence, identical wherever a name is typed. */
-    fun tooLongMessage(label: String): String = "$label can be at most $MAX_LENGTH characters"
+    /**
+     * One sentence, identical wherever a name is typed. [label] names which name is too long —
+     * a player's or a game's — and is itself a translated string.
+     */
+    fun tooLongMessage(label: UiText): UiText =
+        UiText.plural(R.plurals.error_name_too_long, MAX_LENGTH, label, MAX_LENGTH)
 }

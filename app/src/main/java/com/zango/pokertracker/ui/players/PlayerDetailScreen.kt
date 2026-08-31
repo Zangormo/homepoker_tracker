@@ -25,11 +25,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.zango.pokertracker.R
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.ui.common.CashAmountText
 import com.zango.pokertracker.ui.common.NetCashText
@@ -59,16 +62,23 @@ fun PlayerDetailScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text(state.name.ifEmpty { "Player" })
+                        Text(state.name.ifEmpty { stringResource(R.string.player_title_fallback) })
                         if (state.hasPlayed) {
                             Text(
-                                buildString {
-                                    append(state.gamesPlayed)
-                                    append(if (state.gamesPlayed == 1) " game" else " games")
+                                pluralStringResource(
+                                    R.plurals.game_count,
+                                    state.gamesPlayed,
+                                    state.gamesPlayed,
+                                ).let { games ->
                                     if (state.gamesUp > 0) {
-                                        append(" · ")
-                                        append(state.gamesUp)
-                                        append(" up")
+                                        pluralStringResource(
+                                            R.plurals.player_games_and_wins,
+                                            state.gamesUp,
+                                            games,
+                                            state.gamesUp,
+                                        )
+                                    } else {
+                                        games
                                     }
                                 },
                                 style = MaterialTheme.typography.labelMedium,
@@ -79,7 +89,7 @@ fun PlayerDetailScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -91,7 +101,7 @@ fun PlayerDetailScreen(
         when {
             state.isLoading -> Centered(Modifier.padding(padding)) { CircularProgressIndicator() }
             state.isMissing -> Centered(Modifier.padding(padding)) {
-                Text("This player is no longer on the roster.")
+                Text(stringResource(R.string.player_missing))
             }
 
             else -> PlayerDetailContent(state, Modifier.padding(padding))
@@ -121,7 +131,7 @@ private fun PlayerDetailContent(state: PlayerDetailUiState, modifier: Modifier =
         item { StatTiles(state) }
 
         if (state.games.isNotEmpty()) {
-            item { SectionLabel("Every game") }
+            item { SectionLabel(stringResource(R.string.player_section_every_game)) }
             items(state.games, key = { it.gameId }) { game -> GameLine(game) }
         }
     }
@@ -145,23 +155,26 @@ private fun LifetimeHeadline(state: PlayerDetailUiState) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            SectionLabel("All-time profit")
+            SectionLabel(stringResource(R.string.player_all_time_profit))
             if (state.netProfit != null) {
                 NetCashText(state.netProfit, style = PokerTheme.type.numericHero)
             } else {
                 Text(
-                    if (state.hasPlayed) "Not settled yet" else "No games yet",
+                    stringResource(
+                        if (state.hasPlayed) R.string.player_not_settled_yet
+                        else R.string.player_no_games_yet,
+                    ),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             if (state.openGames > 0) {
                 Text(
-                    if (state.openGames == 1) {
-                        "One game is still to be settled and is not counted here."
-                    } else {
-                        "${state.openGames} games are still to be settled and are not counted here."
-                    },
+                    pluralStringResource(
+                        R.plurals.games_to_settle_note,
+                        state.openGames,
+                        state.openGames,
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -174,13 +187,13 @@ private fun LifetimeHeadline(state: PlayerDetailUiState) {
 @Composable
 private fun StatTiles(state: PlayerDetailUiState) {
     StatRow {
-        StatTile(label = "Paid in") {
+        StatTile(label = stringResource(R.string.player_stat_paid_in)) {
             CashAmountText(state.totalPaidIn, style = PokerTheme.type.numericMedium)
         }
-        StatTile(label = "Buy-ins") {
+        StatTile(label = stringResource(R.string.player_stat_buy_ins)) {
             StatCount(state.buyInCount)
         }
-        StatTile(label = "Cashed out") {
+        StatTile(label = stringResource(R.string.player_stat_cashed_out)) {
             CashAmountText(state.cashedOut, style = PokerTheme.type.numericMedium)
         }
     }
@@ -212,7 +225,10 @@ private fun GameLine(game: PlayerGameRow) {
                 NetCashText(game.net, style = PokerTheme.type.numericSmall)
             } else {
                 Text(
-                    if (game.isInProgress) "Still playing" else "No result",
+                    stringResource(
+                        if (game.isInProgress) R.string.player_game_still_playing
+                        else R.string.player_game_no_result,
+                    ),
                     style = MaterialTheme.typography.labelSmall,
                     color = if (game.isInProgress) {
                         MaterialTheme.colorScheme.primary
@@ -228,12 +244,11 @@ private fun GameLine(game: PlayerGameRow) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                buildString {
-                    append(game.dateLabel)
-                    append(" · ")
-                    append(game.buyInCount)
-                    append(if (game.buyInCount == 1) " buy-in" else " buy-ins")
-                },
+                stringResource(
+                    R.string.player_game_line,
+                    game.dateLabel,
+                    pluralStringResource(R.plurals.buy_in_count, game.buyInCount, game.buyInCount),
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

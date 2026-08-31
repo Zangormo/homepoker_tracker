@@ -39,11 +39,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.ChipRate
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
@@ -59,6 +64,7 @@ import com.zango.pokertracker.ui.common.MinTouchTarget
 import com.zango.pokertracker.ui.common.NetCashText
 import com.zango.pokertracker.ui.common.PokerTextField
 import com.zango.pokertracker.ui.common.SectionLabel
+import com.zango.pokertracker.ui.common.resolve
 import com.zango.pokertracker.ui.theme.PokerTheme
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
 
@@ -72,11 +78,13 @@ fun LiveGameScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val context = LocalContext.current
+
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
                 is LiveGameEvent.EndGame -> onEndGame(event.gameId)
-                is LiveGameEvent.Message -> snackbarHostState.showSnackbar(event.text)
+                is LiveGameEvent.Message -> snackbarHostState.showSnackbar(event.text.resolve(context))
             }
         }
     }
@@ -85,15 +93,17 @@ fun LiveGameScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(state.gameName.ifEmpty { "Game" }) },
+                title = { Text(state.gameName.ifEmpty { stringResource(R.string.live_title_fallback) }) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 actions = {
                     if (state.canEndGame) {
-                        TextButton(onClick = viewModel::onEndGame) { Text("End game") }
+                        TextButton(onClick = viewModel::onEndGame) {
+                            Text(stringResource(R.string.live_end_game))
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -106,7 +116,7 @@ fun LiveGameScreen(
                 ExtendedFloatingActionButton(
                     onClick = viewModel::onAddPlayer,
                     icon = { Icon(Icons.Filled.PersonAdd, contentDescription = null) },
-                    text = { Text("Add player") },
+                    text = { Text(stringResource(R.string.live_add_player)) },
                 )
             }
         },
@@ -115,7 +125,7 @@ fun LiveGameScreen(
         when {
             state.isLoading -> Centered(Modifier.padding(padding)) { CircularProgressIndicator() }
             state.isMissing -> Centered(Modifier.padding(padding)) {
-                Text("This game is no longer available.")
+                Text(stringResource(R.string.live_game_missing))
             }
 
             else -> LiveGameContent(
@@ -194,7 +204,11 @@ private fun LiveGameContent(
         item { HeadlinePanel(state) }
 
         if (state.activeSeats.isNotEmpty()) {
-            item { SectionLabel("At the table · ${state.activeSeats.size}") }
+            item {
+                SectionLabel(
+                    stringResource(R.string.live_section_at_table, state.activeSeats.size),
+                )
+            }
             items(state.activeSeats, key = { it.seatId }) { seat ->
                 ActiveSeatRow(
                     seat = seat,
@@ -208,7 +222,11 @@ private fun LiveGameContent(
         }
 
         if (state.cashedOutSeats.isNotEmpty()) {
-            item { SectionLabel("Cashed out · ${state.cashedOutSeats.size}") }
+            item {
+                SectionLabel(
+                    stringResource(R.string.live_section_cashed_out, state.cashedOutSeats.size),
+                )
+            }
             items(state.cashedOutSeats, key = { it.seatId }) { seat ->
                 CashedOutSeatRow(
                     seat = seat,
@@ -221,7 +239,7 @@ private fun LiveGameContent(
         if (state.playerCount == 0) {
             item {
                 Text(
-                    "Nobody is seated yet.",
+                    stringResource(R.string.live_nobody_seated),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -245,7 +263,7 @@ private fun HeadlinePanel(state: LiveGameUiState) {
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            SectionLabel("On the table")
+            SectionLabel(stringResource(R.string.live_section_on_the_table))
             CashAmountText(
                 money = state.totalOnTable.cash ?: Money.ZERO,
                 style = PokerTheme.type.numericHero,
@@ -257,8 +275,12 @@ private fun HeadlinePanel(state: LiveGameUiState) {
             )
             if (state.hasReturns) {
                 Text(
-                    "${state.returnedChips} chips bought back by the bank · " +
-                        "${state.returnedCash.format()} paid out",
+                    pluralStringResource(
+                        R.plurals.live_returned_summary,
+                        state.returnedChips.count.toInt(),
+                        state.returnedChips.count,
+                        state.returnedCash.format(),
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -273,13 +295,13 @@ private fun HeadlinePanel(state: LiveGameUiState) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Statistic("Elapsed", state.elapsed)
-                Statistic("Buy-ins", state.buyInCount.toString())
-                Statistic("Blinds", state.stakes)
+                Statistic(stringResource(R.string.live_stat_elapsed), state.elapsed)
+                Statistic(stringResource(R.string.live_stat_buy_ins), state.buyInCount.toString())
+                Statistic(stringResource(R.string.live_stat_blinds), state.stakes)
             }
 
             Text(
-                state.chipValueLabel,
+                state.chipValueLabel?.resolve().orEmpty(),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 12.dp),
@@ -287,7 +309,7 @@ private fun HeadlinePanel(state: LiveGameUiState) {
 
             if (state.isFinished) {
                 Text(
-                    "This game has finished.",
+                    stringResource(R.string.live_game_finished),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -330,7 +352,7 @@ private fun ActiveSeatRow(
             ) {
                 Text(seat.name, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "${seat.buyInCount} buy-in${if (seat.buyInCount == 1) "" else "s"}",
+                    pluralStringResource(R.plurals.buy_in_count, seat.buyInCount, seat.buyInCount),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -350,7 +372,7 @@ private fun ActiveSeatRow(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        SectionLabel("Sold back")
+                        SectionLabel(stringResource(R.string.live_seat_sold_back))
                         ChipsToCashRow(
                             chips = seat.returnedChips,
                             cash = seat.returnedCash,
@@ -358,7 +380,9 @@ private fun ActiveSeatRow(
                         )
                     }
                     if (enabled) {
-                        TextButton(onClick = onUndoLastReturn) { Text("Undo last") }
+                        TextButton(onClick = onUndoLastReturn) {
+                            Text(stringResource(R.string.live_action_undo_last))
+                        }
                     }
                 }
             }
@@ -369,18 +393,18 @@ private fun ActiveSeatRow(
                         modifier = Modifier
                             .weight(1f)
                             .height(MinTouchTarget),
-                    ) { Text("Rebuy") }
+                    ) { Text(stringResource(R.string.live_action_rebuy)) }
                     OutlinedButton(
                         onClick = onCashOut,
                         modifier = Modifier
                             .weight(1f)
                             .height(MinTouchTarget),
-                    ) { Text("Cash out") }
+                    ) { Text(stringResource(R.string.live_action_cash_out)) }
                 }
                 TextButton(
                     onClick = onReturnChips,
                     modifier = Modifier.height(MinTouchTarget),
-                ) { Text("Sell chips back to the bank") }
+                ) { Text(stringResource(R.string.live_action_sell_back)) }
             }
         }
     }
@@ -416,11 +440,11 @@ private fun CashedOutSeatRow(seat: SeatRow, enabled: Boolean, onUndo: () -> Unit
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column {
-                    SectionLabel("In for")
+                    SectionLabel(stringResource(R.string.live_seat_in_for))
                     CashAmountText(seat.totalBuyIn, style = PokerTheme.type.numericSmall)
                 }
                 Column {
-                    SectionLabel("Out with")
+                    SectionLabel(stringResource(R.string.live_seat_out_with))
                     ChipsToCashRow(
                         chips = seat.finalChips,
                         cash = seat.cashOutValue,
@@ -432,7 +456,7 @@ private fun CashedOutSeatRow(seat: SeatRow, enabled: Boolean, onUndo: () -> Unit
                 TextButton(
                     onClick = onUndo,
                     modifier = Modifier.height(MinTouchTarget),
-                ) { Text("Undo cash-out") }
+                ) { Text(stringResource(R.string.live_action_undo_cash_out)) }
             }
         }
     }
@@ -465,7 +489,7 @@ private fun PokerDialog(
         dismissButton = {
             Row {
                 extraDismiss?.invoke()
-                TextButton(onClick = onDismiss) { Text("Cancel") }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
             }
         },
     )
@@ -479,16 +503,16 @@ private fun AddBuyInDialog(
     onDismiss: () -> Unit,
 ) {
     PokerDialog(
-        title = "Rebuy for ${dialog.playerName}",
+        title = stringResource(R.string.live_rebuy_title, dialog.playerName),
         onDismiss = onDismiss,
-        confirmLabel = "Add",
+        confirmLabel = stringResource(R.string.live_rebuy_confirm),
         confirmEnabled = dialog.canConfirm,
         onConfirm = onConfirm,
     ) {
         CashAmountField(
             value = dialog.amount,
             onValueChange = onAmountChange,
-            label = "Amount",
+            label = stringResource(R.string.live_rebuy_amount),
             required = true,
             error = dialog.error,
             forceShowError = true,
@@ -510,26 +534,27 @@ private fun ReturnChipsDialog(
     onDismiss: () -> Unit,
 ) {
     PokerDialog(
-        title = "${dialog.playerName} sells chips back",
+        title = stringResource(R.string.live_return_title, dialog.playerName),
         onDismiss = onDismiss,
-        confirmLabel = "Record",
+        confirmLabel = stringResource(R.string.live_return_confirm),
         confirmEnabled = dialog.canConfirm,
         onConfirm = onConfirm,
     ) {
         Text(
-            "They hand the chips to the bank and take the cash for them. They keep playing, and " +
-                "the cash counts towards their result.",
+            stringResource(R.string.live_return_explainer),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         ChipAmountField(
             value = dialog.chips,
             onValueChange = onChipsChange,
-            label = "Chips returned",
+            label = stringResource(R.string.live_return_field),
             required = true,
             error = dialog.error,
             forceShowError = true,
-            supporting = dialog.chipsOnTable?.let { "$it chips are on the table" },
+            supporting = dialog.chipsOnTable?.let {
+                UiText.plural(R.plurals.live_return_on_table, it.count.toInt(), it.count)
+            },
             imeAction = ImeAction.Done,
         )
         HorizontalDivider(color = PokerTheme.colors.divider)
@@ -549,21 +574,21 @@ private fun CashOutDialog(
     onDismiss: () -> Unit,
 ) {
     PokerDialog(
-        title = "Cash out ${dialog.playerName}",
+        title = stringResource(R.string.live_cash_out_title, dialog.playerName),
         onDismiss = onDismiss,
-        confirmLabel = "Cash out",
+        confirmLabel = stringResource(R.string.live_cash_out_confirm),
         confirmEnabled = dialog.canConfirm,
         onConfirm = onConfirm,
     ) {
         Text(
-            "Count the chips in front of them.",
+            stringResource(R.string.live_cash_out_explainer),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         ChipAmountField(
             value = dialog.chips,
             onValueChange = onChipsChange,
-            label = "Final chip count",
+            label = stringResource(R.string.live_cash_out_field),
             required = true,
             error = dialog.error,
             forceShowError = true,
@@ -581,11 +606,11 @@ private fun CashOutDialog(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column {
-                SectionLabel("In for")
+                SectionLabel(stringResource(R.string.live_seat_in_for))
                 CashAmountText(dialog.totalBuyIn, style = PokerTheme.type.numericSmall)
             }
             Column(horizontalAlignment = Alignment.End) {
-                SectionLabel("Net")
+                SectionLabel(stringResource(R.string.live_seat_net))
                 NetCashText(dialog.net, style = PokerTheme.type.numericMedium)
             }
         }
@@ -602,14 +627,14 @@ private fun AddPlayerDialog(
     onDismiss: () -> Unit,
 ) {
     PokerDialog(
-        title = "Add a player",
+        title = stringResource(R.string.live_add_player_title),
         onDismiss = onDismiss,
-        confirmLabel = "Seat them",
+        confirmLabel = stringResource(R.string.live_add_player_confirm),
         confirmEnabled = dialog.canConfirm,
         onConfirm = onConfirm,
     ) {
         if (dialog.candidates.isNotEmpty()) {
-            SectionLabel("From the roster")
+            SectionLabel(stringResource(R.string.live_add_player_from_roster))
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -627,14 +652,14 @@ private fun AddPlayerDialog(
         PokerTextField(
             value = dialog.newPlayerName,
             onValueChange = onNewNameChange,
-            label = "Or add someone new",
+            label = stringResource(R.string.live_add_player_new_name),
             error = dialog.nameError,
             forceShowError = true,
         )
         CashAmountField(
             value = dialog.buyIn,
             onValueChange = onBuyInChange,
-            label = "Buy-in",
+            label = stringResource(R.string.live_add_player_buy_in),
             required = true,
             error = dialog.error,
             forceShowError = true,
@@ -643,7 +668,7 @@ private fun AddPlayerDialog(
         CashToChipsRow(cash = dialog.preview.cash, chips = dialog.preview.chips)
         if (!dialog.hasSubject) {
             Text(
-                "Pick someone from the roster or type a name.",
+                stringResource(R.string.live_add_player_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -681,7 +706,7 @@ private fun liveState() = LiveGameUiState(
     gameId = 1,
     gameName = "Thursday",
     stakes = "0.005 / 0.01",
-    chipValueLabel = "1 chip = 0.005",
+    chipValueLabel = UiText.Raw("1 chip = 0.005"),
     elapsed = "2h 47m",
     totalOnTable = AmountPreview.of(Money(4_000_000), PreviewRate),
     buyInCount = 5,
@@ -724,7 +749,7 @@ private fun CashOutErrorPreview() {
                 chips = "250.5",
                 cashValue = null,
                 net = null,
-                error = "Chips come in whole numbers only",
+                error = UiText.Raw("Chips come in whole numbers only"),
             ),
             onChipsChange = {},
             onConfirm = {},
@@ -783,7 +808,7 @@ private fun ReturnChipsErrorPreview() {
                 playerName = "Anna",
                 chips = "900",
                 chipsOnTable = Chips(800),
-                error = "Only 800 chips are on the table",
+                error = UiText.Raw("Only 800 chips are on the table"),
             ),
             onChipsChange = {},
             onConfirm = {},

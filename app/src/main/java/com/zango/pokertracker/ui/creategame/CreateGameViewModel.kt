@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.core.money.MoneyParser
 import com.zango.pokertracker.core.money.sum
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.data.repository.CreatePlayerResult
 import com.zango.pokertracker.data.repository.PokerRepository
 import com.zango.pokertracker.domain.model.NameRules
@@ -126,15 +128,23 @@ class CreateGameViewModel @Inject constructor(
                     selectPlayer(result.existing.id)
                     editing.update { it.copy(newPlayerName = "", newPlayerError = null) }
                     eventChannel.send(
-                        CreateGameEvent.Message("${result.existing.name} is already on the roster"),
+                        CreateGameEvent.Message(
+                            UiText.of(R.string.error_name_taken, result.existing.name),
+                        ),
                     )
                 }
 
                 CreatePlayerResult.BlankName ->
-                    editing.update { it.copy(newPlayerError = "Enter a name") }
+                    editing.update {
+                        it.copy(newPlayerError = UiText.of(R.string.error_name_required))
+                    }
 
                 CreatePlayerResult.NameTooLong -> editing.update {
-                    it.copy(newPlayerError = NameRules.tooLongMessage("A name"))
+                    it.copy(
+                        newPlayerError = NameRules.tooLongMessage(
+                            UiText.of(R.string.error_name_label_player),
+                        ),
+                    )
                 }
             }
         }
@@ -207,7 +217,7 @@ class CreateGameViewModel @Inject constructor(
                 .onSuccess { eventChannel.send(CreateGameEvent.GameStarted(it)) }
                 .onFailure {
                     eventChannel.send(
-                        CreateGameEvent.Message(it.message ?: "Could not start the game"),
+                        CreateGameEvent.Message(UiText.of(R.string.error_could_not_start)),
                     )
                 }
         }
@@ -274,7 +284,7 @@ class CreateGameViewModel @Inject constructor(
     /** State that belongs to the screen rather than to the game being described. */
     private data class EditingState(
         val newPlayerName: String = "",
-        val newPlayerError: String? = null,
+        val newPlayerError: UiText? = null,
         val editor: EditorDraft? = null,
         val isStarting: Boolean = false,
     )
@@ -290,25 +300,33 @@ class CreateGameViewModel @Inject constructor(
     private fun EditorDraft.toUiModel(validation: CreateGameValidation): OverrideEditor {
         val bigBlind = validation.bigBlind
         val rate = validation.chipRate
-        val (amount, error) = when (mode) {
+        val (amount, error: UiText?) = when (mode) {
             BuyInMode.CASH -> when (val parsed = MoneyParser.parseOrNull(cash)) {
-                null -> null to "Enter an amount like 1.50"
-                else -> if (parsed.isPositive) parsed to null else null to "Must be greater than zero"
+                null -> null to UiText.of(R.string.error_enter_amount_like)
+                else -> if (parsed.isPositive) {
+                    parsed to null
+                } else {
+                    null to UiText.of(R.string.error_must_be_positive)
+                }
             }
 
             BuyInMode.BIG_BLINDS -> {
                 val multiple = bigBlinds.trim().toLongOrNull()
                 when {
-                    bigBlind == null -> null to "Enter the blinds first"
-                    multiple == null -> null to "Enter a whole number of big blinds"
-                    multiple <= 0 -> null to "Must be greater than zero"
+                    bigBlind == null -> null to UiText.of(R.string.error_blinds_first)
+                    multiple == null -> null to UiText.of(R.string.error_whole_big_blinds)
+                    multiple <= 0 -> null to UiText.of(R.string.error_must_be_positive)
                     else -> runCatching { bigBlind * multiple }.getOrNull() to null
                 }
             }
         }
         val chipError = amount?.let { value ->
             rate?.chipsFor(value)?.let { conversion ->
-                if (conversion.exactOrNull() == null) "Not a whole number of chips" else null
+                if (conversion.exactOrNull() == null) {
+                    UiText.of(R.string.error_not_whole_chips_short)
+                } else {
+                    null
+                }
             }
         }
         return OverrideEditor(

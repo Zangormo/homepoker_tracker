@@ -2,6 +2,8 @@ package com.zango.pokertracker.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.data.repository.AddStakesResult
 import com.zango.pokertracker.data.repository.PokerRepository
 import com.zango.pokertracker.domain.model.Stakes
@@ -57,7 +59,11 @@ class SettingsViewModel @Inject constructor(
             viewModelScope.launch {
                 eventChannel.send(
                     SettingsEvent.Message(
-                        "That is all ${Stakes.MAX_PRESETS} levels. Remove one to make room.",
+                        UiText.plural(
+                            R.plurals.error_stakes_list_full,
+                            Stakes.MAX_PRESETS,
+                            Stakes.MAX_PRESETS,
+                        ),
                     ),
                 )
             }
@@ -82,11 +88,11 @@ class SettingsViewModel @Inject constructor(
      */
     fun onConfirmAdd() {
         val editor = editing.value ?: return
-        val small = parsePositiveMoney(editor.smallBlind, "Small blind")
-        val big = parsePositiveMoney(editor.bigBlind, "Big blind")
-        val error = small.error
+        val small = parsePositiveMoney(editor.smallBlind, UiText.of(R.string.create_small_blind))
+        val big = parsePositiveMoney(editor.bigBlind, UiText.of(R.string.create_big_blind))
+        val error: UiText? = small.error
             ?: big.error
-            ?: "Big blind must be larger than the small blind"
+            ?: UiText.of(R.string.error_big_blind_too_small)
                 .takeIf { small.money != null && big.money != null && big.money <= small.money }
         if (error != null || small.money == null || big.money == null) {
             editing.update { it?.copy(error = error) }
@@ -98,14 +104,31 @@ class SettingsViewModel @Inject constructor(
             when (repository.addStakes(stakes)) {
                 AddStakesResult.Added -> {
                     editing.value = null
-                    eventChannel.send(SettingsEvent.Message("${stakes.label()} added"))
+                    eventChannel.send(
+                        SettingsEvent.Message(
+                            UiText.of(R.string.message_stakes_added, stakes.label()),
+                        ),
+                    )
                 }
 
                 AddStakesResult.AlreadyListed ->
-                    editing.update { it?.copy(error = "${stakes.label()} is already on the list") }
+                    editing.update {
+                        it?.copy(
+                            error = UiText.of(
+                                R.string.error_stakes_already_listed,
+                                stakes.label(),
+                            ),
+                        )
+                    }
 
                 AddStakesResult.ListFull -> editing.update {
-                    it?.copy(error = "That is all ${Stakes.MAX_PRESETS} levels. Remove one first.")
+                    it?.copy(
+                        error = UiText.plural(
+                            R.plurals.error_stakes_list_full_short,
+                            Stakes.MAX_PRESETS,
+                            Stakes.MAX_PRESETS,
+                        ),
+                    )
                 }
             }
         }
@@ -114,7 +137,12 @@ class SettingsViewModel @Inject constructor(
     fun onRemove(stakes: Stakes) {
         viewModelScope.launch {
             repository.removeStakes(stakes)
-            eventChannel.send(SettingsEvent.Removed(stakes, "${stakes.label()} removed"))
+            eventChannel.send(
+                SettingsEvent.Removed(
+                    stakes,
+                    UiText.of(R.string.message_stakes_removed, stakes.label()),
+                ),
+            )
         }
     }
 
@@ -123,7 +151,9 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             if (repository.addStakes(stakes) == AddStakesResult.ListFull) {
                 eventChannel.send(
-                    SettingsEvent.Message("The list filled up, so ${stakes.label()} stayed off."),
+                    SettingsEvent.Message(
+                        UiText.of(R.string.message_stakes_stayed_off, stakes.label()),
+                    ),
                 )
             }
         }

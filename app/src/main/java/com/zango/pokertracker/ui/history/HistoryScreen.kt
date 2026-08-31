@@ -43,17 +43,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.zango.pokertracker.R
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.ui.common.CashAmountText
 import com.zango.pokertracker.ui.common.ChipAmountText
 import com.zango.pokertracker.ui.common.MinTouchTarget
 import com.zango.pokertracker.ui.common.SectionLabel
+import com.zango.pokertracker.ui.common.resolve
 import com.zango.pokertracker.ui.theme.PokerTheme
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
 
@@ -69,10 +74,12 @@ fun HistoryScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val context = LocalContext.current
+
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
-                is HistoryEvent.Message -> snackbarHostState.showSnackbar(event.text)
+                is HistoryEvent.Message -> snackbarHostState.showSnackbar(event.text.resolve(context))
             }
         }
     }
@@ -81,10 +88,10 @@ fun HistoryScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Game hub") },
+                title = { Text(stringResource(R.string.history_title)) },
                 navigationIcon = {
                     IconButton(onClick = onOpenMenu) {
-                        Icon(Icons.Filled.Menu, contentDescription = "Open menu")
+                        Icon(Icons.Filled.Menu, contentDescription = stringResource(R.string.action_open_menu))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -96,7 +103,7 @@ fun HistoryScreen(
             ExtendedFloatingActionButton(
                 onClick = onNewGame,
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text("New game") },
+                text = { Text(stringResource(R.string.history_new_game)) },
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -140,9 +147,9 @@ private fun EmptyHistory() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text("No games yet", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.history_empty_title), style = MaterialTheme.typography.titleMedium)
         Text(
-            "Tap New game to set one up.",
+            stringResource(R.string.history_empty_body),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -163,7 +170,7 @@ private fun HistoryList(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (state.inProgress.isNotEmpty()) {
-            item { SectionLabel("Still running") }
+            item { SectionLabel(stringResource(R.string.history_section_running)) }
             items(state.inProgress, key = { it.gameId }) { row ->
                 GameRow(
                     row = row,
@@ -173,7 +180,7 @@ private fun HistoryList(
             }
         }
         if (state.finished.isNotEmpty()) {
-            item { SectionLabel("Finished", modifier = Modifier.padding(top = 12.dp)) }
+            item { SectionLabel(stringResource(R.string.history_section_finished), modifier = Modifier.padding(top = 12.dp)) }
             items(state.finished, key = { it.gameId }) { row ->
                 GameRow(
                     row = row,
@@ -228,7 +235,7 @@ private fun GameRow(row: HistoryRow, onClick: () -> Unit, onDelete: () -> Unit) 
                     )
                     if (row.isInProgress) {
                         Text(
-                            "RUNNING",
+                            stringResource(R.string.history_badge_running),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary,
                         )
@@ -255,7 +262,7 @@ private fun GameRow(row: HistoryRow, onClick: () -> Unit, onDelete: () -> Unit) 
                     // anyone who cannot separate the two greens or is reading a screenshot.
                     if (row.isFullyPaid) {
                         Text(
-                            "PAID UP",
+                            stringResource(R.string.history_badge_paid_up),
                             style = MaterialTheme.typography.labelSmall,
                             color = PokerTheme.colors.positive,
                         )
@@ -268,13 +275,11 @@ private fun GameRow(row: HistoryRow, onClick: () -> Unit, onDelete: () -> Unit) 
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        buildString {
-                            append(row.playerCount)
-                            append(if (row.playerCount == 1) " player" else " players")
-                            append(" · ")
-                            append(row.buyInCount)
-                            append(if (row.buyInCount == 1) " buy-in" else " buy-ins")
-                        },
+                        stringResource(
+                            R.string.history_row_counts,
+                            pluralStringResource(R.plurals.player_count, row.playerCount, row.playerCount),
+                            pluralStringResource(R.plurals.buy_in_count, row.buyInCount, row.buyInCount),
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -317,7 +322,7 @@ private fun RowMenu(gameName: String, onDelete: () -> Unit) {
         ) {
             Icon(
                 Icons.Filled.MoreVert,
-                contentDescription = "More options for $gameName",
+                contentDescription = stringResource(R.string.history_row_menu, gameName),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -327,7 +332,7 @@ private fun RowMenu(gameName: String, onDelete: () -> Unit) {
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         ) {
             DropdownMenuItem(
-                text = { Text("Delete game", color = MaterialTheme.colorScheme.error) },
+                text = { Text(stringResource(R.string.history_delete_game), color = MaterialTheme.colorScheme.error) },
                 leadingIcon = {
                     Icon(
                         Icons.Filled.Delete,
@@ -349,31 +354,28 @@ private fun DeleteGameDialog(row: HistoryRow, onConfirm: () -> Unit, onDismiss: 
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        title = { Text("Delete ${row.name}?") },
+        title = { Text(stringResource(R.string.history_delete_title, row.name)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     if (row.isInProgress) {
-                        "This game is still running. Deleting it throws away the whole night."
+                        stringResource(R.string.history_delete_running_body)
                     } else {
-                        "This removes the game and its results for good."
+                        stringResource(R.string.history_delete_finished_body)
                     },
                 )
                 Text(
-                    buildString {
-                        append(row.playerCount)
-                        append(if (row.playerCount == 1) " player and " else " players and ")
-                        append(row.buyInCount)
-                        append(if (row.buyInCount == 1) " buy-in" else " buy-ins")
-                        append(" go with it, along with ")
-                        append(row.totalOnTable.format())
-                        append(" of recorded results. The players stay on your roster.")
-                    },
+                    stringResource(
+                        R.string.history_delete_detail,
+                        pluralStringResource(R.plurals.player_count, row.playerCount, row.playerCount),
+                        pluralStringResource(R.plurals.buy_in_count, row.buyInCount, row.buyInCount),
+                        row.totalOnTable.format(),
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    "This cannot be undone.",
+                    stringResource(R.string.history_delete_irreversible),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -381,10 +383,10 @@ private fun DeleteGameDialog(row: HistoryRow, onConfirm: () -> Unit, onDismiss: 
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text("Delete", color = MaterialTheme.colorScheme.error)
+                Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Keep it") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.history_delete_keep)) } },
     )
 }
 

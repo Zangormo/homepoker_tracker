@@ -2,6 +2,8 @@ package com.zango.pokertracker.ui.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.time.formatElapsed
 import com.zango.pokertracker.core.time.formatGameDate
 import com.zango.pokertracker.data.repository.PokerRepository
@@ -63,7 +65,7 @@ class HistoryViewModel @Inject constructor(
             runCatching { repository.deleteGame(gameId) }
                 .onFailure {
                     eventChannel.send(
-                        HistoryEvent.Message(it.message ?: "Could not delete the game"),
+                        HistoryEvent.Message(UiText.of(R.string.error_could_not_delete_game)),
                     )
                 }
         }

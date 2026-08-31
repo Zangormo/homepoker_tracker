@@ -2,6 +2,8 @@ package com.zango.pokertracker.ui.players
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.data.repository.CreatePlayerResult
 import com.zango.pokertracker.data.repository.DeletePlayerResult
 import com.zango.pokertracker.data.repository.PokerRepository
@@ -71,18 +73,33 @@ class PlayersViewModel @Inject constructor(
                     editing.update {
                         it.copy(isAdding = false, newPlayerName = "", newPlayerError = null)
                     }
-                    eventChannel.send(PlayersEvent.Message("${result.player.name} added"))
+                    eventChannel.send(
+                        PlayersEvent.Message(
+                            UiText.of(R.string.message_player_added, result.player.name),
+                        ),
+                    )
                 }
 
                 is CreatePlayerResult.NameTaken -> editing.update {
-                    it.copy(newPlayerError = "${result.existing.name} is already on the roster")
+                    it.copy(
+                        newPlayerError = UiText.of(
+                            R.string.error_name_taken,
+                            result.existing.name,
+                        ),
+                    )
                 }
 
                 CreatePlayerResult.BlankName ->
-                    editing.update { it.copy(newPlayerError = "Enter a name") }
+                    editing.update {
+                        it.copy(newPlayerError = UiText.of(R.string.error_name_required))
+                    }
 
                 CreatePlayerResult.NameTooLong -> editing.update {
-                    it.copy(newPlayerError = NameRules.tooLongMessage("A name"))
+                    it.copy(
+                        newPlayerError = NameRules.tooLongMessage(
+                            UiText.of(R.string.error_name_label_player),
+                        ),
+                    )
                 }
             }
         }
@@ -119,27 +136,35 @@ class PlayersViewModel @Inject constructor(
                 is RenamePlayerResult.Renamed -> {
                     editing.update { it.copy(renaming = null) }
                     eventChannel.send(
-                        PlayersEvent.Message("${editor.originalName} is now ${result.player.name}"),
+                        PlayersEvent.Message(
+                            UiText.of(
+                                R.string.message_player_renamed,
+                                editor.originalName,
+                                result.player.name,
+                            ),
+                        ),
                     )
                 }
 
                 is RenamePlayerResult.NameTaken ->
-                    setRenameError("${result.existing.name} is already on the roster")
+                    setRenameError(UiText.of(R.string.error_name_taken, result.existing.name))
 
-                RenamePlayerResult.BlankName -> setRenameError("Enter a name")
+                RenamePlayerResult.BlankName ->
+                    setRenameError(UiText.of(R.string.error_name_required))
 
-                RenamePlayerResult.NameTooLong ->
-                    setRenameError(NameRules.tooLongMessage("A name"))
+                RenamePlayerResult.NameTooLong -> setRenameError(
+                    NameRules.tooLongMessage(UiText.of(R.string.error_name_label_player)),
+                )
 
                 RenamePlayerResult.NotFound -> {
                     editing.update { it.copy(renaming = null) }
-                    eventChannel.send(PlayersEvent.Message("That player is no longer on the roster"))
+                    eventChannel.send(PlayersEvent.Message(UiText.of(R.string.message_player_gone)))
                 }
             }
         }
     }
 
-    private fun setRenameError(message: String) {
+    private fun setRenameError(message: UiText) {
         editing.update { state -> state.copy(renaming = state.renaming?.copy(error = message)) }
     }
 
@@ -166,16 +191,19 @@ class PlayersViewModel @Inject constructor(
         editing.update { it.copy(deleting = null) }
         viewModelScope.launch {
             if (editor.hasHistory) {
-                hide(editor.playerId, "${editor.name} hidden from the roster")
+                hide(editor.playerId, UiText.of(R.string.message_player_hidden, editor.name))
                 return@launch
             }
             when (repository.deletePlayer(editor.playerId)) {
-                DeletePlayerResult.Deleted ->
-                    eventChannel.send(PlayersEvent.Message("${editor.name} deleted"))
+                DeletePlayerResult.Deleted -> eventChannel.send(
+                    PlayersEvent.Message(UiText.of(R.string.message_player_deleted, editor.name)),
+                )
 
                 // They were seated between the dialog opening and this tap.
-                is DeletePlayerResult.HasHistory ->
-                    hide(editor.playerId, "${editor.name} has games now, so they were hidden")
+                is DeletePlayerResult.HasHistory -> hide(
+                    editor.playerId,
+                    UiText.of(R.string.message_player_now_has_games, editor.name),
+                )
             }
         }
     }
@@ -184,7 +212,7 @@ class PlayersViewModel @Inject constructor(
         viewModelScope.launch { repository.setPlayerArchived(playerId, archived = false) }
     }
 
-    private suspend fun hide(playerId: Long, message: String) {
+    private suspend fun hide(playerId: Long, message: UiText) {
         repository.setPlayerArchived(playerId, archived = true)
         eventChannel.send(PlayersEvent.Message(message))
     }
@@ -210,7 +238,7 @@ class PlayersViewModel @Inject constructor(
     private data class Editing(
         val isAdding: Boolean = false,
         val newPlayerName: String = "",
-        val newPlayerError: String? = null,
+        val newPlayerError: UiText? = null,
         val renaming: RenameEditor? = null,
         val deleting: DeleteEditor? = null,
     )

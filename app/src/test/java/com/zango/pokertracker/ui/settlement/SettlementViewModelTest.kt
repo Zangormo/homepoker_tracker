@@ -1,7 +1,9 @@
 package com.zango.pokertracker.ui.settlement
 
 import androidx.lifecycle.SavedStateHandle
+import com.zango.pokertracker.R
 import com.zango.pokertracker.core.money.Chips
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.Fixture
 import com.zango.pokertracker.domain.model.GameSnapshot
@@ -158,12 +160,12 @@ class SettlementViewModelTest {
         )
 
         assertEquals(
-            """
-            Thursday — settlement
-
-            Boris pays Anna 0.50
-            """.trimIndent(),
-            state().shareText,
+            listOf(
+                UiText.of(R.string.settlement_share_subject, "Thursday"),
+                UiText.Raw(""),
+                UiText.of(R.string.settlement_pays, "Boris", "Anna", "0.50"),
+            ),
+            state().shareLines,
         )
     }
 
@@ -176,7 +178,7 @@ class SettlementViewModelTest {
 
         val state = state()
         assertFalse(state.hasPayments)
-        assertTrue(state.shareText.contains("Everyone broke even"))
+        assertTrue(state.shareLines.contains(UiText.of(R.string.settlement_everyone_even)))
     }
 
     @Test
@@ -190,7 +192,7 @@ class SettlementViewModelTest {
 
         val state = state()
         assertEquals(
-            listOf("Rounded to the nearest 0.01. Chris absorbed 0.01."),
+            listOf(UiText.of(R.string.note_rounded, "0.01", "Chris", "0.01")),
             state.notes,
         )
         assertEquals(listOf("Chris pays Anna 0.01", "Chris pays Boris 0.01"), state.sentences())
@@ -208,9 +210,12 @@ class SettlementViewModelTest {
         assertTrue(state.hasProblem)
         assertEquals(
             listOf(
-                "Chip counts came out 0.06 short of the buy-ins, " +
-                    "so these payments do not fully square everyone up.",
-                "Boris still owes 0.06.",
+                UiText.of(
+                    R.string.note_imbalance,
+                    "0.06",
+                    UiText.of(R.string.note_imbalance_short),
+                ),
+                UiText.of(R.string.note_still_owes, "Boris", "0.06"),
             ),
             state.notes,
         )

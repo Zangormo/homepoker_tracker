@@ -2,7 +2,9 @@ package com.zango.pokertracker.ui.livegame
 
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
+import com.zango.pokertracker.R
 import com.zango.pokertracker.core.money.Chips
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.Fixture
 import com.zango.pokertracker.domain.model.GameSnapshot
@@ -95,7 +97,10 @@ class LiveGameViewModelTest {
         run {
             assertEquals("Thursday", state.gameName)
             assertEquals("0.005 / 0.01", state.stakes)
-            assertEquals("1 chip = 0.005", state.chipValueLabel)
+            assertEquals(
+                UiText.of(R.string.chip_value_label, "0.005"),
+                state.chipValueLabel,
+            )
             assertEquals(Money(2_000_000), state.totalOnTable.cash)
             assertEquals(Chips(400), state.totalOnTable.chips)
             assertEquals(2, state.buyInCount)
@@ -148,7 +153,7 @@ class LiveGameViewModelTest {
         val dialog = viewModel.buyInDialog("1.0025")
 
         assertEquals(
-            "1.0025 is not a whole number of 0.005 chips (0.0025 left over)",
+            UiText.of(R.string.error_not_whole_chips, "1.0025", "0.005", "0.0025"),
             dialog.error,
         )
         assertFalse(dialog.canConfirm)
@@ -204,7 +209,7 @@ class LiveGameViewModelTest {
         viewModel.onChipCountChange("250.5")
 
         val dialog = viewModel.cashOutDialog("250.5")
-        assertEquals("Chips come in whole numbers only", dialog.error)
+        assertEquals(UiText.of(R.string.error_chips_not_whole), dialog.error)
         assertFalse(dialog.canConfirm)
     }
 
@@ -330,7 +335,7 @@ class LiveGameViewModelTest {
             viewModel.onSelectCandidate(3)
             viewModel.onConfirmAddPlayer()
             assertEquals(
-                LiveGameEvent.Message("That player is already seated"),
+                LiveGameEvent.Message(UiText.of(R.string.error_add_player)),
                 awaitItem(),
             )
             cancelAndIgnoreRemainingEvents()

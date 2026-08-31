@@ -33,11 +33,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.ChipRate
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
@@ -50,6 +54,7 @@ import com.zango.pokertracker.ui.common.NetCashText
 import com.zango.pokertracker.ui.common.ResultRow
 import com.zango.pokertracker.ui.common.ResultsTable
 import com.zango.pokertracker.ui.common.SectionLabel
+import com.zango.pokertracker.ui.common.resolve
 import com.zango.pokertracker.ui.theme.PokerTheme
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
 
@@ -64,11 +69,13 @@ fun EndGameScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    val context = LocalContext.current
+
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
                 is EndGameEvent.Finished -> onFinished(event.gameId)
-                is EndGameEvent.Message -> snackbarHostState.showSnackbar(event.text)
+                is EndGameEvent.Message -> snackbarHostState.showSnackbar(event.text.resolve(context))
             }
         }
     }
@@ -79,7 +86,7 @@ fun EndGameScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("End game")
+                        Text(stringResource(R.string.end_title))
                         if (state.gameName.isNotEmpty()) {
                             Text(
                                 state.gameName,
@@ -91,7 +98,7 @@ fun EndGameScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -113,7 +120,7 @@ fun EndGameScreen(
         when {
             state.isLoading -> Centered(Modifier.padding(padding)) { CircularProgressIndicator() }
             state.isMissing -> Centered(Modifier.padding(padding)) {
-                Text("This game is no longer available.")
+                Text(stringResource(R.string.end_game_missing))
             }
 
             else -> EndGameContent(
@@ -159,10 +166,12 @@ private fun EndGameContent(
 
         item {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                SectionLabel("Chip counts")
+                SectionLabel(stringResource(R.string.end_section_chip_counts))
                 Text(
-                    "Count the chips still in front of each player. Anything already sold " +
-                        "back to the bank is credited on top. ${state.chipValueLabel}.",
+                    stringResource(
+                        R.string.end_chip_counts_body,
+                        state.chipValueLabel?.resolve().orEmpty(),
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -177,7 +186,7 @@ private fun EndGameContent(
             )
         }
 
-        item { SectionLabel("Results") }
+        item { SectionLabel(stringResource(R.string.end_section_results)) }
         item { ResultsTable(state.results) }
     }
 }
@@ -210,7 +219,7 @@ private fun ReconciliationPanel(summary: ReconciliationSummary) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
-                summary.headline,
+                summary.headline.resolve(),
                 style = MaterialTheme.typography.titleMedium,
                 color = headlineColor,
             )
@@ -220,18 +229,18 @@ private fun ReconciliationPanel(summary: ReconciliationSummary) {
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    SectionLabel("Bought in")
+                    SectionLabel(stringResource(R.string.end_bought_in))
                     ChipAmountText(summary.expectedChips, style = PokerTheme.type.numericMedium)
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    SectionLabel("Counted")
+                    SectionLabel(stringResource(R.string.end_counted))
                     ChipAmountText(summary.countedChips, style = PokerTheme.type.numericMedium)
                 }
                 Column(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
-                    SectionLabel("Difference")
+                    SectionLabel(stringResource(R.string.end_difference))
                     if (summary.hasDiscrepancy) {
                         ChipsToCashRow(
                             chips = summary.differenceChips,
@@ -246,8 +255,7 @@ private fun ReconciliationPanel(summary: ReconciliationSummary) {
 
             if (summary.hasDiscrepancy) {
                 Text(
-                    "Re-count the stacks before finishing. Settling up as counted leaves " +
-                        "somebody out of pocket.",
+                    stringResource(R.string.end_recount_warning),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                 )
@@ -275,7 +283,10 @@ private fun CountCard(row: CountRow, enabled: Boolean, onCountChange: (String) -
                 Column(modifier = Modifier.weight(1f)) {
                     Text(row.name, style = MaterialTheme.typography.titleMedium)
                     Text(
-                        if (row.wasCashedOut) "Cashed out during play" else "Still at the table",
+                        stringResource(
+                            if (row.wasCashedOut) R.string.end_seat_cashed_out
+                            else R.string.end_seat_still_playing,
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -286,7 +297,7 @@ private fun CountCard(row: CountRow, enabled: Boolean, onCountChange: (String) -
             ChipAmountField(
                 value = row.text,
                 onValueChange = onCountChange,
-                label = "Final chips",
+                label = stringResource(R.string.end_final_chips),
                 required = true,
                 enabled = enabled,
                 error = row.error,
@@ -300,12 +311,12 @@ private fun CountCard(row: CountRow, enabled: Boolean, onCountChange: (String) -
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    SectionLabel("In for")
+                    SectionLabel(stringResource(R.string.end_seat_in_for))
                     CashAmountText(row.totalBuyIn, style = PokerTheme.type.numericSmall)
                 }
                 if (!row.returnedChips.isZero) {
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        SectionLabel("Sold back")
+                        SectionLabel(stringResource(R.string.end_seat_sold_back))
                         ChipsToCashRow(
                             chips = row.returnedChips,
                             cash = row.returnedCash,
@@ -321,13 +332,13 @@ private fun CountCard(row: CountRow, enabled: Boolean, onCountChange: (String) -
                     )
                 } else if (row.countedAsZero) {
                     Text(
-                        "Empty — recorded as 0",
+                        stringResource(R.string.end_seat_empty_recorded),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary,
                     )
                 } else {
                     Text(
-                        "Not counted yet",
+                        stringResource(R.string.end_seat_not_counted),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -356,11 +367,11 @@ private fun FinishBar(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(MinTouchTarget),
-                ) { Text("View settlement") }
+                ) { Text(stringResource(R.string.end_view_settlement)) }
             } else {
                 if (state.reconciliation?.isComplete == false) {
                     Text(
-                        "Count the remaining stacks, or enter enough that the chips add up.",
+                        stringResource(R.string.end_blocked_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -378,7 +389,7 @@ private fun FinishBar(
                             color = MaterialTheme.colorScheme.onPrimary,
                         )
                     } else {
-                        Text("Finish and settle up")
+                        Text(stringResource(R.string.end_finish))
                     }
                 }
             }
@@ -399,11 +410,11 @@ private fun MismatchDialog(
     AlertDialog(
         onDismissRequest = onGoBack,
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        title = { Text("The chips do not add up") },
+        title = { Text(stringResource(R.string.end_mismatch_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    summary?.headline.orEmpty(),
+                    summary?.headline?.resolve().orEmpty(),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -416,17 +427,18 @@ private fun MismatchDialog(
                     )
                 }
                 Text(
-                    "Settling up now divides the table as counted, which means somebody ends up " +
-                        "short by that much.",
+                    stringResource(R.string.end_mismatch_body),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
         },
         confirmButton = {
-            Button(onClick = onGoBack) { Text("Re-count") }
+            Button(onClick = onGoBack) { Text(stringResource(R.string.end_mismatch_recount)) }
         },
         dismissButton = {
-            TextButton(onClick = onFinishAnyway) { Text("Finish anyway") }
+            TextButton(onClick = onFinishAnyway) {
+                Text(stringResource(R.string.end_mismatch_finish_anyway))
+            }
         },
     )
 }
@@ -443,7 +455,7 @@ private fun countRow(
     buyIn: Long,
     chips: Long?,
     cashedOut: Boolean = false,
-    error: String? = null,
+    error: UiText? = null,
     text: String = chips?.toString().orEmpty(),
 ) = CountRow(
     seatId = id,
@@ -470,7 +482,7 @@ private fun summary(
     expected: Long,
     counted: Long,
     uncounted: Int,
-    headline: String,
+    headline: UiText,
     impliedZero: Boolean = false,
 ) = ReconciliationSummary(
     expectedChips = Chips(expected),
@@ -487,7 +499,7 @@ private fun balancedState() = EndGameUiState(
     isLoading = false,
     gameId = 1,
     gameName = "Thursday",
-    chipValueLabel = "1 chip = 0.005",
+    chipValueLabel = UiText.Raw("1 chip = 0.005"),
     counts = listOf(
         countRow(1, "Anna", 2_000_000, 500),
         countRow(2, "Boris", 1_000_000, 100, cashedOut = true),
@@ -498,32 +510,32 @@ private fun balancedState() = EndGameUiState(
         resultRow(2, "Boris", 1_000_000, 100),
         resultRow(3, "Chris", 1_000_000, 200),
     ),
-    reconciliation = summary(800, 800, 0, "Every chip is accounted for"),
+    reconciliation = summary(800, 800, 0, UiText.Raw("Every chip is accounted for")),
 )
 
 private fun mismatchState() = EndGameUiState(
     isLoading = false,
     gameId = 1,
     gameName = "Thursday",
-    chipValueLabel = "1 chip = 0.005",
+    chipValueLabel = UiText.Raw("1 chip = 0.005"),
     counts = listOf(
         countRow(1, "Anna", 2_000_000, 500),
         countRow(2, "Boris", 1_000_000, 100, cashedOut = true),
-        countRow(3, "Chris", 1_000_000, null, text = "18o", error = "Enter Chip count as a whole number"),
+        countRow(3, "Chris", 1_000_000, null, text = "18o", error = UiText.Raw("Enter Chip count as a whole number")),
     ),
     results = listOf(
         resultRow(1, "Anna", 2_000_000, 500),
         resultRow(2, "Boris", 1_000_000, 100),
         resultRow(3, "Chris", 1_000_000, null),
     ),
-    reconciliation = summary(800, 788, 0, "12 chips unaccounted for — worth 0.06"),
+    reconciliation = summary(800, 788, 0, UiText.Raw("12 chips unaccounted for — worth 0.06")),
 )
 
 private fun scoopedState() = EndGameUiState(
     isLoading = false,
     gameId = 1,
     gameName = "Thursday",
-    chipValueLabel = "1 chip = 0.005",
+    chipValueLabel = UiText.Raw("1 chip = 0.005"),
     counts = listOf(
         countRow(1, "Anna", 2_000_000, 800),
         countRow(2, "Boris", 1_000_000, null, text = "").copy(
@@ -544,7 +556,7 @@ private fun scoopedState() = EndGameUiState(
         expected = 800,
         counted = 800,
         uncounted = 2,
-        headline = "Every chip is accounted for — 2 empty stacks recorded as 0",
+        headline = UiText.Raw("Every chip is accounted for — 2 empty stacks recorded as 0"),
         impliedZero = true,
     ),
 )
@@ -584,7 +596,7 @@ private fun EndGameMismatchPreview() {
 private fun MismatchDialogPreview() {
     PokerTrackerTheme {
         MismatchDialog(
-            summary = summary(800, 788, 0, "12 chips unaccounted for — worth 0.06"),
+            summary = summary(800, 788, 0, UiText.Raw("12 chips unaccounted for — worth 0.06")),
             onFinishAnyway = {},
             onGoBack = {},
         )

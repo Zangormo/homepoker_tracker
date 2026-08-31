@@ -1,5 +1,6 @@
 package com.zango.pokertracker.ui.players
 
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Money
 
 /** One roster player as the list shows them. */
@@ -23,7 +24,7 @@ data class RenameEditor(
     val playerId: Long,
     val originalName: String,
     val name: String,
-    val error: String? = null,
+    val error: UiText? = null,
 ) {
     val canSave: Boolean
         get() = name.isNotBlank() && name.trim() != originalName && error == null
@@ -48,7 +49,7 @@ data class PlayersUiState(
     val archived: List<PlayerRow> = emptyList(),
     val isAdding: Boolean = false,
     val newPlayerName: String = "",
-    val newPlayerError: String? = null,
+    val newPlayerError: UiText? = null,
     val renaming: RenameEditor? = null,
     val deleting: DeleteEditor? = null,
 ) {
@@ -56,5 +57,5 @@ data class PlayersUiState(
 }
 
 sealed interface PlayersEvent {
-    data class Message(val text: String) : PlayersEvent
+    data class Message(val text: UiText) : PlayersEvent
 }

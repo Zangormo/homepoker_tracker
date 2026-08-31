@@ -1,5 +1,7 @@
 package com.zango.pokertracker.domain
 
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.ChipRate
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
@@ -14,8 +16,8 @@ import com.zango.pokertracker.domain.model.Seat
 import com.zango.pokertracker.domain.model.reconcile
 import com.zango.pokertracker.domain.settlement.notes
 import com.zango.pokertracker.domain.settlement.settle
-import com.zango.pokertracker.domain.settlement.toSentence
-import com.zango.pokertracker.domain.settlement.toShareText
+import com.zango.pokertracker.testing.sentence
+import com.zango.pokertracker.domain.settlement.shareLines
 import com.zango.pokertracker.ui.common.toResultRows
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -167,7 +169,7 @@ class WholeNightTest {
                 "Dana pays Boris 0.75",
                 "Chris pays Boris 1.00",
             ).sorted(),
-            settlement.payments.map { it.toSentence() }.sorted(),
+            settlement.payments.map { it.sentence() }.sorted(),
         )
         assertTrue(settlement.isBalanced)
         assertTrue(settlement.unsettled.isEmpty())
@@ -195,15 +197,17 @@ class WholeNightTest {
 
     @Test
     fun `the shared message stands on its own without the app`() {
-        val text = night.settle().toShareText(game.name)
-        val lines = text.lines()
+        val lines = night.settle().shareLines(game.name)
 
-        assertEquals("Thursday — settlement", lines.first())
-        assertEquals("", lines[1])
-        assertEquals(3, lines.drop(2).count { it.contains(" pays ") })
-        // Nothing to caveat: the table reconciled and every figure is payable.
-        assertFalse(text.contains("Chip counts came out"))
-        assertFalse(text.contains("Rounded to"))
+        assertEquals(UiText.of(R.string.settlement_share_subject, "Thursday"), lines.first())
+        assertEquals(UiText.Raw(""), lines[1])
+        assertEquals(
+            3,
+            lines.drop(2).count { it is UiText.Res && it.id == R.string.settlement_pays },
+        )
+        // Nothing to caveat: the table reconciled and every figure is payable, so the message
+        // is the header, the blank line and the three instructions — and nothing else.
+        assertEquals(5, lines.size)
     }
 
     // -----------------------------------------------------------------------------------------
@@ -242,9 +246,21 @@ class WholeNightTest {
         assertEquals(listOf("Dana"), settlement.unsettled.map { it.player.name })
         assertEquals(Money(-60_000), settlement.unsettled.single().net)
 
-        val text = settlement.toShareText(game.name)
-        assertTrue(text.contains("Chip counts came out 0.06 short of the buy-ins"))
-        assertTrue(text.contains("Dana still owes 0.06."))
+        val lines = settlement.shareLines(game.name)
+        assertTrue(
+            lines.toString(),
+            lines.contains(
+                UiText.of(
+                    R.string.note_imbalance,
+                    "0.06",
+                    UiText.of(R.string.note_imbalance_short),
+                ),
+            ),
+        )
+        assertTrue(
+            lines.toString(),
+            lines.contains(UiText.of(R.string.note_still_owes, "Dana", "0.06")),
+        )
     }
 
     /**

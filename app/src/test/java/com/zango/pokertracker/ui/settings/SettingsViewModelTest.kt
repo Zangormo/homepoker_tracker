@@ -1,5 +1,7 @@
 package com.zango.pokertracker.ui.settings
 
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.Stakes
 import com.zango.pokertracker.testing.FakePokerRepository
@@ -109,7 +111,7 @@ class SettingsViewModelTest {
         viewModel.onConfirmAdd()
 
         assertEquals(
-            "Big blind must be larger than the small blind",
+            UiText.of(R.string.error_big_blind_too_small),
             viewModel.stateWhere { it.editor?.error != null }.editor?.error,
         )
         assertTrue(repository.writes.isEmpty())
@@ -126,7 +128,7 @@ class SettingsViewModelTest {
         viewModel.onConfirmAdd()
 
         assertEquals(
-            "0.05 / 0.10 is already on the list",
+            UiText.of(R.string.error_stakes_already_listed, "0.05 / 0.10"),
             viewModel.stateWhere { it.editor?.error != null }.editor?.error,
         )
         assertEquals(5, viewModel.stateWhere { true }.count)

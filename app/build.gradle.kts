@@ -54,6 +54,11 @@ android {
             // dependency. It only bites a library published against an older runtime; this app
             // compiles as one unit, and the calls it flags are plain Long and Map members.
             "MemberExtensionConflict",
+            // Two screens saying "Add" in English is not two screens saying the same thing.
+            // A translator needs each one separately: the word that fits "Add a rebuy" is not
+            // always the word that fits "Add a player", and merging them here to satisfy a
+            // heuristic would take that choice away before anyone has made it.
+            "DuplicateStrings",
             // Dependency currency is a deliberate decision, not something a build should fail on.
             "GradleDependency",
             "NewerVersionAvailable",

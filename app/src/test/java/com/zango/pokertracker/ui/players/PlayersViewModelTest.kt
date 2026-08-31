@@ -1,5 +1,7 @@
 package com.zango.pokertracker.ui.players
 
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.Fixture
@@ -124,7 +126,7 @@ class PlayersViewModelTest {
         viewModel.onConfirmRename()
 
         val editor = viewModel.stateWhere { it.renaming?.error != null }.renaming!!
-        assertEquals("Boris is already on the roster", editor.error)
+        assertEquals(UiText.of(R.string.error_name_taken, "Boris"), editor.error)
         assertTrue(repository.writes.isEmpty())
     }
 
@@ -226,7 +228,7 @@ class PlayersViewModelTest {
             viewModel.onAddPlayer()
 
             val state = viewModel.stateWhere { it.newPlayerError != null }
-            assertEquals("Anna is already on the roster", state.newPlayerError)
+            assertEquals(UiText.of(R.string.error_name_taken, "Anna"), state.newPlayerError)
             assertEquals(1, state.active.size)
         }
 }

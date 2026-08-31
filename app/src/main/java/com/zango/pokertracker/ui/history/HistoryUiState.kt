@@ -1,5 +1,6 @@
 package com.zango.pokertracker.ui.history
 
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
 
@@ -31,5 +32,5 @@ data class HistoryUiState(
 }
 
 sealed interface HistoryEvent {
-    data class Message(val text: String) : HistoryEvent
+    data class Message(val text: UiText) : HistoryEvent
 }

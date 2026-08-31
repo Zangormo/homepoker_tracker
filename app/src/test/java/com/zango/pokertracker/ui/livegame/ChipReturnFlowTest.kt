@@ -1,6 +1,8 @@
 package com.zango.pokertracker.ui.livegame
 
 import androidx.lifecycle.SavedStateHandle
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.Fixture
@@ -118,7 +120,10 @@ class ChipReturnFlowTest {
         viewModel.onReturnChipsChange("401")
 
         val dialog = viewModel.returnDialog()
-        assertEquals("Only 400 chips are on the table", dialog.error)
+        assertEquals(
+            UiText.plural(R.plurals.error_more_than_on_table, 400, 400L),
+            dialog.error,
+        )
         assertNull(dialog.chipCount)
         assertFalse(dialog.canConfirm)
     }
@@ -142,7 +147,7 @@ class ChipReturnFlowTest {
 
         viewModel.onReturnChipsChange("1.5")
 
-        assertEquals("Chips come in whole numbers only", viewModel.returnDialog().error)
+        assertEquals(UiText.of(R.string.error_chips_not_whole), viewModel.returnDialog().error)
     }
 
     @Test
@@ -153,7 +158,10 @@ class ChipReturnFlowTest {
 
         viewModel.onReturnChipsChange("0")
 
-        assertEquals("Chips returned must be greater than zero", viewModel.returnDialog().error)
+        assertEquals(
+            UiText.of(R.string.error_amount_positive, UiText.of(R.string.live_return_field)),
+            viewModel.returnDialog().error,
+        )
     }
 
     @Test

@@ -4,6 +4,8 @@ import com.zango.pokertracker.core.money.ChipRate
 import com.zango.pokertracker.core.money.ChipRateDerivation
 import com.zango.pokertracker.core.money.ChipRateError
 import com.zango.pokertracker.core.money.Money
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.domain.model.NameRules
 import com.zango.pokertracker.domain.model.NewGameEntry
 import com.zango.pokertracker.domain.model.NewGameSetup
@@ -46,14 +48,14 @@ data class CreateGameForm(
  * ready-to-persist [setup] that is non-null only when everything holds together.
  */
 data class CreateGameValidation(
-    val nameError: String? = null,
-    val smallBlindError: String? = null,
-    val bigBlindError: String? = null,
-    val chipValueError: String? = null,
-    val buyInError: String? = null,
-    val payoutRoundingError: String? = null,
-    val playersError: String? = null,
-    val overrideErrors: Map<Long, String> = emptyMap(),
+    val nameError: UiText? = null,
+    val smallBlindError: UiText? = null,
+    val bigBlindError: UiText? = null,
+    val chipValueError: UiText? = null,
+    val buyInError: UiText? = null,
+    val payoutRoundingError: UiText? = null,
+    val playersError: UiText? = null,
+    val overrideErrors: Map<Long, UiText> = emptyMap(),
     val smallBlind: Money? = null,
     val bigBlind: Money? = null,
     val chipRate: ChipRate? = null,
@@ -65,17 +67,21 @@ data class CreateGameValidation(
 }
 
 fun CreateGameForm.validate(): CreateGameValidation {
-    val nameError = when {
-        name.isBlank() -> "Give the game a name"
-        NameRules.isTooLong(name) -> NameRules.tooLongMessage("A game name")
+    val nameError: UiText? = when {
+        name.isBlank() -> UiText.of(R.string.error_game_name_required)
+        NameRules.isTooLong(name) ->
+            NameRules.tooLongMessage(UiText.of(R.string.error_name_label_game))
+
         else -> null
     }
 
-    val (smallBlindValue, smallBlindError) = parsePositiveMoney(smallBlind, "Small blind")
-    val (parsedBigBlind, bigBlindParseError) = parsePositiveMoney(bigBlind, "Big blind")
-    val bigBlindError = bigBlindParseError ?: when {
+    val (smallBlindValue, smallBlindError) =
+        parsePositiveMoney(smallBlind, UiText.of(R.string.create_small_blind))
+    val (parsedBigBlind, bigBlindParseError) =
+        parsePositiveMoney(bigBlind, UiText.of(R.string.create_big_blind))
+    val bigBlindError: UiText? = bigBlindParseError ?: when {
         smallBlindValue != null && parsedBigBlind != null && parsedBigBlind <= smallBlindValue ->
-            "Big blind must be larger than the small blind"
+            UiText.of(R.string.error_big_blind_too_small)
 
         else -> null
     }
@@ -83,15 +89,19 @@ fun CreateGameForm.validate(): CreateGameValidation {
 
     val (chipRate, chipValueError) = resolveChipRate(bigBlindValue)
     val (defaultBuyIn, buyInError) = resolveDefaultBuyIn(bigBlindValue, chipRate)
-    val (roundingValue, payoutRoundingError) = parsePositiveMoney(payoutRounding, "Rounding unit")
+    val (roundingValue, payoutRoundingError) =
+        parsePositiveMoney(payoutRounding, UiText.of(R.string.label_rounding_unit))
 
-    val playersError = if (selection.isEmpty()) "Pick at least one player" else null
+    val playersError =
+        if (selection.isEmpty()) UiText.of(R.string.error_pick_a_player) else null
     val overrideErrors = buildMap {
         if (chipRate == null) return@buildMap
         selection.forEach { (playerId, override) ->
             if (override == null) return@forEach
             val error = when {
-                !override.isPositive -> "A buy-in must be greater than zero"
+                !override.isPositive ->
+                    UiText.of(R.string.error_buy_in_positive)
+
                 else -> wholeChipsError(override, chipRate)
             }
             if (error != null) put(playerId, error)
@@ -139,24 +149,32 @@ fun CreateGameForm.validate(): CreateGameValidation {
     )
 }
 
-private fun CreateGameForm.resolveChipRate(bigBlind: Money?): Pair<ChipRate?, String?> {
+private fun CreateGameForm.resolveChipRate(bigBlind: Money?): Pair<ChipRate?, UiText?> {
     if (!deriveChipValue) {
-        val (value, error) = parsePositiveMoney(chipValue, "Chip value")
+        val (value, error) = parsePositiveMoney(chipValue, UiText.of(R.string.label_chip_value))
         return value?.let { ChipRate(it.micros) } to error
     }
 
-    val (chips, chipsError) = parseChipCount(chipsPerBigBlind, "Big blind in chips", allowZero = false)
+    val (chips, chipsError) = parseChipCount(
+        chipsPerBigBlind,
+        UiText.of(R.string.label_big_blind_in_chips),
+        allowZero = false,
+    )
     if (chipsError != null) return null to chipsError
-    if (bigBlind == null) return null to "Enter the blinds first"
+    if (bigBlind == null) return null to UiText.of(R.string.error_blinds_first)
 
     return when (val derived = ChipRate.derive(bigBlind, chips!!)) {
         is ChipRateDerivation.Valid -> derived.rate to null
         is ChipRateDerivation.Invalid -> null to when (derived.error) {
-            ChipRateError.NOT_DIVISIBLE ->
-                "A big blind of ${bigBlind.format()} does not split evenly into $chips chips"
+            ChipRateError.NOT_DIVISIBLE -> UiText.of(
+                R.string.error_chip_split,
+                bigBlind.format(),
+                chips.count,
+            )
 
-            ChipRateError.NON_POSITIVE_CASH -> "Enter the blinds first"
-            ChipRateError.NON_POSITIVE_CHIPS -> "Big blind in chips must be greater than zero"
+            ChipRateError.NON_POSITIVE_CASH -> UiText.of(R.string.error_blinds_first)
+            ChipRateError.NON_POSITIVE_CHIPS ->
+                UiText.of(R.string.error_chips_per_bb_positive)
         }
     }
 }
@@ -164,16 +182,18 @@ private fun CreateGameForm.resolveChipRate(bigBlind: Money?): Pair<ChipRate?, St
 private fun CreateGameForm.resolveDefaultBuyIn(
     bigBlind: Money?,
     chipRate: ChipRate?,
-): Pair<Money?, String?> {
+): Pair<Money?, UiText?> {
     val (amount, parseError) = when (buyInMode) {
-        BuyInMode.CASH -> parsePositiveMoney(buyInCash, "Buy-in").let { it.money to it.error }
+        BuyInMode.CASH -> parsePositiveMoney(buyInCash, UiText.of(R.string.label_buy_in))
+            .let { it.money to it.error }
+
         BuyInMode.BIG_BLINDS -> {
             val multiple = buyInBigBlinds.trim().toLongOrNull()
             when {
-                buyInBigBlinds.isBlank() -> null to "Buy-in is required"
-                multiple == null -> null to "Enter the buy-in as a whole number of big blinds"
-                multiple <= 0 -> null to "Buy-in must be greater than zero"
-                bigBlind == null -> null to "Enter the blinds first"
+                buyInBigBlinds.isBlank() -> null to UiText.of(R.string.error_buy_in_required)
+                multiple == null -> null to UiText.of(R.string.error_buy_in_whole_big_blinds)
+                multiple <= 0 -> null to UiText.of(R.string.error_buy_in_positive)
+                bigBlind == null -> null to UiText.of(R.string.error_blinds_first)
                 else -> runCatching { bigBlind * multiple }.getOrNull() to null
             }
         }

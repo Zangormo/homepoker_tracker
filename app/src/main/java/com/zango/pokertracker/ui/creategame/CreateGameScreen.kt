@@ -46,15 +46,19 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.zango.pokertracker.R
 import com.zango.pokertracker.core.money.ChipRate
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
@@ -73,6 +77,7 @@ import com.zango.pokertracker.ui.common.SectionLabel
 import com.zango.pokertracker.ui.common.SegmentedChoice
 import com.zango.pokertracker.ui.common.SelectableCard
 import com.zango.pokertracker.ui.common.SelectionIndicator
+import com.zango.pokertracker.ui.common.resolve
 import com.zango.pokertracker.ui.theme.PokerTheme
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
 
@@ -107,11 +112,13 @@ fun CreateGameScreen(
     var revealAllProblems by rememberSaveable { mutableStateOf(false) }
     val focusRequesters = remember { FormField.entries.associateWith { FocusRequester() } }
 
+    val context = LocalContext.current
+
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
                 is CreateGameEvent.GameStarted -> onGameStarted(event.gameId)
-                is CreateGameEvent.Message -> snackbarHostState.showSnackbar(event.text)
+                is CreateGameEvent.Message -> snackbarHostState.showSnackbar(event.text.resolve(context))
             }
         }
     }
@@ -120,10 +127,10 @@ fun CreateGameScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("New game") },
+                title = { Text(stringResource(R.string.create_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -237,11 +244,11 @@ private fun CreateGameContent(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        FormSection("Identity") {
+        FormSection(stringResource(R.string.create_section_identity)) {
             PokerTextField(
                 value = state.form.name,
                 onValueChange = actions.onNameChange,
-                label = "Game name",
+                label = stringResource(R.string.create_game_name),
                 required = true,
                 error = state.validation.nameError,
                 forceShowError = revealAllProblems,
@@ -253,13 +260,13 @@ private fun CreateGameContent(
         BuyInSection(state, actions, revealAllProblems, focus)
 
         FormSection(
-            title = "Payout rounding",
-            subtitle = "The smallest note or coin players will hand each other.",
+            title = stringResource(R.string.create_section_rounding),
+            subtitle = stringResource(R.string.create_section_rounding_subtitle),
         ) {
             CashAmountField(
                 value = state.form.payoutRounding,
                 onValueChange = actions.onPayoutRoundingChange,
-                label = "Round payments to",
+                label = stringResource(R.string.create_rounding_field),
                 required = true,
                 error = state.validation.payoutRoundingError,
                 forceShowError = revealAllProblems,
@@ -309,7 +316,7 @@ private fun StakesPicker(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
-                "COMMON STAKES",
+                stringResource(R.string.create_common_stakes_bar),
                 style = MaterialTheme.typography.labelMedium,
             )
             Row(
@@ -317,7 +324,7 @@ private fun StakesPicker(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text(
-                    selected?.label ?: "Custom",
+                    selected?.label ?: stringResource(R.string.create_stakes_custom),
                     style = if (selected != null) {
                         PokerTheme.type.numericMedium
                     } else {
@@ -373,12 +380,12 @@ private fun StakesSheetContent(
             .padding(start = 24.dp, end = 24.dp, bottom = 40.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Text("Common stakes", style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.create_stakes_sheet_title), style = MaterialTheme.typography.titleLarge)
         Text(
             if (options.isEmpty()) {
-                "No levels saved. Type the blinds above, or add levels in Settings."
+                stringResource(R.string.create_stakes_sheet_empty)
             } else {
-                "Pick a level and both blinds are filled in. Whatever you play joins the list."
+                stringResource(R.string.create_stakes_sheet_body)
             },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -445,7 +452,7 @@ private fun StakesSection(
     revealAllProblems: Boolean,
     focus: (FormField) -> Modifier,
 ) {
-    FormSection("Stakes") {
+    FormSection(stringResource(R.string.create_section_stakes)) {
         // Full width rather than a shared row. Side by side, the longer label wrapped to two
         // lines while the shorter one did not, so the two fields never matched height; and an
         // error like "Big blind must be larger than the small blind" had half a column to wrap
@@ -453,7 +460,7 @@ private fun StakesSection(
         CashAmountField(
             value = state.form.smallBlind,
             onValueChange = actions.onSmallBlindChange,
-            label = "Small blind",
+            label = stringResource(R.string.create_small_blind),
             required = true,
             error = state.validation.smallBlindError,
             forceShowError = revealAllProblems,
@@ -462,7 +469,7 @@ private fun StakesSection(
         CashAmountField(
             value = state.form.bigBlind,
             onValueChange = actions.onBigBlindChange,
-            label = "Big blind",
+            label = stringResource(R.string.create_big_blind),
             required = true,
             error = state.validation.bigBlindError,
             forceShowError = revealAllProblems,
@@ -484,11 +491,11 @@ private fun StakesSection(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "Work the chip value out from the markings",
+                    stringResource(R.string.create_derive_chip_value),
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(
-                    "Chips marked 1/2 on a 0.005/0.01 table make one chip worth 0.005.",
+                    stringResource(R.string.create_derive_chip_value_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -503,7 +510,7 @@ private fun StakesSection(
             ChipAmountField(
                 value = state.form.chipsPerBigBlind,
                 onValueChange = actions.onChipsPerBigBlindChange,
-                label = "Big blind, in chips",
+                label = stringResource(R.string.create_big_blind_in_chips),
                 required = true,
                 error = state.validation.chipValueError,
                 forceShowError = revealAllProblems,
@@ -513,7 +520,7 @@ private fun StakesSection(
             CashAmountField(
                 value = state.form.chipValue,
                 onValueChange = actions.onChipValueChange,
-                label = "Cash value of one chip",
+                label = stringResource(R.string.create_chip_value),
                 required = true,
                 error = state.validation.chipValueError,
                 forceShowError = revealAllProblems,
@@ -527,7 +534,7 @@ private fun StakesSection(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    "One chip is worth",
+                    stringResource(R.string.create_one_chip_is_worth),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -544,12 +551,16 @@ private fun BuyInSection(
     revealAllProblems: Boolean,
     focus: (FormField) -> Modifier,
 ) {
-    FormSection("Buy-in") {
+    val bigBlindsLabel = stringResource(R.string.create_buy_in_mode_big_blinds)
+    val cashLabel = stringResource(R.string.create_buy_in_mode_cash)
+    FormSection(stringResource(R.string.create_section_buy_in)) {
         SegmentedChoice(
             options = listOf(BuyInMode.BIG_BLINDS, BuyInMode.CASH),
             selected = state.form.buyInMode,
             onSelect = actions.onBuyInModeChange,
-            label = { if (it == BuyInMode.BIG_BLINDS) "Big blinds" else "Cash" },
+            label = { mode ->
+                if (mode == BuyInMode.BIG_BLINDS) bigBlindsLabel else cashLabel
+            },
             modifier = Modifier.fillMaxWidth(),
         )
 
@@ -557,7 +568,7 @@ private fun BuyInSection(
             BuyInMode.BIG_BLINDS -> PokerTextField(
                 value = state.form.buyInBigBlinds,
                 onValueChange = actions.onBuyInBigBlindsChange,
-                label = "Buy-in, in big blinds",
+                label = stringResource(R.string.create_buy_in_in_big_blinds),
                 required = true,
                 error = state.validation.buyInError,
                 forceShowError = revealAllProblems,
@@ -567,7 +578,7 @@ private fun BuyInSection(
             BuyInMode.CASH -> CashAmountField(
                 value = state.form.buyInCash,
                 onValueChange = actions.onBuyInCashChange,
-                label = "Buy-in",
+                label = stringResource(R.string.create_buy_in_cash),
                 required = true,
                 error = state.validation.buyInError,
                 forceShowError = revealAllProblems,
@@ -602,10 +613,10 @@ private fun BuyInReadout(bigBlinds: Long?, preview: AmountPreview) {
             modifier = Modifier.padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            SectionLabel("Every player starts with")
+            SectionLabel(stringResource(R.string.create_everyone_starts_with))
             if (preview.isEmpty) {
                 Text(
-                    "Fill in the blinds and the chip value to see this.",
+                    stringResource(R.string.create_buy_in_needs_stakes),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             } else {
@@ -615,7 +626,11 @@ private fun BuyInReadout(bigBlinds: Long?, preview: AmountPreview) {
                 ) {
                     if (bigBlinds != null) {
                         Text(
-                            "$bigBlinds BB",
+                            pluralStringResource(
+                                R.plurals.create_big_blinds_short,
+                                bigBlinds.toInt(),
+                                bigBlinds,
+                            ),
                             style = PokerTheme.type.numericLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -628,8 +643,7 @@ private fun BuyInReadout(bigBlinds: Long?, preview: AmountPreview) {
             }
             preview.leftOver?.let {
                 Text(
-                    "${it.format()} of that does not fit into whole chips. " +
-                        "Change the buy-in or the chip value.",
+                    stringResource(R.string.create_buy_in_remainder, it.format()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                 )
@@ -641,7 +655,7 @@ private fun BuyInReadout(bigBlinds: Long?, preview: AmountPreview) {
 @Composable
 private fun Equals() {
     Text(
-        "=",
+        stringResource(R.string.create_equals),
         style = PokerTheme.type.numericLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -655,8 +669,8 @@ private fun PlayersSection(
     focusRequester: FocusRequester,
 ) {
     FormSection(
-        title = "Players",
-        subtitle = "Tap to pick who is playing. Tap again to drop anyone who did not show up.",
+        title = stringResource(R.string.create_section_players),
+        subtitle = stringResource(R.string.create_section_players_subtitle),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -666,7 +680,7 @@ private fun PlayersSection(
             PokerTextField(
                 value = state.newPlayerName,
                 onValueChange = actions.onNewPlayerNameChange,
-                label = "Add someone new",
+                label = stringResource(R.string.create_add_someone_new),
                 error = state.newPlayerError,
                 imeAction = ImeAction.Done,
                 modifier = Modifier
@@ -679,14 +693,14 @@ private fun PlayersSection(
                     .padding(top = 4.dp)
                     .size(MinTouchTarget),
             ) {
-                Icon(Icons.Filled.Add, contentDescription = "Add player to the roster")
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.create_add_to_roster))
             }
         }
 
         val playersError = state.validation.playersError
         if (revealAllProblems && playersError != null) {
             Text(
-                playersError,
+                playersError.resolve(),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
             )
@@ -694,7 +708,7 @@ private fun PlayersSection(
 
         if (!state.hasRoster) {
             Text(
-                "Nobody on the roster yet. Add the first player above.",
+                stringResource(R.string.create_no_roster),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -710,7 +724,11 @@ private fun PlayersSection(
 
         if (state.selectedCount > 0) {
             Text(
-                "${state.selectedCount} playing",
+                pluralStringResource(
+                    R.plurals.create_playing_count,
+                    state.selectedCount,
+                    state.selectedCount,
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -735,7 +753,7 @@ private fun RosterItem(row: RosterRow, onToggle: () -> Unit, onEdit: () -> Unit)
                     Text(row.player.name, style = MaterialTheme.typography.titleMedium)
                     if (row.isOverridden) {
                         Text(
-                            "OVERRIDE",
+                            stringResource(R.string.create_badge_override),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary,
                         )
@@ -743,7 +761,7 @@ private fun RosterItem(row: RosterRow, onToggle: () -> Unit, onEdit: () -> Unit)
                 }
                 when {
                     row.error != null -> Text(
-                        row.error,
+                        row.error.resolve(),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -755,7 +773,7 @@ private fun RosterItem(row: RosterRow, onToggle: () -> Unit, onEdit: () -> Unit)
                     )
 
                     row.isSelected -> Text(
-                        "Finish the stakes to see the buy-in",
+                        stringResource(R.string.create_finish_stakes_first),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -765,7 +783,7 @@ private fun RosterItem(row: RosterRow, onToggle: () -> Unit, onEdit: () -> Unit)
                 IconButton(onClick = onEdit, modifier = Modifier.size(MinTouchTarget)) {
                     Icon(
                         Icons.Filled.Edit,
-                        contentDescription = "Change the buy-in for ${row.player.name}",
+                        contentDescription = stringResource(R.string.create_change_buy_in, row.player.name),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -789,7 +807,7 @@ private fun StartGameBar(state: CreateGameUiState, onStart: () -> Unit) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    SectionLabel("On the table at kick-off")
+                    SectionLabel(stringResource(R.string.create_on_the_table))
                     CashToChipsRow(
                         cash = state.totalOnTable.cash,
                         chips = state.totalOnTable.chips,
@@ -809,7 +827,7 @@ private fun StartGameBar(state: CreateGameUiState, onStart: () -> Unit) {
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
                 } else {
-                    Text("Start game")
+                    Text(stringResource(R.string.create_start_game))
                 }
             }
         }
@@ -818,24 +836,28 @@ private fun StartGameBar(state: CreateGameUiState, onStart: () -> Unit) {
 
 @Composable
 private fun OverrideDialog(editor: OverrideEditor, actions: CreateGameActions) {
+    val bigBlindsLabel = stringResource(R.string.create_buy_in_mode_big_blinds)
+    val cashLabel = stringResource(R.string.create_buy_in_mode_cash)
     AlertDialog(
         onDismissRequest = actions.onDismissOverride,
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        title = { Text("Buy-in for ${editor.playerName}") },
+        title = { Text(stringResource(R.string.create_override_title, editor.playerName)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 SegmentedChoice(
                     options = listOf(BuyInMode.BIG_BLINDS, BuyInMode.CASH),
                     selected = editor.mode,
                     onSelect = actions.onOverrideModeChange,
-                    label = { if (it == BuyInMode.BIG_BLINDS) "Big blinds" else "Cash" },
+                    label = { mode ->
+                        if (mode == BuyInMode.BIG_BLINDS) bigBlindsLabel else cashLabel
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 when (editor.mode) {
                     BuyInMode.BIG_BLINDS -> PokerTextField(
                         value = editor.bigBlinds,
                         onValueChange = actions.onOverrideBigBlindsChange,
-                        label = "Big blinds",
+                        label = stringResource(R.string.create_buy_in_mode_big_blinds),
                         error = editor.error,
                         forceShowError = true,
                     )
@@ -843,7 +865,7 @@ private fun OverrideDialog(editor: OverrideEditor, actions: CreateGameActions) {
                     BuyInMode.CASH -> CashAmountField(
                         value = editor.cash,
                         onValueChange = actions.onOverrideCashChange,
-                        label = "Cash",
+                        label = stringResource(R.string.create_buy_in_mode_cash),
                         error = editor.error,
                         forceShowError = true,
                         imeAction = ImeAction.Done,
@@ -853,14 +875,18 @@ private fun OverrideDialog(editor: OverrideEditor, actions: CreateGameActions) {
             }
         },
         confirmButton = {
-            TextButton(onClick = actions.onApplyOverride, enabled = editor.canApply) { Text("Set") }
+            TextButton(onClick = actions.onApplyOverride, enabled = editor.canApply) {
+                Text(stringResource(R.string.create_override_apply))
+            }
         },
         dismissButton = {
             Row {
                 TextButton(onClick = { actions.onClearOverride(editor.playerId) }) {
-                    Text("Use default")
+                    Text(stringResource(R.string.create_override_use_default))
                 }
-                TextButton(onClick = actions.onDismissOverride) { Text("Cancel") }
+                TextButton(onClick = actions.onDismissOverride) {
+                    Text(stringResource(R.string.action_cancel))
+                }
             }
         },
     )

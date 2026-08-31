@@ -1,7 +1,9 @@
 package com.zango.pokertracker.ui.endgame
 
 import com.zango.pokertracker.core.money.Chips
+import com.zango.pokertracker.R
 import com.zango.pokertracker.core.money.Money
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.domain.model.Reconciliation
 import com.zango.pokertracker.ui.common.ResultRow
 
@@ -19,7 +21,7 @@ data class CountRow(
     val returnedChips: Chips = Chips.ZERO,
     val returnedCash: Money = Money.ZERO,
     val net: Money? = null,
-    val error: String? = null,
+    val error: UiText? = null,
     /** Blank, but the other stacks already account for every chip, so this one must be empty. */
     val countedAsZero: Boolean = false,
 ) {
@@ -38,7 +40,7 @@ data class ReconciliationSummary(
     val chipRemainder: Money,
     val uncountedCount: Int,
     val uncountedAreImpliedZero: Boolean,
-    val headline: String,
+    val headline: UiText,
 ) {
     val hasUncounted: Boolean get() = uncountedCount > 0
     val hasDiscrepancy: Boolean get() = !differenceChips.isZero || !chipRemainder.isZero
@@ -58,25 +60,47 @@ data class ReconciliationSummary(
  * mistakes. Missing usually means a stack was miscounted or someone pocketed a chip; surplus
  * usually means a rebuy was never recorded.
  */
-fun Reconciliation.headline(): String = when {
-    uncountedAreImpliedZero && uncountedSeatIds.size == 1 ->
-        "Every chip is accounted for — 1 empty stack recorded as 0"
+fun Reconciliation.headline(): UiText = when {
+    uncountedAreImpliedZero -> UiText.of(
+        R.string.end_headline_with_blanks,
+        UiText.of(R.string.end_headline_balanced),
+        UiText.plural(
+            R.plurals.empty_stack_count,
+            uncountedSeatIds.size,
+            uncountedSeatIds.size,
+        ),
+    )
 
-    uncountedAreImpliedZero ->
-        "Every chip is accounted for — ${uncountedSeatIds.size} empty stacks recorded as 0"
+    hasUncountedSeats -> UiText.plural(
+        R.plurals.end_headline_needs_counts,
+        uncountedSeatIds.size,
+        uncountedSeatIds.size,
+    )
 
-    hasUncountedSeats && uncountedSeatIds.size == 1 -> "1 player still needs a chip count"
-    hasUncountedSeats -> "${uncountedSeatIds.size} players still need a chip count"
     !chipRemainder.isZero ->
-        "Buy-ins include ${chipRemainder.format()} that is not a whole number of chips"
+        UiText.of(R.string.end_headline_remainder, chipRemainder.format())
 
-    differenceChips.isNegative ->
-        "${differenceChips.abs().count} chips unaccounted for — worth ${differenceCash.abs().format()}"
+    differenceChips.isNegative -> UiText.of(
+        R.string.end_headline_missing,
+        UiText.plural(
+            R.plurals.chip_count,
+            differenceChips.abs().count.toInt(),
+            differenceChips.abs().count,
+        ),
+        differenceCash.abs().format(),
+    )
 
-    differenceChips.isPositive ->
-        "${differenceChips.count} chips more than were bought in — worth ${differenceCash.format()}"
+    differenceChips.isPositive -> UiText.of(
+        R.string.end_headline_surplus,
+        UiText.plural(
+            R.plurals.chip_count,
+            differenceChips.count.toInt(),
+            differenceChips.count,
+        ),
+        differenceCash.format(),
+    )
 
-    else -> "Every chip is accounted for"
+    else -> UiText.of(R.string.end_headline_balanced)
 }
 
 fun Reconciliation.toSummary(): ReconciliationSummary = ReconciliationSummary(
@@ -96,7 +120,7 @@ data class EndGameUiState(
     val gameId: Long = 0,
     val gameName: String = "",
     val alreadyFinished: Boolean = false,
-    val chipValueLabel: String = "",
+    val chipValueLabel: UiText? = null,
     val counts: List<CountRow> = emptyList(),
     val results: List<ResultRow> = emptyList(),
     val reconciliation: ReconciliationSummary? = null,
@@ -120,5 +144,5 @@ data class EndGameUiState(
 
 sealed interface EndGameEvent {
     data class Finished(val gameId: Long) : EndGameEvent
-    data class Message(val text: String) : EndGameEvent
+    data class Message(val text: UiText) : EndGameEvent
 }

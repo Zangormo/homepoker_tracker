@@ -1,10 +1,13 @@
 package com.zango.pokertracker.domain.settlement
 
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.Fixture
 import com.zango.pokertracker.domain.model.GameSnapshot
 import com.zango.pokertracker.domain.model.reconcile
+import com.zango.pokertracker.testing.sentence
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -42,7 +45,7 @@ class SettlementFromGameTest {
         assertEquals(Money(500_000), settlement.nets.single { it.player.name == "Anna" }.net)
         assertEquals(Money(-500_000), settlement.nets.single { it.player.name == "Boris" }.net)
         assertEquals(Money.ZERO, settlement.nets.single { it.player.name == "Chris" }.net)
-        assertEquals(listOf("Boris pays Anna 0.50"), settlement.payments.map { it.toSentence() })
+        assertEquals(listOf("Boris pays Anna 0.50"), settlement.payments.map { it.sentence() })
         assertTrue(settlement.isBalanced)
     }
 
@@ -59,7 +62,7 @@ class SettlementFromGameTest {
         val settlement = snapshot.settle()
 
         assertEquals(Money(1_000), settlement.roundingUnit)
-        assertEquals(listOf("Boris pays Anna 0.005"), settlement.payments.map { it.toSentence() })
+        assertEquals(listOf("Boris pays Anna 0.005"), settlement.payments.map { it.sentence() })
     }
 
     @Test
@@ -81,7 +84,7 @@ class SettlementFromGameTest {
 
         assertFalse(settlement.isBalanced)
         assertEquals(Money(-60_000), settlement.imbalance)
-        assertEquals(listOf("Boris pays Anna 0.25"), settlement.payments.map { it.toSentence() })
+        assertEquals(listOf("Boris pays Anna 0.25"), settlement.payments.map { it.sentence() })
         // Boris is down 0.31 but only pays 0.25, because 0.06 of the table never came back.
         assertEquals(listOf("Boris"), settlement.unsettled.map { it.player.name })
         assertEquals(Money(-60_000), settlement.unsettled.single().net)
@@ -114,16 +117,16 @@ class SettlementFromGameTest {
             ),
         )
 
-        val text = snapshot.settle().toShareText("Thursday")
+        val lines = snapshot.settle().shareLines("Thursday")
 
         assertEquals(
-            """
-            Thursday — settlement
-
-            Anna pays Boris 1.20
-            Anna pays Chris 0.30
-            """.trimIndent(),
-            text,
+            listOf(
+                UiText.of(R.string.settlement_share_subject, "Thursday"),
+                UiText.Raw(""),
+                UiText.of(R.string.settlement_pays, "Anna", "Boris", "1.20"),
+                UiText.of(R.string.settlement_pays, "Anna", "Chris", "0.30"),
+            ),
+            lines,
         )
     }
 
@@ -138,12 +141,12 @@ class SettlementFromGameTest {
         )
 
         assertEquals(
-            """
-            Thursday — settlement
-
-            Everyone broke even. No payments needed.
-            """.trimIndent(),
-            snapshot.settle().toShareText("Thursday"),
+            listOf(
+                UiText.of(R.string.settlement_share_subject, "Thursday"),
+                UiText.Raw(""),
+                UiText.of(R.string.settlement_everyone_even),
+            ),
+            snapshot.settle().shareLines("Thursday"),
         )
     }
 
@@ -164,10 +167,10 @@ class SettlementFromGameTest {
 
         assertEquals("Chris", settlement.adjustedPlayer?.name)
         assertTrue(settlement.hasRoundingAdjustment)
+        val lines = settlement.shareLines("Thursday")
         assertTrue(
-            settlement.toShareText("Thursday"),
-            settlement.toShareText("Thursday")
-                .contains("Rounded to the nearest 0.01. Chris absorbed 0.01."),
+            lines.toString(),
+            lines.contains(UiText.of(R.string.note_rounded, "0.01", "Chris", "0.01")),
         )
     }
 }

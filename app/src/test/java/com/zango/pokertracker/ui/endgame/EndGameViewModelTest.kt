@@ -2,7 +2,9 @@ package com.zango.pokertracker.ui.endgame
 
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
+import com.zango.pokertracker.R
 import com.zango.pokertracker.core.money.Chips
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.Fixture
 import com.zango.pokertracker.domain.model.GameSnapshot
@@ -28,6 +30,30 @@ import org.junit.Test
 private const val GAME_ID = 42L
 
 /** Sentences the host reads when the chips do not add up. Pure, so it is checked directly. */
+/** The three headline shapes, written once so each test reads as the case it is about. */
+private val BALANCED = UiText.of(R.string.end_headline_balanced)
+
+private fun missing(chips: Long, cash: String) = UiText.of(
+    R.string.end_headline_missing,
+    UiText.plural(R.plurals.chip_count, chips.toInt(), chips),
+    cash,
+)
+
+private fun surplus(chips: Long, cash: String) = UiText.of(
+    R.string.end_headline_surplus,
+    UiText.plural(R.plurals.chip_count, chips.toInt(), chips),
+    cash,
+)
+
+private fun needsCounts(players: Int) =
+    UiText.plural(R.plurals.end_headline_needs_counts, players, players)
+
+private fun balancedWithBlanks(blanks: Int) = UiText.of(
+    R.string.end_headline_with_blanks,
+    BALANCED,
+    UiText.plural(R.plurals.empty_stack_count, blanks, blanks),
+)
+
 class ReconciliationHeadlineTest {
 
     private fun snapshot(vararg seats: Seat) = GameSnapshot(Fixture.game(), seats.toList())
@@ -39,7 +65,7 @@ class ReconciliationHeadlineTest {
             Fixture.seat(2, "Boris", finalChips = Chips(150)),
         ).reconcile().headline()
 
-        assertEquals("Every chip is accounted for", headline)
+        assertEquals(BALANCED, headline)
     }
 
     @Test
@@ -50,7 +76,7 @@ class ReconciliationHeadlineTest {
             Fixture.seat(2, "Boris", finalChips = Chips(138)),
         ).reconcile().headline()
 
-        assertEquals("12 chips unaccounted for — worth 0.06", headline)
+        assertEquals(missing(12, "0.06"), headline)
     }
 
     @Test
@@ -60,7 +86,7 @@ class ReconciliationHeadlineTest {
             Fixture.seat(2, "Boris", finalChips = Chips(162)),
         ).reconcile().headline()
 
-        assertEquals("12 chips more than were bought in — worth 0.06", headline)
+        assertEquals(surplus(12, "0.06"), headline)
     }
 
     @Test
@@ -72,10 +98,7 @@ class ReconciliationHeadlineTest {
         ).reconcile()
 
         assertTrue(result.uncountedAreImpliedZero)
-        assertEquals(
-            "Every chip is accounted for — 1 empty stack recorded as 0",
-            result.headline(),
-        )
+        assertEquals(balancedWithBlanks(1), result.headline())
     }
 
     @Test
@@ -87,21 +110,21 @@ class ReconciliationHeadlineTest {
         ).reconcile()
 
         assertFalse(result.uncountedAreImpliedZero)
-        assertEquals("1 player still needs a chip count", result.headline())
+        assertEquals(needsCounts(1), result.headline())
     }
 
     @Test
     fun `uncounted players are reported while their stacks are still unknown`() {
         // 300 of 400 counted, so Boris could be holding the rest: nothing can be inferred.
         assertEquals(
-            "1 player still needs a chip count",
+            needsCounts(1),
             snapshot(
                 Fixture.seat(1, "Anna", finalChips = Chips(300)),
                 Fixture.seat(2, "Boris"),
             ).reconcile().headline(),
         )
         assertEquals(
-            "2 players still need a chip count",
+            needsCounts(2),
             snapshot(Fixture.seat(1, "Anna"), Fixture.seat(2, "Boris")).reconcile().headline(),
         )
     }
@@ -113,7 +136,7 @@ class ReconciliationHeadlineTest {
         ).reconcile().headline()
 
         assertEquals(
-            "Buy-ins include 0.000001 that is not a whole number of chips",
+            UiText.of(R.string.end_headline_remainder, "0.000001"),
             headline,
         )
     }
@@ -210,7 +233,10 @@ class EndGameViewModelTest {
         // Only the first write happened: the stored 250 survives until real digits replace it.
         assertEquals(listOf("setFinalChipCount(1, 250)"), repository.writes)
         val row = viewModel.stateWhere { it.counts[0].error != null }.counts[0]
-        assertEquals("Enter Chip count as a whole number", row.error)
+        assertEquals(
+            UiText.of(R.string.error_chips_whole_number, UiText.of(R.string.label_chip_count)),
+            row.error,
+        )
     }
 
     @Test
@@ -220,7 +246,7 @@ class EndGameViewModelTest {
         viewModel.onCountChange(1, "250.5")
 
         val row = viewModel.stateWhere { it.counts[0].error != null }.counts[0]
-        assertEquals("Chips come in whole numbers only", row.error)
+        assertEquals(UiText.of(R.string.error_chips_not_whole), row.error)
     }
 
     @Test
@@ -229,7 +255,7 @@ class EndGameViewModelTest {
         val state = viewModel.stateWhere()
 
         assertFalse(state.canFinish)
-        assertEquals("2 players still need a chip count", state.reconciliation?.headline)
+        assertEquals(needsCounts(2), state.reconciliation?.headline)
 
         viewModel.onFinish()
         assertTrue(repository.writes.none { it.startsWith("endGame") })
@@ -257,10 +283,7 @@ class EndGameViewModelTest {
         val viewModel = viewModel()
         val state = viewModel.countAll(anna = "250", boris = "138")
 
-        assertEquals(
-            "12 chips unaccounted for — worth 0.06",
-            state.reconciliation?.headline,
-        )
+        assertEquals(missing(12, "0.06"), state.reconciliation?.headline)
         // Finishing is still allowed, but only after the host is told and agrees.
         assertTrue(state.canFinish)
 

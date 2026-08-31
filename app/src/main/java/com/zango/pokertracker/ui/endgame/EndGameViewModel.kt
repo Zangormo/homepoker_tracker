@@ -8,6 +8,8 @@ import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.data.repository.PokerRepository
 import com.zango.pokertracker.domain.model.GameSnapshot
 import com.zango.pokertracker.domain.model.reconcile
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.ui.common.parseChipCount
 import com.zango.pokertracker.ui.common.toResultRows
 import com.zango.pokertracker.ui.navigation.Routes
@@ -96,7 +98,7 @@ class EndGameViewModel @Inject constructor(
                 .onSuccess { eventChannel.send(EndGameEvent.Finished(gameId)) }
                 .onFailure {
                     eventChannel.send(
-                        EndGameEvent.Message(it.message ?: "Could not end the game"),
+                        EndGameEvent.Message(UiText.of(R.string.error_could_not_end)),
                     )
                 }
             screen.update { it.copy(isFinishing = false) }
@@ -108,7 +110,7 @@ class EndGameViewModel @Inject constructor(
             runCatching { repository.setFinalChipCount(seatId, chips) }
                 .onFailure {
                     eventChannel.send(
-                        EndGameEvent.Message(it.message ?: "Could not save the chip count"),
+                        EndGameEvent.Message(UiText.of(R.string.error_could_not_save_count)),
                     )
                 }
         }
@@ -171,7 +173,7 @@ class EndGameViewModel @Inject constructor(
             gameId = snapshot.game.id,
             gameName = snapshot.game.name,
             alreadyFinished = !snapshot.game.isInProgress,
-            chipValueLabel = "1 chip = ${rate.chipValue.format()}",
+            chipValueLabel = UiText.of(R.string.chip_value_label, rate.chipValue.format()),
             counts = counts,
             results = results,
             reconciliation = reconciliation,
@@ -187,6 +189,6 @@ class EndGameViewModel @Inject constructor(
 
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5_000L
-        const val CHIP_COUNT_LABEL = "Chip count"
+        val CHIP_COUNT_LABEL = UiText.of(R.string.label_chip_count)
     }
 }

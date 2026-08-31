@@ -3,6 +3,9 @@ package com.zango.pokertracker.domain.settlement
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.core.money.sum
 import com.zango.pokertracker.domain.model.Player
+import com.zango.pokertracker.testing.sentence
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -18,7 +21,7 @@ private fun player(name: String) = Player(id = name.hashCode().toLong(), name = 
 private fun net(name: String, micros: Long) = PlayerNet(player(name), Money(micros))
 
 /** "Anna pays Boris 4.50", the exact shape a player reads off the screen. */
-private fun Settlement.sentences(): List<String> = payments.map { it.toSentence() }
+private fun Settlement.sentences(): List<String> = payments.map { it.sentence() }
 
 /**
  * The property that actually matters: after the payments, every player is left holding exactly
@@ -373,9 +376,21 @@ class SettlementMismatchTest {
 
     @Test
     fun `an unsettled remainder is spelled out in the shared text`() {
-        val text = SettlementCalculator.settle(chipsMissing, CENT).toShareText("Thursday")
+        val lines = SettlementCalculator.settle(chipsMissing, CENT).shareLines("Thursday")
 
-        assertTrue(text, text.contains("Chip counts came out 0.06 short of the buy-ins"))
-        assertTrue(text, text.contains("Anna still owes 0.06."))
+        assertTrue(
+            lines.toString(),
+            lines.contains(
+                UiText.of(
+                    R.string.note_imbalance,
+                    "0.06",
+                    UiText.of(R.string.note_imbalance_short),
+                ),
+            ),
+        )
+        assertTrue(
+            lines.toString(),
+            lines.contains(UiText.of(R.string.note_still_owes, "Anna", "0.06")),
+        )
     }
 }

@@ -44,6 +44,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -56,6 +58,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.ui.common.CashAmountText
@@ -63,6 +67,7 @@ import com.zango.pokertracker.ui.common.MinTouchTarget
 import com.zango.pokertracker.ui.common.ResultRow
 import com.zango.pokertracker.ui.common.ResultsTable
 import com.zango.pokertracker.ui.common.SectionLabel
+import com.zango.pokertracker.ui.common.resolve
 import com.zango.pokertracker.ui.common.StatCount
 import com.zango.pokertracker.ui.common.StatRow
 import com.zango.pokertracker.ui.common.StatText
@@ -87,6 +92,12 @@ fun SettlementScreen(
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val shareSubject = stringResource(R.string.settlement_share_subject, state.gameName)
+    val shareChooser = stringResource(R.string.settlement_share_chooser)
+    val copiedMessage = stringResource(R.string.settlement_copied)
+    // Built here rather than in the ViewModel: the lines are resources, and this is the only
+    // layer that knows which language to render them in.
+    val shareText = state.shareLines.joinToString(separator = "\n") { it.resolve(context) }
 
     Scaffold(
         modifier = modifier,
@@ -94,7 +105,7 @@ fun SettlementScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Settlement")
+                        Text(stringResource(R.string.settlement_title))
                         if (state.gameName.isNotEmpty()) {
                             Text(
                                 state.gameName,
@@ -106,7 +117,7 @@ fun SettlementScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -120,14 +131,14 @@ fun SettlementScreen(
                     onShare = {
                         val intent = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
-                            putExtra(Intent.EXTRA_SUBJECT, "${state.gameName} — settlement")
-                            putExtra(Intent.EXTRA_TEXT, state.shareText)
+                            putExtra(Intent.EXTRA_SUBJECT, shareSubject)
+                            putExtra(Intent.EXTRA_TEXT, shareText)
                         }
-                        context.startActivity(Intent.createChooser(intent, "Share settlement"))
+                        context.startActivity(Intent.createChooser(intent, shareChooser))
                     },
                     onCopy = {
-                        clipboard.setText(AnnotatedString(state.shareText))
-                        scope.launch { snackbarHostState.showSnackbar("Copied") }
+                        clipboard.setText(AnnotatedString(shareText))
+                        scope.launch { snackbarHostState.showSnackbar(copiedMessage) }
                     },
                 )
             }
@@ -137,7 +148,7 @@ fun SettlementScreen(
         when {
             state.isLoading -> Centered(Modifier.padding(padding)) { CircularProgressIndicator() }
             state.isMissing -> Centered(Modifier.padding(padding)) {
-                Text("This game is no longer available.")
+                Text(stringResource(R.string.settlement_game_missing))
             }
 
             else -> SettlementContent(
@@ -188,9 +199,18 @@ private fun SettlementContent(
             item {
                 Text(
                     if (state.isFinished) {
-                        "${state.paidCount} of ${state.payments.size} paid"
+                        pluralStringResource(
+                            R.plurals.settlement_paid_count,
+                            state.payments.size,
+                            state.paidCount,
+                            state.payments.size,
+                        )
                     } else {
-                        "${state.payments.size} payment${if (state.payments.size == 1) "" else "s"}"
+                        pluralStringResource(
+                            R.plurals.payment_count,
+                            state.payments.size,
+                            state.payments.size,
+                        )
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = if (state.isFullyPaid) {
@@ -204,7 +224,7 @@ private fun SettlementContent(
         } else {
             item {
                 Text(
-                    "Everyone broke even. No payments needed.",
+                    stringResource(R.string.settlement_everyone_even),
                     style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(vertical = 16.dp),
                 )
@@ -216,7 +236,7 @@ private fun SettlementContent(
         }
 
         item {
-            SectionLabel("Results", modifier = Modifier.padding(top = 28.dp, bottom = 8.dp))
+            SectionLabel(stringResource(R.string.settlement_section_results), modifier = Modifier.padding(top = 28.dp, bottom = 8.dp))
         }
         item { ResultsTable(state.results) }
 
@@ -227,7 +247,7 @@ private fun SettlementContent(
                     .fillMaxWidth()
                     .padding(top = 16.dp)
                     .height(MinTouchTarget),
-            ) { Text("Back to history") }
+            ) { Text(stringResource(R.string.settlement_back_to_history)) }
         }
     }
 }
@@ -247,11 +267,13 @@ private fun GameStats(state: SettlementUiState) {
             .padding(bottom = 20.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        SectionLabel("The night")
+        SectionLabel(stringResource(R.string.settlement_section_the_night))
         StatRow {
-            StatTile(label = "Buy-ins") { StatCount(state.buyInCount) }
-            StatTile(label = "Lasted") { StatText(state.durationLabel ?: "—") }
-            StatTile(label = "In the bank") {
+            StatTile(label = stringResource(R.string.settlement_stat_buy_ins)) { StatCount(state.buyInCount) }
+            StatTile(label = stringResource(R.string.settlement_stat_lasted)) {
+                StatText(state.durationLabel ?: stringResource(R.string.value_none))
+            }
+            StatTile(label = stringResource(R.string.settlement_stat_in_the_bank)) {
                 CashAmountText(state.totalOnTable, style = PokerTheme.type.numericMedium)
             }
         }
@@ -276,10 +298,11 @@ private fun PaymentLineRow(line: PaymentLine, canTick: Boolean, onToggle: () -> 
     } else {
         MaterialTheme.colorScheme.onSurface
     }
+    val paysVerb = stringResource(R.string.settlement_pays_verb)
     val sentence = buildAnnotatedString {
         append(line.from)
         withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
-            append(" pays ")
+            append(paysVerb)
         }
         append(line.to)
         append(' ')
@@ -300,9 +323,11 @@ private fun PaymentLineRow(line: PaymentLine, canTick: Boolean, onToggle: () -> 
         }
     }
 
-    val spoken = buildString {
-        append("${line.from} pays ${line.to} ${line.amount.format()}")
-        if (canTick) append(if (paid) ", paid" else ", not paid yet")
+    val plain = stringResource(R.string.settlement_pays, line.from, line.to, line.amount.format())
+    val spoken = when {
+        !canTick -> plain
+        paid -> stringResource(R.string.settlement_payment_paid, plain)
+        else -> stringResource(R.string.settlement_payment_unpaid, plain)
     }
 
     Row(
@@ -343,7 +368,7 @@ private fun PaymentLineRow(line: PaymentLine, canTick: Boolean, onToggle: () -> 
 }
 
 @Composable
-private fun NotesBlock(notes: List<String>, isProblem: Boolean) {
+private fun NotesBlock(notes: List<UiText>, isProblem: Boolean) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -361,13 +386,13 @@ private fun NotesBlock(notes: List<String>, isProblem: Boolean) {
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Text(
-                        "Not fully settled",
+                        stringResource(R.string.settlement_not_settled),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.error,
                     )
                     notes.forEach {
                         Text(
-                            it,
+                            it.resolve(),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onErrorContainer,
                         )
@@ -377,7 +402,7 @@ private fun NotesBlock(notes: List<String>, isProblem: Boolean) {
         } else {
             notes.forEach {
                 Text(
-                    it,
+                    it.resolve(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -406,7 +431,8 @@ private fun ShareBar(onShare: () -> Unit, onCopy: () -> Unit) {
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
                 )
-                Text("  Share")
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.settlement_share))
             }
             OutlinedButton(
                 onClick = onCopy,
@@ -419,7 +445,8 @@ private fun ShareBar(onShare: () -> Unit, onCopy: () -> Unit) {
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
                 )
-                Text("  Copy")
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.settlement_copy))
             }
         }
     }
@@ -454,7 +481,7 @@ private fun settledState() = SettlementUiState(
         result("Anna", 5_000_000, 100, 500_000, -4_500_000),
         result("Chris", 2_000_000, 160, 800_000, -1_200_000),
     ),
-    shareText = "Thursday — settlement",
+    shareLines = listOf(UiText.Raw("Thursday — settlement")),
 )
 
 private fun unsettledState() = settledState().copy(
@@ -463,9 +490,11 @@ private fun unsettledState() = settledState().copy(
     totalOnTable = Money(2_000_000),
     hasProblem = true,
     notes = listOf(
-        "Chip counts came out 0.06 short of the buy-ins, so these payments do not fully " +
-            "square everyone up.",
-        "Boris still owes 0.06.",
+        UiText.Raw(
+            "Chip counts came out 0.06 short of the buy-ins, so these payments do not fully " +
+                "square everyone up.",
+        ),
+        UiText.Raw("Boris still owes 0.06."),
     ),
     results = listOf(
         result("Anna", 1_000_000, 250, 1_250_000, 250_000),

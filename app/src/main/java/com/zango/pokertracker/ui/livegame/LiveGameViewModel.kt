@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.zango.pokertracker.core.time.Clock
 import com.zango.pokertracker.core.time.formatElapsed
 import com.zango.pokertracker.core.time.tick
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.data.repository.CreatePlayerResult
 import com.zango.pokertracker.data.repository.PokerRepository
 import com.zango.pokertracker.domain.model.GameSnapshot
@@ -75,7 +77,7 @@ class LiveGameViewModel @Inject constructor(
         val dialog = uiState.value.dialog as? LiveGameDialog.AddBuyIn ?: return
         val amount = dialog.preview.cash?.takeIf { dialog.canConfirm } ?: return
         draft.value = null
-        launchWrite("Could not add the buy-in") { repository.addBuyIn(dialog.seatId, amount) }
+        launchWrite(UiText.of(R.string.error_record_buy_in)) { repository.addBuyIn(dialog.seatId, amount) }
     }
 
     fun onReturnChips(seatId: Long) {
@@ -90,7 +92,7 @@ class LiveGameViewModel @Inject constructor(
         val dialog = uiState.value.dialog as? LiveGameDialog.ReturnChips ?: return
         val chips = dialog.chipCount?.takeIf { dialog.canConfirm } ?: return
         draft.value = null
-        launchWrite("Could not record the chip return") {
+        launchWrite(UiText.of(R.string.error_record_return)) {
             repository.returnChips(dialog.seatId, chips)
         }
     }
@@ -100,7 +102,7 @@ class LiveGameViewModel @Inject constructor(
         val row = (uiState.value.activeSeats + uiState.value.cashedOutSeats)
             .firstOrNull { it.seatId == seatId } ?: return
         val returnId = row.lastReturnId ?: return
-        launchWrite("Could not undo the chip return") { repository.undoChipReturn(returnId) }
+        launchWrite(UiText.of(R.string.error_undo_return)) { repository.undoChipReturn(returnId) }
     }
 
     fun onCashOut(seatId: Long) {
@@ -116,12 +118,12 @@ class LiveGameViewModel @Inject constructor(
         if (!dialog.canConfirm) return
         val chips = parseChipCount(dialog.chips, CHIP_COUNT_LABEL, allowZero = true).chips ?: return
         draft.value = null
-        launchWrite("Could not cash the player out") { repository.cashOut(dialog.seatId, chips) }
+        launchWrite(UiText.of(R.string.error_record_cash_out)) { repository.cashOut(dialog.seatId, chips) }
     }
 
     /** Puts a player who was cashed out by mistake back into the game, count and all. */
     fun onUndoCashOut(seatId: Long) =
-        launchWrite("Could not undo the cash-out") { repository.undoCashOut(seatId) }
+        launchWrite(UiText.of(R.string.error_undo_cash_out)) { repository.undoCashOut(seatId) }
 
     fun onAddPlayer() {
         draft.value = DialogDraft.AddPlayer(
@@ -161,13 +163,17 @@ class LiveGameViewModel @Inject constructor(
                 // Someone with that name is already on the roster: seat them rather than refuse.
                 is CreatePlayerResult.NameTaken -> created.existing.id
                 CreatePlayerResult.BlankName -> {
-                    eventChannel.send(LiveGameEvent.Message("Enter a name"))
+                    eventChannel.send(LiveGameEvent.Message(UiText.of(R.string.error_name_required)))
                     return@launch
                 }
 
                 CreatePlayerResult.NameTooLong -> {
                     eventChannel.send(
-                        LiveGameEvent.Message(NameRules.tooLongMessage("A name")),
+                        LiveGameEvent.Message(
+                            NameRules.tooLongMessage(
+                                UiText.of(R.string.error_name_label_player),
+                            ),
+                        ),
                     )
                     return@launch
                 }
@@ -175,7 +181,7 @@ class LiveGameViewModel @Inject constructor(
             runCatching { repository.seatPlayer(gameId, playerId, buyIn) }
                 .onFailure { failure ->
                     eventChannel.send(
-                        LiveGameEvent.Message(failure.message ?: "Could not add the player"),
+                        LiveGameEvent.Message(UiText.of(R.string.error_add_player)),
                     )
                 }
         }
@@ -189,11 +195,15 @@ class LiveGameViewModel @Inject constructor(
         viewModelScope.launch { eventChannel.send(LiveGameEvent.EndGame(gameId)) }
     }
 
-    private fun launchWrite(failureMessage: String, block: suspend () -> Unit) {
+    /**
+     * Runs a write and names what went wrong if it fails.
+     *
+     * The exception's own message is deliberately not shown: it comes from Room or from a
+     * `check` in the repository, and is developer English that no translation covers.
+     */
+    private fun launchWrite(failureMessage: UiText, block: suspend () -> Unit) {
         viewModelScope.launch {
-            runCatching { block() }.onFailure {
-                eventChannel.send(LiveGameEvent.Message(it.message ?: failureMessage))
-            }
+            runCatching { block() }.onFailure { eventChannel.send(LiveGameEvent.Message(failureMessage)) }
         }
     }
 
@@ -219,7 +229,7 @@ class LiveGameViewModel @Inject constructor(
             gameId = game.id,
             gameName = game.name,
             stakes = "${game.smallBlind.format()} / ${game.bigBlind.format()}",
-            chipValueLabel = "1 chip = ${rate.chipValue.format()}",
+            chipValueLabel = UiText.of(R.string.chip_value_label, rate.chipValue.format()),
             elapsed = formatElapsed(until - game.startedAt),
             isFinished = !game.isInProgress,
             totalOnTable = AmountPreview.of(snapshot.totalOnTable, rate),
@@ -284,7 +294,11 @@ class LiveGameViewModel @Inject constructor(
                     chipCount = parsed.chips?.takeIf { !tooMany },
                     cashValue = parsed.chips?.takeIf { !tooMany }?.let { rate.cashFor(it) },
                     error = parsed.error
-                        ?: "Only $onTable chips are on the table".takeIf { tooMany },
+                        ?: UiText.plural(
+                            R.plurals.error_more_than_on_table,
+                            onTable?.count?.toInt() ?: 0,
+                            onTable?.count ?: 0,
+                        ).takeIf { tooMany },
                 )
             }
 
@@ -315,7 +329,8 @@ class LiveGameViewModel @Inject constructor(
                     buyIn = buyIn,
                     preview = if (chipError == null) AmountPreview.of(parsed.money, rate) else AmountPreview(),
                     error = parsed.error ?: chipError,
-                    nameError = NameRules.tooLongMessage("A name")
+                    nameError = NameRules
+                        .tooLongMessage(UiText.of(R.string.error_name_label_player))
                         .takeIf { NameRules.isTooLong(newPlayerName) },
                 )
             }
@@ -336,8 +351,8 @@ class LiveGameViewModel @Inject constructor(
 
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5_000L
-        const val BUY_IN_LABEL = "Buy-in"
-        const val CHIP_COUNT_LABEL = "Chip count"
-        const val RETURN_LABEL = "Chips returned"
+        val BUY_IN_LABEL = UiText.of(R.string.label_buy_in)
+        val CHIP_COUNT_LABEL = UiText.of(R.string.label_chip_count)
+        val RETURN_LABEL = UiText.of(R.string.live_return_field)
     }
 }

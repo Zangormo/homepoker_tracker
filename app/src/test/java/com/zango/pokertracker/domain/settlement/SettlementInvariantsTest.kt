@@ -6,6 +6,7 @@ import com.zango.pokertracker.core.money.sum
 import com.zango.pokertracker.domain.model.Fixture
 import com.zango.pokertracker.domain.model.GameSnapshot
 import com.zango.pokertracker.domain.model.Seat
+import com.zango.pokertracker.testing.sentence
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -211,8 +212,8 @@ class SettlementInvariantsTest {
             val game = balancedGame(random, random.nextInt(2, 9))
 
             assertEquals(
-                game.settle().payments.map { it.toSentence() },
-                game.settle().payments.map { it.toSentence() },
+                game.settle().payments.map { it.sentence() },
+                game.settle().payments.map { it.sentence() },
             )
         }
     }
@@ -229,8 +230,8 @@ class SettlementInvariantsTest {
             val shuffled = game.copy(seats = game.seats.shuffled(random))
 
             assertEquals(
-                game.settle().payments.map { it.toSentence() }.toSet(),
-                shuffled.settle().payments.map { it.toSentence() }.toSet(),
+                game.settle().payments.map { it.sentence() }.toSet(),
+                shuffled.settle().payments.map { it.sentence() }.toSet(),
             )
         }
     }
@@ -334,7 +335,7 @@ class SettlementInvariantsTest {
         ).settle()
 
         // 300 chips at 0.005 is 1.50 against 1.00 in: Anna is up 0.50, Boris down 0.50.
-        assertEquals(listOf("Boris pays Anna 0.50"), settlement.payments.map { it.toSentence() })
+        assertEquals(listOf("Boris pays Anna 0.50"), settlement.payments.map { it.sentence() })
         assertEquals(rate.cashFor(Chips(100)), settlement.payments.single().amount)
     }
 }

@@ -1,3 +1,582 @@
 <resources>
+
+    <!--
+        Every user-facing string in the app.
+
+        Notes for translators:
+        · Amounts and chip counts are formatted by the app and arrive as placeholders. Never
+          translate the digits, and keep the placeholder in a position that reads naturally.
+        · "Chips" always means the physical tokens on the table. "Cash" always means real money.
+          The distinction is the app's central hazard and must survive translation.
+        · A "big blind" (BB) and a "small blind" are poker terms; most languages keep them.
+        · Positional placeholders (%1$s) are used everywhere so word order can change freely.
+    -->
+
     <string name="app_name">Poker Tracker</string>
+
+    <!-- ==================================================================================== -->
+    <!-- Shared actions and labels                                                            -->
+    <!-- ==================================================================================== -->
+
+    <string name="action_back">Back</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_add">Add</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_undo">Undo</string>
+    <string name="action_open_menu">Open menu</string>
+    <string name="value_none">—</string>
+
+    <!-- ==================================================================================== -->
+    <!-- Navigation drawer                                                                    -->
+    <!-- ==================================================================================== -->
+
+    <string name="drawer_tagline">The bank for your home game</string>
+    <string name="destination_game_hub">Game hub</string>
+    <string name="destination_players">Players</string>
+    <string name="destination_settings">Settings</string>
+
+    <!-- ==================================================================================== -->
+    <!-- Game hub (history)                                                                   -->
+    <!-- ==================================================================================== -->
+
+    <string name="history_title">Game hub</string>
+    <string name="history_new_game">New game</string>
+    <string name="history_empty_title">No games yet</string>
+    <string name="history_empty_body">Tap New game to set one up.</string>
+    <string name="history_section_running">Still running</string>
+    <string name="history_section_finished">Finished</string>
+    <!-- Shown on a game that has not finished. Short, uppercase badge. -->
+    <string name="history_badge_running">RUNNING</string>
+    <!-- Shown on a finished game whose settlement payments have all been ticked off. -->
+    <string name="history_badge_paid_up">PAID UP</string>
+    <!-- %1$s: game name -->
+    <string name="history_row_menu">More options for %1$s</string>
+    <string name="history_delete_game">Delete game</string>
+    <!-- %1$s: game name -->
+    <string name="history_delete_title">Delete %1$s?</string>
+    <string name="history_delete_running_body">This game is still running. Deleting it throws away the whole night.</string>
+    <string name="history_delete_finished_body">This removes the game and its results for good.</string>
+    <!-- %1$s: e.g. "5 players"  %2$s: e.g. "7 buy-ins"  %3$s: a cash amount -->
+    <string name="history_delete_detail">%1$s and %2$s go with it, along with %3$s of recorded results. The players stay on your roster.</string>
+    <string name="history_delete_irreversible">This cannot be undone.</string>
+    <string name="history_delete_keep">Keep it</string>
+    <!-- %1$s: e.g. "5 players"  %2$s: e.g. "7 buy-ins" -->
+    <string name="history_row_counts">%1$s · %2$s</string>
+
+    <!-- ==================================================================================== -->
+    <!-- Live game                                                                            -->
+    <!-- ==================================================================================== -->
+
+    <string name="live_title_fallback">Game</string>
+    <string name="live_end_game">End game</string>
+    <string name="live_add_player">Add player</string>
+    <string name="live_game_missing">This game is no longer available.</string>
+    <string name="live_game_finished">This game has finished.</string>
+    <string name="live_nobody_seated">Nobody is seated yet.</string>
+    <!-- %1$d: how many players are still playing -->
+    <string name="live_section_at_table">At the table · %1$d</string>
+    <!-- %1$d: how many players have cashed out -->
+    <string name="live_section_cashed_out">Cashed out · %1$d</string>
+    <string name="live_section_on_the_table">On the table</string>
+    <string name="live_stat_elapsed">Elapsed</string>
+    <string name="live_stat_buy_ins">Buy-ins</string>
+    <string name="live_stat_blinds">Blinds</string>
+    <string name="live_seat_sold_back">Sold back</string>
+    <string name="live_seat_in_for">In for</string>
+    <string name="live_seat_out_with">Out with</string>
+    <string name="live_seat_net">Net</string>
+    <string name="live_action_rebuy">Rebuy</string>
+    <string name="live_action_cash_out">Cash out</string>
+    <string name="live_action_sell_back">Sell chips back to the bank</string>
+    <string name="live_action_undo_last">Undo last</string>
+    <string name="live_action_undo_cash_out">Undo cash-out</string>
+
+    <!-- Rebuy dialog -->
+    <!-- %1$s: player name -->
+    <string name="live_rebuy_title">Rebuy for %1$s</string>
+    <string name="live_rebuy_confirm">Add</string>
+    <string name="live_rebuy_amount">Amount</string>
+
+    <!-- Sell-chips-back dialog -->
+    <!-- %1$s: player name -->
+    <string name="live_return_title">%1$s sells chips back</string>
+    <string name="live_return_confirm">Record</string>
+    <string name="live_return_explainer">They hand the chips to the bank and take the cash for them. They keep playing, and the cash counts towards their result.</string>
+    <string name="live_return_field">Chips returned</string>
+
+    <!-- Cash-out dialog -->
+    <!-- %1$s: player name -->
+    <string name="live_cash_out_title">Cash out %1$s</string>
+    <string name="live_cash_out_confirm">Cash out</string>
+    <string name="live_cash_out_explainer">Count the chips in front of them.</string>
+    <string name="live_cash_out_field">Final chip count</string>
+
+    <!-- Add-player dialog -->
+    <string name="live_add_player_title">Add a player</string>
+    <string name="live_add_player_confirm">Seat them</string>
+    <string name="live_add_player_from_roster">From the roster</string>
+    <string name="live_add_player_new_name">Or add someone new</string>
+    <string name="live_add_player_buy_in">Buy-in</string>
+    <string name="live_add_player_hint">Pick someone from the roster or type a name.</string>
+
+    <!-- ==================================================================================== -->
+    <!-- New game                                                                             -->
+    <!-- ==================================================================================== -->
+
+    <string name="create_title">New game</string>
+    <string name="create_section_identity">Identity</string>
+    <string name="create_game_name">Game name</string>
+    <string name="create_section_rounding">Payout rounding</string>
+    <string name="create_section_rounding_subtitle">The smallest note or coin players will hand each other.</string>
+    <string name="create_rounding_field">Round payments to</string>
+
+    <!-- Stakes -->
+    <string name="create_section_stakes">Stakes</string>
+    <string name="create_small_blind">Small blind</string>
+    <string name="create_big_blind">Big blind</string>
+    <!-- The green bar under the blind fields. Short, uppercase. -->
+    <string name="create_common_stakes_bar">COMMON STAKES</string>
+    <!-- Shown on that bar when the typed blinds match none of the saved levels. -->
+    <string name="create_stakes_custom">Custom</string>
+    <string name="create_stakes_sheet_title">Common stakes</string>
+    <string name="create_stakes_sheet_body">Pick a level and both blinds are filled in. Whatever you play joins the list.</string>
+    <string name="create_stakes_sheet_empty">No levels saved. Type the blinds above, or add levels in Settings.</string>
+
+    <!-- Chip value -->
+    <string name="create_derive_chip_value">Work the chip value out from the markings</string>
+    <!-- "1 and 2" are the two chip denominations, not a fraction. -->
+    <string name="create_derive_chip_value_hint">Chips marked 1 and 2 on a 0.005 / 0.01 table make one chip worth 0.005.</string>
+    <string name="create_big_blind_in_chips">Big blind, in chips</string>
+    <string name="create_chip_value">Cash value of one chip</string>
+    <string name="create_one_chip_is_worth">One chip is worth</string>
+
+    <!-- Buy-in -->
+    <string name="create_section_buy_in">Buy-in</string>
+    <string name="create_buy_in_mode_big_blinds">Big blinds</string>
+    <string name="create_buy_in_mode_cash">Cash</string>
+    <string name="create_buy_in_in_big_blinds">Buy-in, in big blinds</string>
+    <string name="create_buy_in_cash">Buy-in</string>
+    <string name="create_everyone_starts_with">Every player starts with</string>
+    <string name="create_buy_in_needs_stakes">Fill in the blinds and the chip value to see this.</string>
+    <!-- %1$d: a whole number of big blinds. "BB" is the usual poker abbreviation. -->
+    <!-- %1$s: the leftover cash that will not convert into whole chips -->
+    <string name="create_buy_in_remainder">%1$s of that does not fit into whole chips. Change the buy-in or the chip value.</string>
+    <!-- Separates the cash figure from the chip figure in the conversion readout. -->
+    <string name="create_equals">=</string>
+
+    <!-- Players -->
+    <string name="create_section_players">Players</string>
+    <string name="create_section_players_subtitle">Tap to pick who is playing. Tap again to drop anyone who did not show up.</string>
+    <string name="create_add_someone_new">Add someone new</string>
+    <string name="create_add_to_roster">Add player to the roster</string>
+    <string name="create_no_roster">Nobody on the roster yet. Add the first player above.</string>
+    <!-- Badge on a player whose buy-in differs from the game default. Short, uppercase. -->
+    <string name="create_badge_override">OVERRIDE</string>
+    <string name="create_finish_stakes_first">Finish the stakes to see the buy-in</string>
+    <!-- %1$s: player name -->
+    <string name="create_change_buy_in">Change the buy-in for %1$s</string>
+    <string name="create_on_the_table">On the table at kick-off</string>
+    <string name="create_start_game">Start game</string>
+
+    <!-- Per-player buy-in dialog -->
+    <!-- %1$s: player name -->
+    <string name="create_override_title">Buy-in for %1$s</string>
+    <string name="create_override_apply">Set</string>
+    <string name="create_override_use_default">Use default</string>
+
+    <!-- ==================================================================================== -->
+    <!-- End game                                                                             -->
+    <!-- ==================================================================================== -->
+
+    <string name="end_title">End game</string>
+    <string name="end_game_missing">This game is no longer available.</string>
+    <string name="end_section_chip_counts">Chip counts</string>
+    <!-- %1$s: a sentence naming the chip value, e.g. "1 chip = 0.005" -->
+    <string name="end_chip_counts_body">Count the chips still in front of each player. Anything already sold back to the bank is credited on top. %1$s.</string>
+    <string name="end_section_results">Results</string>
+    <string name="end_bought_in">Bought in</string>
+    <string name="end_counted">Counted</string>
+    <string name="end_difference">Difference</string>
+    <string name="end_recount_warning">Re-count the stacks before finishing. Settling up as counted leaves somebody out of pocket.</string>
+    <string name="end_seat_cashed_out">Cashed out during play</string>
+    <string name="end_seat_still_playing">Still at the table</string>
+    <string name="end_final_chips">Final chips</string>
+    <string name="end_seat_in_for">In for</string>
+    <string name="end_seat_sold_back">Sold back</string>
+    <string name="end_seat_empty_recorded">Empty — recorded as 0</string>
+    <string name="end_seat_not_counted">Not counted yet</string>
+    <string name="end_view_settlement">View settlement</string>
+    <string name="end_blocked_hint">Count the remaining stacks, or enter enough that the chips add up.</string>
+    <string name="end_finish">Finish and settle up</string>
+
+    <!-- Mismatch confirmation -->
+    <string name="end_mismatch_title">The chips do not add up</string>
+    <string name="end_mismatch_body">Settling up now divides the table as counted, which means somebody ends up short by that much.</string>
+    <string name="end_mismatch_recount">Re-count</string>
+    <string name="end_mismatch_finish_anyway">Finish anyway</string>
+
+    <!-- ==================================================================================== -->
+    <!-- Settlement                                                                           -->
+    <!-- ==================================================================================== -->
+
+    <string name="settlement_title">Settlement</string>
+    <string name="settlement_game_missing">This game is no longer available.</string>
+    <!-- %1$s: game name. Used as the subject line when sharing. -->
+    <string name="settlement_share_subject">%1$s — settlement</string>
+    <string name="settlement_share_chooser">Share settlement</string>
+    <string name="settlement_share">Share</string>
+    <string name="settlement_copy">Copy</string>
+    <string name="settlement_copied">Copied</string>
+    <string name="settlement_everyone_even">Everyone broke even. No payments needed.</string>
+    <string name="settlement_section_results">Results</string>
+    <string name="settlement_back_to_history">Back to history</string>
+    <string name="settlement_not_settled">Not fully settled</string>
+    <!-- %1$d: payments ticked off  %2$d: payments in total -->
+
+    <!-- The night's summary, above the payments -->
+    <string name="settlement_section_the_night">The night</string>
+    <string name="settlement_stat_buy_ins">Buy-ins</string>
+    <string name="settlement_stat_lasted">Lasted</string>
+    <string name="settlement_stat_in_the_bank">In the bank</string>
+
+    <!-- One payment. %1$s: who pays  %2$s: who is paid  %3$s: the amount -->
+    <string name="settlement_pays">%1$s pays %2$s %3$s</string>
+    <!-- The word between the two names on screen; the amount is styled separately. -->
+    <string name="settlement_pays_verb">" pays "</string>
+    <!-- Read aloud by screen readers. %1$s: the payment sentence -->
+    <string name="settlement_payment_paid">%1$s, paid</string>
+    <!-- %1$s: the payment sentence -->
+    <string name="settlement_payment_unpaid">%1$s, not paid yet</string>
+
+    <!-- ==================================================================================== -->
+    <!-- Players tab                                                                          -->
+    <!-- ==================================================================================== -->
+
+    <string name="players_title">Players</string>
+    <string name="players_add">Add player</string>
+    <string name="players_empty_title">No players yet</string>
+    <string name="players_empty_body">Add the regulars here, or as you set up a game.</string>
+    <string name="players_section_hidden">Hidden</string>
+    <string name="players_no_results_yet">No results yet</string>
+    <string name="players_never_played">Never played</string>
+    <string name="players_hidden_note">Hidden from new games</string>
+    <!-- %1$s: player name -->
+    <string name="players_row_menu">More options for %1$s</string>
+    <string name="players_rename">Rename</string>
+    <string name="players_restore">Show in new games</string>
+    <string name="players_remove_from_roster">Remove from roster</string>
+    <string name="players_delete">Delete player</string>
+    <!-- %1$s: e.g. "14 games"  %2$s: e.g. "22 buy-ins" -->
+    <string name="players_row_counts">%1$s · %2$s</string>
+
+    <!-- Add player dialog -->
+    <string name="players_add_title">Add player</string>
+    <string name="players_name_field">Name</string>
+
+    <!-- Rename dialog -->
+    <!-- %1$s: the player's current name -->
+    <string name="players_rename_title">Rename %1$s</string>
+    <string name="players_rename_note">Past games show the new name too — it is the same person.</string>
+
+    <!-- Remove dialog -->
+    <!-- %1$s: player name -->
+    <string name="players_remove_title">Remove %1$s from the roster?</string>
+    <!-- %1$s: player name -->
+    <string name="players_delete_title">Delete %1$s?</string>
+    <!-- %1$s: player name  %2$s: e.g. "14 games" -->
+    <string name="players_remove_body">%1$s has played %2$s, so those results stay exactly as they are.</string>
+    <string name="players_remove_detail">They stop appearing when you set up a new game. You can bring them back from the Hidden list at any time.</string>
+    <string name="players_delete_body">They have never played a game, so nothing else goes with them.</string>
+    <string name="players_delete_irreversible">This cannot be undone.</string>
+    <string name="players_remove_confirm">Hide</string>
+    <string name="players_delete_confirm">Delete</string>
+    <string name="players_keep">Keep</string>
+
+    <!-- ==================================================================================== -->
+    <!-- One player's record                                                                  -->
+    <!-- ==================================================================================== -->
+
+    <string name="player_title_fallback">Player</string>
+    <string name="player_missing">This player is no longer on the roster.</string>
+    <string name="player_all_time_profit">All-time profit</string>
+    <string name="player_not_settled_yet">Not settled yet</string>
+    <string name="player_no_games_yet">No games yet</string>
+    <string name="player_section_every_game">Every game</string>
+    <string name="player_stat_paid_in">Paid in</string>
+    <string name="player_stat_buy_ins">Buy-ins</string>
+    <string name="player_stat_cashed_out">Cashed out</string>
+    <string name="player_game_still_playing">Still playing</string>
+    <string name="player_game_no_result">No result</string>
+    <!-- %1$s: e.g. "14 games"  %2$d: how many of them the player finished up on -->
+    <!-- %1$s: a date and time  %2$s: e.g. "2 buy-ins" -->
+    <string name="player_game_line">%1$s · %2$s</string>
+
+    <!-- ==================================================================================== -->
+    <!-- Settings                                                                             -->
+    <!-- ==================================================================================== -->
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_blind_sizes">Blind sizes</string>
+    <string name="settings_blind_sizes_body">The levels offered when you set up a game. Playing a game on new blinds adds them here too, so this is where a one-off night gets tidied away.</string>
+    <!-- %1$d: levels saved  %2$d: the most that can be saved -->
+    <string name="settings_blind_count">%1$d of %2$d</string>
+    <string name="settings_blind_sizes_empty">No levels left. Add the ones you play.</string>
+    <string name="settings_add_blinds">Add blinds</string>
+    <string name="settings_add_blinds_title">Add blinds</string>
+    <!-- %1$s: the level, e.g. "0.05 / 0.10" -->
+    <string name="settings_remove_blinds">Remove %1$s</string>
+
+    <!-- ==================================================================================== -->
+    <!-- The results table, shared by the end-game and settlement screens                     -->
+    <!-- ==================================================================================== -->
+
+    <!-- Column headings. Kept very short: the table has five columns on a phone. -->
+    <string name="results_column_player">Player</string>
+    <!-- Money the player put on the table. -->
+    <string name="results_column_in">In</string>
+    <string name="results_column_chips">Chips</string>
+    <!-- Money the player took off the table. -->
+    <string name="results_column_out">Out</string>
+    <!-- Profit or loss. -->
+    <string name="results_column_net">Net</string>
+
+    <!-- ==================================================================================== -->
+    <!-- Amount fields: what a figure is read as by a screen reader                           -->
+    <!-- ==================================================================================== -->
+
+    <string name="amount_chips_unit">chips</string>
+    <string name="amount_cash_unit">cash amount</string>
+    <string name="amount_no_chips">no chip count</string>
+    <string name="amount_no_cash">no amount</string>
+    <!-- %1$s: an amount  %2$s: its unit, one of the two above -->
+    <string name="amount_spoken">%1$s %2$s</string>
+    <!-- %1$s: a cash amount  %2$s: the chips it buys -->
+    <string name="amount_cash_to_chips">%1$s cash converts to %2$s chips</string>
+    <!-- %1$s: a chip count  %2$s: the cash it is worth -->
+    <string name="amount_chips_to_cash">%1$s chips converts to %2$s cash</string>
+    <!-- Appended to a field label to mark it required. %1$s: the label -->
+    <string name="field_required">%1$s *</string>
+
+    <!-- ==================================================================================== -->
+    <!-- Counted things                                                                       -->
+    <!--                                                                                      -->
+    <!-- English needs only "one" and "other"; other languages add zero/two/few/many. Keep     -->
+    <!-- the number as %1$d so a translation can put it wherever the language requires.        -->
+    <!-- ==================================================================================== -->
+
+    <!-- %1$d: how many players are selected for the new game -->
+    <!-- %1$d: a whole number of big blinds. "BB" is the usual poker abbreviation. -->
+    <plurals name="create_big_blinds_short">
+        <item quantity="one">%1$d BB</item>
+        <item quantity="other">%1$d BB</item>
+    </plurals>
+
+    <!-- %1$d: payments ticked off  %2$d: payments in total. Keyed on the total. -->
+    <plurals name="settlement_paid_count">
+        <item quantity="one">%1$d of %2$d paid</item>
+        <item quantity="other">%1$d of %2$d paid</item>
+    </plurals>
+
+    <!-- %1$s: e.g. "14 games"  %2$d: how many of them the player finished up on -->
+    <plurals name="player_games_and_wins">
+        <item quantity="one">%1$s · %2$d up</item>
+        <item quantity="other">%1$s · %2$d up</item>
+    </plurals>
+
+    <!-- %1$s: field label  %2$d: how many decimal places are allowed -->
+    <!-- %1$s: which name  %2$d: the limit -->
+    <!-- %1$d: the maximum number of stake levels -->
+    <plurals name="create_playing_count">
+        <item quantity="one">%1$d playing</item>
+        <item quantity="other">%1$d playing</item>
+    </plurals>
+
+    <plurals name="player_count">
+        <item quantity="one">%1$d player</item>
+        <item quantity="other">%1$d players</item>
+    </plurals>
+
+    <plurals name="buy_in_count">
+        <item quantity="one">%1$d buy-in</item>
+        <item quantity="other">%1$d buy-ins</item>
+    </plurals>
+
+    <plurals name="game_count">
+        <item quantity="one">%1$d game</item>
+        <item quantity="other">%1$d games</item>
+    </plurals>
+
+    <plurals name="payment_count">
+        <item quantity="one">%1$d payment</item>
+        <item quantity="other">%1$d payments</item>
+    </plurals>
+
+    <!-- %1$d: chips bought back by the bank  %2$s: the cash paid out for them -->
+    <plurals name="live_returned_summary">
+        <item quantity="one">%1$d chip bought back by the bank · %2$s paid out</item>
+        <item quantity="other">%1$d chips bought back by the bank · %2$s paid out</item>
+    </plurals>
+
+    <!-- %1$d: how many chips are still in play -->
+    <plurals name="live_return_on_table">
+        <item quantity="one">%1$d chip is on the table</item>
+        <item quantity="other">%1$d chips are on the table</item>
+    </plurals>
+
+    <!-- %1$d: chips still in play -->
+    <plurals name="games_to_settle">
+        <item quantity="one">%1$d game still to be settled</item>
+        <item quantity="other">%1$d games still to be settled</item>
+    </plurals>
+
+    <plurals name="games_to_settle_note">
+        <item quantity="one">%1$d game is still to be settled and is not counted here.</item>
+        <item quantity="other">%1$d games are still to be settled and are not counted here.</item>
+    </plurals>
+
+    <!-- ==================================================================================== -->
+    <!-- Validation and messages                                                              -->
+    <!--                                                                                      -->
+    <!-- Formed outside the UI layer: a ViewModel or the domain names the message and hands    -->
+    <!-- over its arguments as a UiText, and the screen resolves it. See core/text/UiText.kt.  -->
+    <!-- ==================================================================================== -->
+
+    <!-- Amounts -->
+    <!-- %1$s: the field's label, e.g. "Buy-in" -->
+    <string name="error_amount_required">%1$s is required</string>
+    <string name="error_amount_positive">%1$s must be greater than zero</string>
+    <string name="error_amount_malformed">Enter %1$s as a number, for example 0.005</string>
+    <!-- %1$s: field label  %2$d: how many decimal places are allowed -->
+    <string name="error_amount_too_large">%1$s is too large</string>
+    <string name="error_chips_whole_number">Enter %1$s as a whole number</string>
+    <string name="error_chips_not_whole">Chips come in whole numbers only</string>
+    <!-- %1$s: the amount  %2$s: the value of one chip  %3$s: the cash left over -->
+    <string name="error_not_whole_chips">%1$s is not a whole number of %2$s chips (%3$s left over)</string>
+    <string name="error_not_whole_chips_short">Not a whole number of chips</string>
+
+    <!-- Names -->
+    <string name="error_name_required">Enter a name</string>
+    <!-- %1$s: which name, e.g. "A name" or "A game name"  %2$d: the limit -->
+    <string name="error_name_label_player">A name</string>
+    <string name="error_name_label_game">A game name</string>
+    <!-- %1$s: the player already using that name -->
+    <string name="error_name_taken">%1$s is already on the roster</string>
+
+    <!-- Setting a game up -->
+    <string name="error_game_name_required">Give the game a name</string>
+    <string name="error_big_blind_too_small">Big blind must be larger than the small blind</string>
+    <string name="error_blinds_first">Enter the blinds first</string>
+    <!-- %1$s: the big blind  %2$s: the chip count it was to be split into -->
+    <string name="error_chip_split">A big blind of %1$s does not split evenly into %2$s chips</string>
+    <string name="error_chips_per_bb_positive">Big blind in chips must be greater than zero</string>
+    <string name="error_buy_in_required">Buy-in is required</string>
+    <string name="error_buy_in_whole_big_blinds">Enter the buy-in as a whole number of big blinds</string>
+    <string name="error_buy_in_positive">Buy-in must be greater than zero</string>
+    <string name="error_pick_a_player">Pick at least one player</string>
+    <string name="error_whole_big_blinds">Enter a whole number of big blinds</string>
+    <string name="error_must_be_positive">Must be greater than zero</string>
+    <string name="error_enter_amount_like">Enter an amount like 1.50</string>
+    <string name="error_could_not_start">Could not start the game</string>
+
+    <!-- Live game -->
+    <string name="error_record_buy_in">Could not record the buy-in</string>
+    <string name="error_record_return">Could not record the chip return</string>
+    <string name="error_undo_return">Could not undo the chip return</string>
+    <string name="error_record_cash_out">Could not record the cash-out</string>
+    <string name="error_undo_cash_out">Could not undo the cash-out</string>
+    <string name="error_add_player">Could not add the player</string>
+
+    <!-- Players tab -->
+    <!-- %1$s: the old name  %2$s: the new one -->
+    <string name="message_player_renamed">%1$s is now %2$s</string>
+    <!-- %1$s: player name -->
+    <string name="message_player_added">%1$s added</string>
+    <string name="message_player_deleted">%1$s deleted</string>
+    <string name="message_player_hidden">%1$s hidden from the roster</string>
+    <string name="message_player_now_has_games">%1$s has games now, so they were hidden</string>
+    <string name="message_player_gone">That player is no longer on the roster</string>
+
+    <!-- Settings -->
+    <!-- %1$s: the level, e.g. "0.05 / 0.10" -->
+    <string name="message_stakes_added">%1$s added</string>
+    <string name="message_stakes_removed">%1$s removed</string>
+    <string name="error_stakes_already_listed">%1$s is already on the list</string>
+    <!-- %1$d: the maximum number of levels -->
+    <!-- %1$s: the level that could not be put back -->
+    <string name="message_stakes_stayed_off">The list filled up, so %1$s stayed off.</string>
+
+    <!-- Ending a game -->
+    <string name="end_headline_balanced">Every chip is accounted for</string>
+    <!-- %1$s: e.g. "12 chips"  %2$s: what they are worth in cash -->
+    <string name="end_headline_missing">%1$s unaccounted for — worth %2$s</string>
+    <string name="end_headline_surplus">%1$s more than were bought in — worth %2$s</string>
+    <!-- %1$s: the headline above  %2$s: e.g. "2 empty stacks" -->
+    <string name="end_headline_with_blanks">%1$s — %2$s recorded as 0</string>
+    <string name="error_could_not_end">Could not end the game</string>
+    <string name="error_could_not_delete_game">Could not delete the game</string>
+
+    <!-- The settlement, as pasted into a group chat -->
+    <!-- %1$s: the rounding unit  %2$s: the player who absorbed the remainder  %3$s: how much -->
+    <string name="note_rounded">Rounded to the nearest %1$s. %2$s absorbed %3$s.</string>
+    <!-- %1$s: the size of the mismatch  %2$s: "short of" or "over" -->
+    <string name="note_imbalance">Chip counts came out %1$s %2$s the buy-ins, so these payments do not fully square everyone up.</string>
+    <string name="note_imbalance_short">short of</string>
+    <string name="note_imbalance_over">over</string>
+    <!-- %1$s: player name  %2$s: the amount -->
+    <string name="note_still_owed">%1$s is still owed %2$s.</string>
+    <string name="note_still_owes">%1$s still owes %2$s.</string>
+
+    <plurals name="error_amount_decimals">
+        <item quantity="one">%1$s can have at most %2$d decimal</item>
+        <item quantity="other">%1$s can have at most %2$d decimals</item>
+    </plurals>
+
+    <plurals name="error_name_too_long">
+        <item quantity="one">%1$s can be at most %2$d character</item>
+        <item quantity="other">%1$s can be at most %2$d characters</item>
+    </plurals>
+
+    <plurals name="error_stakes_list_full">
+        <item quantity="one">That is all %1$d level. Remove one to make room.</item>
+        <item quantity="other">That is all %1$d levels. Remove one to make room.</item>
+    </plurals>
+
+    <plurals name="error_stakes_list_full_short">
+        <item quantity="one">That is all %1$d level. Remove one first.</item>
+        <item quantity="other">That is all %1$d levels. Remove one first.</item>
+    </plurals>
+
+    <plurals name="error_more_than_on_table">
+        <item quantity="one">Only %1$d chip is on the table</item>
+        <item quantity="other">Only %1$d chips are on the table</item>
+    </plurals>
+
+    <plurals name="chip_count">
+        <item quantity="one">%1$d chip</item>
+        <item quantity="other">%1$d chips</item>
+    </plurals>
+
+    <plurals name="empty_stack_count">
+        <item quantity="one">%1$d empty stack</item>
+        <item quantity="other">%1$d empty stacks</item>
+    </plurals>
+
+    <!-- Field names, used inside validation messages such as "%1$s is required". -->
+    <string name="label_chip_value">Chip value</string>
+    <string name="label_big_blind_in_chips">Big blind in chips</string>
+    <string name="label_buy_in">Buy-in</string>
+    <string name="label_chip_count">Chip count</string>
+    <string name="label_rounding_unit">Rounding unit</string>
+
+    <!-- %1$s: what one chip is worth -->
+    <string name="chip_value_label">1 chip = %1$s</string>
+
+    <string name="end_headline_remainder">Buy-ins include %1$s that is not a whole number of chips</string>
+    <plurals name="end_headline_needs_counts">
+        <item quantity="one">%1$d player still needs a chip count</item>
+        <item quantity="other">%1$d players still need a chip count</item>
+    </plurals>
+    <string name="error_could_not_save_count">Could not save the chip count</string>
+
+
 </resources>

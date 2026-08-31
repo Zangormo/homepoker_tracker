@@ -1,5 +1,7 @@
 package com.zango.pokertracker.ui.creategame
 
+import com.zango.pokertracker.R
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.ChipRate
 import com.zango.pokertracker.core.money.Money
 import org.junit.Assert.assertEquals
@@ -46,7 +48,7 @@ class CreateGameFormTest {
     @Test
     fun `the game name is required`() {
         val validation = validForm().copy(name = "   ").validate()
-        assertEquals("Give the game a name", validation.nameError)
+        assertEquals(UiText.of(R.string.error_game_name_required), validation.nameError)
         assertFalse(validation.isValid)
     }
 
@@ -65,20 +67,26 @@ class CreateGameFormTest {
     @Test
     fun `the big blind must be larger than the small blind`() {
         val validation = validForm().copy(smallBlind = "0.01", bigBlind = "0.01").validate()
-        assertEquals("Big blind must be larger than the small blind", validation.bigBlindError)
+        assertEquals(UiText.of(R.string.error_big_blind_too_small), validation.bigBlindError)
         assertNull(validation.bigBlind)
     }
 
     @Test
     fun `blinds must be greater than zero`() {
         val validation = validForm().copy(smallBlind = "0").validate()
-        assertEquals("Small blind must be greater than zero", validation.smallBlindError)
+        assertEquals(
+            UiText.of(R.string.error_amount_positive, UiText.of(R.string.create_small_blind)),
+            validation.smallBlindError,
+        )
     }
 
     @Test
     fun `an unparseable blind explains the expected shape`() {
         val validation = validForm().copy(smallBlind = "abc").validate()
-        assertEquals("Enter Small blind as a number, for example 0.005", validation.smallBlindError)
+        assertEquals(
+            UiText.of(R.string.error_amount_malformed, UiText.of(R.string.create_small_blind)),
+            validation.smallBlindError,
+        )
     }
 
     @Test
@@ -92,7 +100,7 @@ class CreateGameFormTest {
     fun `a chip marking that does not divide evenly is refused`() {
         val validation = validForm().copy(chipsPerBigBlind = "3").validate()
         assertEquals(
-            "A big blind of 0.01 does not split evenly into 3 chips",
+            UiText.of(R.string.error_chip_split, "0.01", 3L),
             validation.chipValueError,
         )
         assertFalse(validation.isValid)
@@ -111,7 +119,7 @@ class CreateGameFormTest {
     @Test
     fun `the helper waits for the blinds before it can derive anything`() {
         val validation = validForm().copy(smallBlind = "", bigBlind = "").validate()
-        assertEquals("Enter the blinds first", validation.chipValueError)
+        assertEquals(UiText.of(R.string.error_blinds_first), validation.chipValueError)
     }
 
     @Test
@@ -134,7 +142,7 @@ class CreateGameFormTest {
     fun `a fractional big blind multiple is refused`() {
         val validation = validForm().copy(buyInBigBlinds = "2.5").validate()
         assertEquals(
-            "Enter the buy-in as a whole number of big blinds",
+            UiText.of(R.string.error_buy_in_whole_big_blinds),
             validation.buyInError,
         )
     }
@@ -147,7 +155,7 @@ class CreateGameFormTest {
             .validate()
 
         assertEquals(
-            "1.0025 is not a whole number of 0.005 chips (0.0025 left over)",
+            UiText.of(R.string.error_not_whole_chips, "1.0025", "0.005", "0.0025"),
             validation.buyInError,
         )
         assertFalse(validation.isValid)
@@ -156,7 +164,7 @@ class CreateGameFormTest {
     @Test
     fun `a game needs at least one player`() {
         val validation = validForm().copy(selection = emptyMap()).validate()
-        assertEquals("Pick at least one player", validation.playersError)
+        assertEquals(UiText.of(R.string.error_pick_a_player), validation.playersError)
         assertFalse(validation.isValid)
     }
 
@@ -178,7 +186,7 @@ class CreateGameFormTest {
             .validate()
 
         assertEquals(
-            "1.0025 is not a whole number of 0.005 chips (0.0025 left over)",
+            UiText.of(R.string.error_not_whole_chips, "1.0025", "0.005", "0.0025"),
             validation.overrideErrors[2L],
         )
         assertFalse(validation.isValid)
@@ -190,7 +198,7 @@ class CreateGameFormTest {
             .copy(selection = linkedMapOf(1L to Money(-1_000_000)))
             .validate()
 
-        assertEquals("A buy-in must be greater than zero", validation.overrideErrors[1L])
+        assertEquals(UiText.of(R.string.error_buy_in_positive), validation.overrideErrors[1L])
     }
 
     @Test
@@ -211,7 +219,10 @@ class CreateGameFormTest {
     @Test
     fun `a zero rounding unit is refused`() {
         val validation = validForm().copy(payoutRounding = "0").validate()
-        assertEquals("Rounding unit must be greater than zero", validation.payoutRoundingError)
+        assertEquals(
+            UiText.of(R.string.error_amount_positive, UiText.of(R.string.label_rounding_unit)),
+            validation.payoutRoundingError,
+        )
         assertFalse(validation.isValid)
     }
 
@@ -219,11 +230,20 @@ class CreateGameFormTest {
     fun `an empty form reports what is missing without crashing`() {
         val validation = CreateGameForm().validate()
 
-        assertEquals("Give the game a name", validation.nameError)
-        assertEquals("Small blind is required", validation.smallBlindError)
-        assertEquals("Big blind is required", validation.bigBlindError)
-        assertEquals("Big blind in chips is required", validation.chipValueError)
-        assertEquals("Pick at least one player", validation.playersError)
+        assertEquals(UiText.of(R.string.error_game_name_required), validation.nameError)
+        assertEquals(
+            UiText.of(R.string.error_amount_required, UiText.of(R.string.create_small_blind)),
+            validation.smallBlindError,
+        )
+        assertEquals(
+            UiText.of(R.string.error_amount_required, UiText.of(R.string.create_big_blind)),
+            validation.bigBlindError,
+        )
+        assertEquals(
+            UiText.of(R.string.error_amount_required, UiText.of(R.string.label_big_blind_in_chips)),
+            validation.chipValueError,
+        )
+        assertEquals(UiText.of(R.string.error_pick_a_player), validation.playersError)
         assertFalse(validation.isValid)
     }
 
