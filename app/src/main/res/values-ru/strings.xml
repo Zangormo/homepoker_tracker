@@ -1,0 +1,505 @@
+<resources>
+
+    <!--
+        Russian.
+
+        Terminology held to throughout:
+        · «фишки» are the physical tokens, «наличные» the real money. Keeping those apart is the
+          app's central hazard and matters as much here as in English.
+        · «касса» is the bank that issues and buys back chips, deliberately not «банк», which in
+          Russian poker means the pot.
+        · «бай-ин», «ребай», «блайнд», «стек» are the terms Russian-speaking players actually use.
+        · Field names arrive as arguments inside error messages, so those messages are phrased
+          with a colon («Малый блайнд: обязательное поле») rather than agreeing with the noun's
+          gender, which the app cannot know.
+    -->
+
+    <string name="app_name">Poker Tracker</string>
+
+    <!-- Shared actions and labels -->
+    <string name="action_back">Назад</string>
+    <string name="action_cancel">Отмена</string>
+    <string name="action_add">Добавить</string>
+    <string name="action_delete">Удалить</string>
+    <string name="action_undo">Вернуть</string>
+    <string name="action_open_menu">Открыть меню</string>
+    <string name="value_none">—</string>
+
+    <!-- Navigation drawer -->
+    <string name="drawer_tagline">Касса вашей домашней игры</string>
+    <string name="destination_game_hub">Игры</string>
+    <string name="destination_players">Игроки</string>
+    <string name="destination_settings">Настройки</string>
+
+    <!-- Game hub -->
+    <string name="history_title">Игры</string>
+    <string name="history_new_game">Новая игра</string>
+    <string name="history_empty_title">Игр пока нет</string>
+    <string name="history_empty_body">Нажмите «Новая игра», чтобы начать.</string>
+    <string name="history_section_running">Идут сейчас</string>
+    <string name="history_section_finished">Завершённые</string>
+    <string name="history_badge_running">ИДЁТ</string>
+    <string name="history_badge_paid_up">РАСЧЁТ ЗАКРЫТ</string>
+    <string name="history_row_menu">Ещё действия для «%1$s»</string>
+    <string name="history_delete_game">Удалить игру</string>
+    <string name="history_delete_title">Удалить «%1$s»?</string>
+    <string name="history_delete_running_body">Эта игра ещё идёт. Удаление сотрёт весь вечер.</string>
+    <string name="history_delete_finished_body">Игра и её результаты будут удалены навсегда.</string>
+    <string name="history_delete_detail">Вместе с ней исчезнут %1$s и %2$s, а также записанные результаты на %3$s. Игроки останутся в составе.</string>
+    <string name="history_delete_irreversible">Это действие нельзя отменить.</string>
+    <string name="history_delete_keep">Оставить</string>
+    <string name="history_row_counts">%1$s · %2$s</string>
+
+    <!-- Live game -->
+    <string name="live_title_fallback">Игра</string>
+    <string name="live_end_game">Завершить</string>
+    <string name="live_add_player">Добавить игрока</string>
+    <string name="live_game_missing">Эта игра больше недоступна.</string>
+    <string name="live_game_finished">Эта игра завершена.</string>
+    <string name="live_nobody_seated">За столом пока никого нет.</string>
+    <string name="live_section_at_table">За столом · %1$d</string>
+    <string name="live_section_cashed_out">Вышли из игры · %1$d</string>
+    <string name="live_section_on_the_table">На столе</string>
+    <string name="live_stat_elapsed">Время</string>
+    <string name="live_stat_buy_ins">Бай-ины</string>
+    <string name="live_stat_blinds">Блайнды</string>
+    <string name="live_seat_sold_back">Сдано в кассу</string>
+    <string name="live_seat_in_for">Внесено</string>
+    <string name="live_seat_out_with">Получено</string>
+    <string name="live_seat_net">Итог</string>
+    <string name="live_action_rebuy">Ребай</string>
+    <string name="live_action_cash_out">Вывести</string>
+    <string name="live_action_sell_back">Сдать фишки в кассу</string>
+    <string name="live_action_undo_last">Отменить последнее</string>
+    <string name="live_action_undo_cash_out">Отменить вывод</string>
+
+    <!-- Rebuy dialog -->
+    <string name="live_rebuy_title">Ребай для «%1$s»</string>
+    <string name="live_rebuy_confirm">Добавить</string>
+    <string name="live_rebuy_amount">Сумма</string>
+
+    <!-- Sell-chips-back dialog -->
+    <string name="live_return_title">«%1$s» сдаёт фишки</string>
+    <string name="live_return_confirm">Записать</string>
+    <string name="live_return_explainer">Игрок отдаёт фишки в кассу и забирает за них наличные. Он продолжает играть, а полученные деньги идут в его итог.</string>
+    <string name="live_return_field">Сдано фишек</string>
+
+    <!-- Cash-out dialog -->
+    <string name="live_cash_out_title">Вывод для «%1$s»</string>
+    <string name="live_cash_out_confirm">Вывести</string>
+    <string name="live_cash_out_explainer">Посчитайте фишки перед игроком.</string>
+    <string name="live_cash_out_field">Фишек на руках</string>
+
+    <!-- Add-player dialog -->
+    <string name="live_add_player_title">Добавить игрока</string>
+    <string name="live_add_player_confirm">Посадить за стол</string>
+    <string name="live_add_player_from_roster">Из состава</string>
+    <string name="live_add_player_new_name">Или добавить нового</string>
+    <string name="live_add_player_buy_in">Бай-ин</string>
+    <string name="live_add_player_hint">Выберите игрока из состава или введите имя.</string>
+
+    <!-- New game -->
+    <string name="create_title">Новая игра</string>
+    <string name="create_section_identity">Название</string>
+    <string name="create_game_name">Название игры</string>
+    <string name="create_section_rounding">Округление выплат</string>
+    <string name="create_section_rounding_subtitle">Самая мелкая купюра или монета, которой игроки рассчитываются между собой.</string>
+    <string name="create_rounding_field">Округлять выплаты до</string>
+
+    <!-- Stakes -->
+    <string name="create_section_stakes">Лимиты</string>
+    <string name="create_small_blind">Малый блайнд</string>
+    <string name="create_big_blind">Большой блайнд</string>
+    <string name="create_common_stakes_bar">ЧАСТЫЕ ЛИМИТЫ</string>
+    <string name="create_stakes_custom">Свои</string>
+    <string name="create_stakes_sheet_title">Частые лимиты</string>
+    <string name="create_stakes_sheet_body">Выберите уровень — оба блайнда заполнятся сами. Всё, на чём вы сыграете, попадёт в этот список.</string>
+    <string name="create_stakes_sheet_empty">Сохранённых уровней нет. Введите блайнды выше или добавьте уровни в настройках.</string>
+
+    <!-- Chip value -->
+    <string name="create_derive_chip_value">Вычислить номинал фишки по маркировке</string>
+    <string name="create_derive_chip_value_hint">Фишки с маркировкой 1 и 2 за столом 0.005 / 0.01 дают номинал фишки 0.005.</string>
+    <string name="create_big_blind_in_chips">Большой блайнд, в фишках</string>
+    <string name="create_chip_value">Стоимость одной фишки</string>
+    <string name="create_one_chip_is_worth">Одна фишка стоит</string>
+
+    <!-- Buy-in -->
+    <string name="create_section_buy_in">Бай-ин</string>
+    <string name="create_buy_in_mode_big_blinds">В блайндах</string>
+    <string name="create_buy_in_mode_cash">В деньгах</string>
+    <string name="create_buy_in_in_big_blinds">Бай-ин, в больших блайндах</string>
+    <string name="create_buy_in_cash">Бай-ин</string>
+    <string name="create_everyone_starts_with">Каждый начинает с</string>
+    <string name="create_buy_in_needs_stakes">Заполните блайнды и номинал фишки, чтобы увидеть это.</string>
+    <string name="create_buy_in_remainder">%1$s из этой суммы не раскладывается на целые фишки. Измените бай-ин или номинал фишки.</string>
+    <string name="create_equals">=</string>
+
+    <!-- Players -->
+    <string name="create_section_players">Игроки</string>
+    <string name="create_section_players_subtitle">Нажмите, чтобы выбрать, кто играет. Нажмите ещё раз, чтобы убрать того, кто не пришёл.</string>
+    <string name="create_add_someone_new">Добавить нового</string>
+    <string name="create_add_to_roster">Добавить игрока в состав</string>
+    <string name="create_no_roster">В составе пока никого нет. Добавьте первого игрока выше.</string>
+    <string name="create_badge_override">СВОЙ</string>
+    <string name="create_finish_stakes_first">Заполните лимиты, чтобы увидеть бай-ин</string>
+    <string name="create_change_buy_in">Изменить бай-ин для «%1$s»</string>
+    <string name="create_on_the_table">На столе на старте</string>
+    <string name="create_start_game">Начать игру</string>
+
+    <!-- Per-player buy-in dialog -->
+    <string name="create_override_title">Бай-ин для «%1$s»</string>
+    <string name="create_override_apply">Применить</string>
+    <string name="create_override_use_default">Как у всех</string>
+
+    <!-- End game -->
+    <string name="end_title">Завершение игры</string>
+    <string name="end_game_missing">Эта игра больше недоступна.</string>
+    <string name="end_section_chip_counts">Подсчёт фишек</string>
+    <string name="end_chip_counts_body">Посчитайте фишки, оставшиеся перед каждым игроком. Всё, что уже сдано в кассу, зачтётся сверху. %1$s.</string>
+    <string name="end_section_results">Результаты</string>
+    <string name="end_bought_in">Выдано</string>
+    <string name="end_counted">Посчитано</string>
+    <string name="end_difference">Расхождение</string>
+    <string name="end_recount_warning">Пересчитайте стеки перед завершением. Расчёт по текущим числам оставит кого-то в минусе.</string>
+    <string name="end_seat_cashed_out">Вышел во время игры</string>
+    <string name="end_seat_still_playing">Ещё за столом</string>
+    <string name="end_final_chips">Фишек на руках</string>
+    <string name="end_seat_in_for">Внесено</string>
+    <string name="end_seat_sold_back">Сдано в кассу</string>
+    <string name="end_seat_empty_recorded">Пусто — записано как 0</string>
+    <string name="end_seat_not_counted">Ещё не посчитано</string>
+    <string name="end_view_settlement">Открыть расчёт</string>
+    <string name="end_blocked_hint">Посчитайте оставшиеся стеки или введите столько, чтобы фишки сошлись.</string>
+    <string name="end_finish">Завершить и рассчитаться</string>
+
+    <!-- Mismatch confirmation -->
+    <string name="end_mismatch_title">Фишки не сходятся</string>
+    <string name="end_mismatch_body">Расчёт сейчас разделит стол по текущим числам, а значит кто-то останется в минусе на эту сумму.</string>
+    <string name="end_mismatch_recount">Пересчитать</string>
+    <string name="end_mismatch_finish_anyway">Всё равно завершить</string>
+
+    <!-- Settlement -->
+    <string name="settlement_title">Расчёт</string>
+    <string name="settlement_game_missing">Эта игра больше недоступна.</string>
+    <string name="settlement_share_subject">%1$s — расчёт</string>
+    <string name="settlement_share_chooser">Отправить расчёт</string>
+    <string name="settlement_share">Отправить</string>
+    <string name="settlement_copy">Копировать</string>
+    <string name="settlement_copied">Скопировано</string>
+    <string name="settlement_everyone_even">Все остались при своих. Платежей не нужно.</string>
+    <string name="settlement_section_results">Результаты</string>
+    <string name="settlement_back_to_history">К списку игр</string>
+    <string name="settlement_not_settled">Расчёт неполный</string>
+
+    <!-- The night's summary -->
+    <string name="settlement_section_the_night">Вечер</string>
+    <string name="settlement_stat_buy_ins">Бай-ины</string>
+    <string name="settlement_stat_lasted">Длилась</string>
+    <string name="settlement_stat_in_the_bank">В кассе</string>
+
+    <string name="settlement_pays">%1$s платит %2$s %3$s</string>
+    <string name="settlement_pays_verb">" платит "</string>
+    <string name="settlement_payment_paid">%1$s, оплачено</string>
+    <string name="settlement_payment_unpaid">%1$s, ещё не оплачено</string>
+
+    <!-- Players tab -->
+    <string name="players_title">Игроки</string>
+    <string name="players_add">Добавить игрока</string>
+    <string name="players_empty_title">Игроков пока нет</string>
+    <string name="players_empty_body">Добавьте постоянных участников здесь или во время создания игры.</string>
+    <string name="players_section_hidden">Скрытые</string>
+    <string name="players_no_results_yet">Результатов пока нет</string>
+    <string name="players_never_played">Ещё не играл</string>
+    <string name="players_hidden_note">Не предлагается в новых играх</string>
+    <string name="players_row_menu">Ещё действия для «%1$s»</string>
+    <string name="players_rename">Переименовать</string>
+    <string name="players_restore">Предлагать в новых играх</string>
+    <string name="players_remove_from_roster">Убрать из состава</string>
+    <string name="players_delete">Удалить игрока</string>
+    <string name="players_row_counts">%1$s · %2$s</string>
+
+    <!-- Add player dialog -->
+    <string name="players_add_title">Добавить игрока</string>
+    <string name="players_name_field">Имя</string>
+
+    <!-- Rename dialog -->
+    <string name="players_rename_title">Переименовать «%1$s»</string>
+    <string name="players_rename_note">В прошлых играх тоже появится новое имя — это тот же человек.</string>
+
+    <!-- Remove dialog -->
+    <string name="players_remove_title">Убрать «%1$s» из состава?</string>
+    <string name="players_delete_title">Удалить «%1$s»?</string>
+    <string name="players_remove_body">У игрока «%1$s» уже есть сыгранные игры (%2$s), и их результаты останутся без изменений.</string>
+    <string name="players_remove_detail">Игрок перестанет появляться при создании новой игры. Вернуть его можно в любой момент из списка скрытых.</string>
+    <string name="players_delete_body">Этот игрок не сыграл ни одной игры, так что вместе с ним ничего не пропадёт.</string>
+    <string name="players_delete_irreversible">Это действие нельзя отменить.</string>
+    <string name="players_remove_confirm">Скрыть</string>
+    <string name="players_delete_confirm">Удалить</string>
+    <string name="players_keep">Оставить</string>
+
+    <!-- One player's record -->
+    <string name="player_title_fallback">Игрок</string>
+    <string name="player_missing">Этого игрока больше нет в составе.</string>
+    <string name="player_all_time_profit">Итог за всё время</string>
+    <string name="player_not_settled_yet">Расчёта ещё не было</string>
+    <string name="player_no_games_yet">Игр пока нет</string>
+    <string name="player_section_every_game">Все игры</string>
+    <string name="player_stat_paid_in">Внесено</string>
+    <string name="player_stat_buy_ins">Бай-ины</string>
+    <string name="player_stat_cashed_out">Получено</string>
+    <string name="player_game_still_playing">Ещё идёт</string>
+    <string name="player_game_no_result">Без результата</string>
+    <string name="player_game_line">%1$s · %2$s</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Настройки</string>
+    <string name="settings_section_blind_sizes">Размеры блайндов</string>
+    <string name="settings_blind_sizes_body">Уровни, которые предлагаются при создании игры. Сыгранная на новых блайндах игра тоже добавляет их сюда — здесь же можно убрать разовый вечер.</string>
+    <string name="settings_blind_count">%1$d из %2$d</string>
+    <string name="settings_blind_sizes_empty">Уровней не осталось. Добавьте те, на которых играете.</string>
+    <string name="settings_add_blinds">Добавить блайнды</string>
+    <string name="settings_add_blinds_title">Добавить блайнды</string>
+    <string name="settings_remove_blinds">Удалить %1$s</string>
+
+    <!-- Language -->
+    <string name="settings_section_language">Язык</string>
+    <string name="settings_language_body">При смене языка приложение перезапустится. Игры и игроки не пострадают.</string>
+    <string name="language_english">English</string>
+    <string name="language_russian">Русский</string>
+
+    <!-- The results table -->
+    <string name="results_column_player">Игрок</string>
+    <string name="results_column_in">Внёс</string>
+    <string name="results_column_chips">Фишки</string>
+    <string name="results_column_out">Взял</string>
+    <string name="results_column_net">Итог</string>
+
+    <!-- Amount fields, as read by a screen reader -->
+    <string name="amount_chips_unit">фишек</string>
+    <string name="amount_cash_unit">сумма</string>
+    <string name="amount_no_chips">фишки не посчитаны</string>
+    <string name="amount_no_cash">сумма не указана</string>
+    <string name="amount_spoken">%1$s %2$s</string>
+    <string name="amount_cash_to_chips">%1$s наличными — это %2$s фишек</string>
+    <string name="amount_chips_to_cash">%1$s фишек — это %2$s наличными</string>
+    <string name="field_required">%1$s *</string>
+
+    <!-- Validation and messages -->
+    <string name="error_amount_required">%1$s: обязательное поле</string>
+    <string name="error_amount_positive">%1$s: должно быть больше нуля</string>
+    <string name="error_amount_malformed">%1$s: введите число, например 0.005</string>
+    <string name="error_amount_too_large">%1$s: слишком большое значение</string>
+    <string name="error_chips_whole_number">%1$s: введите целое число</string>
+    <string name="error_chips_not_whole">Фишки бывают только целыми</string>
+    <string name="error_not_whole_chips">%1$s не раскладывается на целые фишки по %2$s (остаётся %3$s)</string>
+    <string name="error_not_whole_chips_short">Не целое число фишек</string>
+
+    <string name="error_name_required">Введите имя</string>
+    <string name="error_name_label_player">Имя</string>
+    <string name="error_name_label_game">Название игры</string>
+    <string name="error_name_taken">«%1$s» уже есть в составе</string>
+
+    <string name="error_game_name_required">Дайте игре название</string>
+    <string name="error_big_blind_too_small">Большой блайнд должен быть больше малого</string>
+    <string name="error_blinds_first">Сначала введите блайнды</string>
+    <string name="error_chip_split">Большой блайнд %1$s не делится нацело на %2$s фишек</string>
+    <string name="error_chips_per_bb_positive">Большой блайнд в фишках должен быть больше нуля</string>
+    <string name="error_buy_in_required">Бай-ин обязателен</string>
+    <string name="error_buy_in_whole_big_blinds">Введите бай-ин целым числом больших блайндов</string>
+    <string name="error_buy_in_positive">Бай-ин должен быть больше нуля</string>
+    <string name="error_pick_a_player">Выберите хотя бы одного игрока</string>
+    <string name="error_whole_big_blinds">Введите целое число больших блайндов</string>
+    <string name="error_must_be_positive">Должно быть больше нуля</string>
+    <string name="error_enter_amount_like">Введите сумму, например 1.50</string>
+    <string name="error_could_not_start">Не удалось начать игру</string>
+
+    <string name="error_record_buy_in">Не удалось записать бай-ин</string>
+    <string name="error_record_return">Не удалось записать сдачу фишек</string>
+    <string name="error_undo_return">Не удалось отменить сдачу фишек</string>
+    <string name="error_record_cash_out">Не удалось записать вывод</string>
+    <string name="error_undo_cash_out">Не удалось отменить вывод</string>
+    <string name="error_add_player">Не удалось добавить игрока</string>
+
+    <string name="message_player_renamed">«%1$s» теперь «%2$s»</string>
+    <string name="message_player_added">«%1$s» добавлен</string>
+    <string name="message_player_deleted">«%1$s» удалён</string>
+    <string name="message_player_hidden">«%1$s» скрыт из состава</string>
+    <string name="message_player_now_has_games">У игрока «%1$s» появились игры, поэтому он скрыт</string>
+    <string name="message_player_gone">Этого игрока больше нет в составе</string>
+
+    <string name="message_stakes_added">%1$s добавлены</string>
+    <string name="message_stakes_removed">%1$s удалены</string>
+    <string name="error_stakes_already_listed">%1$s уже есть в списке</string>
+    <string name="message_stakes_stayed_off">Список заполнился, поэтому %1$s остались вне его</string>
+
+    <string name="end_headline_balanced">Все фишки сошлись</string>
+    <string name="end_headline_missing">Не хватает %1$s — это %2$s</string>
+    <string name="end_headline_surplus">%1$s больше, чем было выдано — это %2$s</string>
+    <string name="end_headline_with_blanks">%1$s — %2$s записано как 0</string>
+    <string name="error_could_not_end">Не удалось завершить игру</string>
+    <string name="error_could_not_delete_game">Не удалось удалить игру</string>
+
+    <string name="note_rounded">Округлено до %1$s. Разницу %3$s принял на себя игрок «%2$s».</string>
+    <string name="note_imbalance">Посчитанные фишки разошлись с бай-инами на %1$s %2$s, поэтому эти платежи не закрывают расчёт полностью.</string>
+    <string name="note_imbalance_short">в минус</string>
+    <string name="note_imbalance_over">в плюс</string>
+    <string name="note_still_owed">Игроку «%1$s» ещё должны %2$s.</string>
+    <string name="note_still_owes">Игрок «%1$s» ещё должен %2$s.</string>
+
+    <string name="label_chip_value">Номинал фишки</string>
+    <string name="label_big_blind_in_chips">Большой блайнд в фишках</string>
+    <string name="label_buy_in">Бай-ин</string>
+    <string name="label_chip_count">Количество фишек</string>
+    <string name="label_rounding_unit">Шаг округления</string>
+    <string name="chip_value_label">1 фишка = %1$s</string>
+    <string name="end_headline_remainder">В бай-инах есть %1$s, что не раскладывается на целые фишки</string>
+    <string name="error_could_not_save_count">Не удалось сохранить количество фишек</string>
+
+    <!--
+        Counted things.
+
+        Russian needs one (1, 21, 31…), few (2–4, 22–24…) and many (0, 5–20, 25–30…). "other"
+        covers fractional counts, which never occur here but is kept so the set is complete.
+    -->
+
+    <plurals name="create_big_blinds_short">
+        <item quantity="one">%1$d ББ</item>
+        <item quantity="few">%1$d ББ</item>
+        <item quantity="many">%1$d ББ</item>
+        <item quantity="other">%1$d ББ</item>
+    </plurals>
+
+    <plurals name="settlement_paid_count">
+        <item quantity="one">Оплачено %1$d из %2$d</item>
+        <item quantity="few">Оплачено %1$d из %2$d</item>
+        <item quantity="many">Оплачено %1$d из %2$d</item>
+        <item quantity="other">Оплачено %1$d из %2$d</item>
+    </plurals>
+
+    <plurals name="player_games_and_wins">
+        <item quantity="one">%1$s · %2$d в плюсе</item>
+        <item quantity="few">%1$s · %2$d в плюсе</item>
+        <item quantity="many">%1$s · %2$d в плюсе</item>
+        <item quantity="other">%1$s · %2$d в плюсе</item>
+    </plurals>
+
+    <plurals name="error_amount_decimals">
+        <item quantity="one">%1$s: не более %2$d знака после запятой</item>
+        <item quantity="few">%1$s: не более %2$d знаков после запятой</item>
+        <item quantity="many">%1$s: не более %2$d знаков после запятой</item>
+        <item quantity="other">%1$s: не более %2$d знаков после запятой</item>
+    </plurals>
+
+    <plurals name="error_name_too_long">
+        <item quantity="one">%1$s: не более %2$d символа</item>
+        <item quantity="few">%1$s: не более %2$d символов</item>
+        <item quantity="many">%1$s: не более %2$d символов</item>
+        <item quantity="other">%1$s: не более %2$d символов</item>
+    </plurals>
+
+    <plurals name="error_stakes_list_full">
+        <item quantity="one">Это уже %1$d уровень. Удалите один, чтобы освободить место.</item>
+        <item quantity="few">Это уже все %1$d уровня. Удалите один, чтобы освободить место.</item>
+        <item quantity="many">Это уже все %1$d уровней. Удалите один, чтобы освободить место.</item>
+        <item quantity="other">Это уже все %1$d уровней. Удалите один, чтобы освободить место.</item>
+    </plurals>
+
+    <plurals name="error_stakes_list_full_short">
+        <item quantity="one">Это уже %1$d уровень. Сначала удалите один.</item>
+        <item quantity="few">Это уже все %1$d уровня. Сначала удалите один.</item>
+        <item quantity="many">Это уже все %1$d уровней. Сначала удалите один.</item>
+        <item quantity="other">Это уже все %1$d уровней. Сначала удалите один.</item>
+    </plurals>
+
+    <plurals name="error_more_than_on_table">
+        <item quantity="one">На столе всего %1$d фишка</item>
+        <item quantity="few">На столе всего %1$d фишки</item>
+        <item quantity="many">На столе всего %1$d фишек</item>
+        <item quantity="other">На столе всего %1$d фишек</item>
+    </plurals>
+
+    <plurals name="live_returned_summary">
+        <item quantity="one">%1$d фишка выкуплена кассой · выплачено %2$s</item>
+        <item quantity="few">%1$d фишки выкуплены кассой · выплачено %2$s</item>
+        <item quantity="many">%1$d фишек выкуплено кассой · выплачено %2$s</item>
+        <item quantity="other">%1$d фишек выкуплено кассой · выплачено %2$s</item>
+    </plurals>
+
+    <plurals name="live_return_on_table">
+        <item quantity="one">На столе %1$d фишка</item>
+        <item quantity="few">На столе %1$d фишки</item>
+        <item quantity="many">На столе %1$d фишек</item>
+        <item quantity="other">На столе %1$d фишек</item>
+    </plurals>
+
+    <plurals name="create_playing_count">
+        <item quantity="one">%1$d играет</item>
+        <item quantity="few">%1$d играют</item>
+        <item quantity="many">%1$d играют</item>
+        <item quantity="other">%1$d играют</item>
+    </plurals>
+
+    <plurals name="player_count">
+        <item quantity="one">%1$d игрок</item>
+        <item quantity="few">%1$d игрока</item>
+        <item quantity="many">%1$d игроков</item>
+        <item quantity="other">%1$d игроков</item>
+    </plurals>
+
+    <plurals name="buy_in_count">
+        <item quantity="one">%1$d бай-ин</item>
+        <item quantity="few">%1$d бай-ина</item>
+        <item quantity="many">%1$d бай-инов</item>
+        <item quantity="other">%1$d бай-инов</item>
+    </plurals>
+
+    <plurals name="game_count">
+        <item quantity="one">%1$d игра</item>
+        <item quantity="few">%1$d игры</item>
+        <item quantity="many">%1$d игр</item>
+        <item quantity="other">%1$d игр</item>
+    </plurals>
+
+    <plurals name="payment_count">
+        <item quantity="one">%1$d платёж</item>
+        <item quantity="few">%1$d платежа</item>
+        <item quantity="many">%1$d платежей</item>
+        <item quantity="other">%1$d платежей</item>
+    </plurals>
+
+    <plurals name="chip_count">
+        <item quantity="one">%1$d фишки</item>
+        <item quantity="few">%1$d фишек</item>
+        <item quantity="many">%1$d фишек</item>
+        <item quantity="other">%1$d фишек</item>
+    </plurals>
+
+    <plurals name="games_to_settle">
+        <item quantity="one">%1$d игра ещё не рассчитана</item>
+        <item quantity="few">%1$d игры ещё не рассчитаны</item>
+        <item quantity="many">%1$d игр ещё не рассчитано</item>
+        <item quantity="other">%1$d игр ещё не рассчитано</item>
+    </plurals>
+
+    <plurals name="games_to_settle_note">
+        <item quantity="one">%1$d игра ещё не рассчитана и здесь не учтена.</item>
+        <item quantity="few">%1$d игры ещё не рассчитаны и здесь не учтены.</item>
+        <item quantity="many">%1$d игр ещё не рассчитано и здесь не учтено.</item>
+        <item quantity="other">%1$d игр ещё не рассчитано и здесь не учтено.</item>
+    </plurals>
+
+    <plurals name="empty_stack_count">
+        <item quantity="one">%1$d пустой стек</item>
+        <item quantity="few">%1$d пустых стека</item>
+        <item quantity="many">%1$d пустых стеков</item>
+        <item quantity="other">%1$d пустых стеков</item>
+    </plurals>
+
+    <plurals name="end_headline_needs_counts">
+        <item quantity="one">%1$d игрок ещё не посчитал фишки</item>
+        <item quantity="few">%1$d игрока ещё не посчитали фишки</item>
+        <item quantity="many">%1$d игроков ещё не посчитали фишки</item>
+        <item quantity="other">%1$d игроков ещё не посчитали фишки</item>
+    </plurals>
+
+</resources>

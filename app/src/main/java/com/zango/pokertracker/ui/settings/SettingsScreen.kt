@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -39,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -46,11 +49,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zango.pokertracker.R
 import com.zango.pokertracker.core.text.UiText
+import com.zango.pokertracker.core.locale.AppLanguage
+import com.zango.pokertracker.core.locale.AppLanguageStore
+import com.zango.pokertracker.core.locale.findActivity
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.Stakes
 import com.zango.pokertracker.ui.common.CashAmountField
 import com.zango.pokertracker.ui.common.MinTouchTarget
 import com.zango.pokertracker.ui.common.SectionLabel
+import com.zango.pokertracker.ui.common.SelectionIndicator
 import com.zango.pokertracker.ui.common.resolve
 import com.zango.pokertracker.ui.theme.PokerTheme
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
@@ -115,6 +122,13 @@ fun SettingsScreen(
         } else {
             SettingsContent(
                 state = state,
+                language = AppLanguageStore.current(context),
+                onSelectLanguage = { language ->
+                    AppLanguageStore.set(context, language)
+                    // Below Android 13 nothing restarts the screen for us; above it the system
+                    // already has, and recreating again is harmless.
+                    context.findActivity()?.recreate()
+                },
                 onAdd = viewModel::onAddRequested,
                 onRemove = viewModel::onRemove,
                 modifier = Modifier.padding(padding),
@@ -136,6 +150,8 @@ fun SettingsScreen(
 @Composable
 private fun SettingsContent(
     state: SettingsUiState,
+    language: AppLanguage,
+    onSelectLanguage: (AppLanguage) -> Unit,
     onAdd: () -> Unit,
     onRemove: (Stakes) -> Unit,
     modifier: Modifier = Modifier,
@@ -147,8 +163,10 @@ private fun SettingsContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        LanguageSection(current = language, onSelect = onSelectLanguage)
+
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -193,6 +211,68 @@ private fun SettingsContent(
             Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
             Text(stringResource(R.string.settings_add_blinds))
+        }
+    }
+}
+
+/**
+ * The language the app speaks.
+ *
+ * Each option is written in its own language rather than translated, so a host who has landed
+ * somewhere they cannot read can still find their way back. Choosing one restarts the screen:
+ * resources are resolved as a screen is built, so there is no way to change them under it.
+ */
+@Composable
+private fun LanguageSection(current: AppLanguage, onSelect: (AppLanguage) -> Unit) {
+    SectionLabel(stringResource(R.string.settings_section_language))
+    Text(
+        stringResource(R.string.settings_language_body),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(bottom = 4.dp),
+    )
+    AppLanguage.entries.forEach { language ->
+        val selected = language == current
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = 56.dp)
+                .selectable(
+                    selected = selected,
+                    role = Role.RadioButton,
+                    onClick = { onSelect(language) },
+                ),
+            shape = MaterialTheme.shapes.small,
+            color = if (selected) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceContainer
+            },
+            border = BorderStroke(
+                width = if (selected) 1.5.dp else 1.dp,
+                color = if (selected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.outline
+                },
+            ),
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                SelectionIndicator(selected = selected)
+                Text(
+                    stringResource(language.label),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = if (selected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
+                )
+            }
         }
     }
 }
@@ -289,6 +369,8 @@ private fun SettingsPreview() {
         Surface(color = MaterialTheme.colorScheme.background) {
             SettingsContent(
                 state = settingsState(listOf(Stakes(Money(20_000), Money(40_000)))),
+                language = AppLanguage.ENGLISH,
+                onSelectLanguage = {},
                 onAdd = {},
                 onRemove = {},
             )
@@ -301,7 +383,7 @@ private fun SettingsPreview() {
 private fun SettingsEmptyPreview() {
     PokerTrackerTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            SettingsContent(SettingsUiState(isLoading = false), {}, {})
+            SettingsContent(SettingsUiState(isLoading = false), AppLanguage.ENGLISH, {}, {}, {})
         }
     }
 }
@@ -325,7 +407,7 @@ private fun AddStakesPreview() {
 private fun SettingsLargeFontPreview() {
     PokerTrackerTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            SettingsContent(settingsState(), {}, {})
+            SettingsContent(settingsState(), AppLanguage.RUSSIAN, {}, {}, {})
         }
     }
 }

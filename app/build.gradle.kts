@@ -66,6 +66,15 @@ android {
         )
     }
 
+    bundle {
+        language {
+            // Both languages ship in every install. By default an App Bundle only delivers the
+            // resources for the device's own language, which would leave the in-app switcher
+            // pointing at a translation that is not on the phone.
+            enableSplit = false
+        }
+    }
+
     testOptions {
         unitTests {
             isReturnDefaultValues = true

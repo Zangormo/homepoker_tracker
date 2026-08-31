@@ -326,6 +326,14 @@
     <!-- %1$s: the level, e.g. "0.05 / 0.10" -->
     <string name="settings_remove_blinds">Remove %1$s</string>
 
+    <!-- Language -->
+    <string name="settings_section_language">Language</string>
+    <string name="settings_language_body">The app restarts to change language. Your games and players are not affected.</string>
+    <!-- Language names are written in their own language, so they can be recognised by
+         someone who cannot read the one currently in use. Do not translate these two. -->
+    <string name="language_english">English</string>
+    <string name="language_russian">Русский</string>
+
     <!-- ==================================================================================== -->
     <!-- The results table, shared by the end-game and settlement screens                     -->
     <!-- ==================================================================================== -->

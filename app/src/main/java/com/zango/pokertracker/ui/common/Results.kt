@@ -52,9 +52,12 @@ fun GameSnapshot.toResultRows(): List<ResultRow> = seats.map { seat ->
     )
 }
 
-private const val NAME_WEIGHT = 2.1f
+// Player names are short and the numeric columns carry headings that other languages spell out
+// at greater length than English, so the name column gives up width to them rather than the
+// other way round.
+private const val NAME_WEIGHT = 1.9f
 private const val CASH_WEIGHT = 1.5f
-private const val CHIP_WEIGHT = 1.3f
+private const val CHIP_WEIGHT = 1.5f
 private const val NET_WEIGHT = 1.6f
 
 /**
@@ -132,7 +135,13 @@ private fun RowScope.HeaderCell(
 ) {
     Row(
         modifier = Modifier.weight(weight),
-        horizontalArrangement = if (align == TextAlign.Start) Arrangement.Start else Arrangement.End,
+        horizontalArrangement = if (align == TextAlign.Start) {
+            Arrangement.Start
+        } else {
+            // A hair of space so the unit mark does not touch the heading beside it, and so
+            // two columns never run together in a language with longer words than English.
+            Arrangement.spacedBy(2.dp, Alignment.End)
+        },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
@@ -148,6 +157,9 @@ private fun RowScope.HeaderCell(
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = align,
+            // A heading that wraps would push its column out of line with the figures under it,
+            // which is the one thing this table exists to keep straight.
+            maxLines = 1,
         )
     }
 }
