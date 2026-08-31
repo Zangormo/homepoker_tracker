@@ -24,6 +24,7 @@ import com.zango.pokertracker.domain.model.NewGameSetup
 import com.zango.pokertracker.domain.model.Player
 import com.zango.pokertracker.domain.model.PlayerStats
 import com.zango.pokertracker.domain.model.SettledPayment
+import com.zango.pokertracker.domain.model.Stakes
 import com.zango.pokertracker.domain.settlement.settle
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -125,6 +126,23 @@ class PokerRepositoryImpl @Inject constructor(
         gameDao.observeSummaries()
             .map { rows -> rows.map { it.toDomain() } }
             .distinctUntilChanged()
+
+    override fun observeStakeOptions(): Flow<List<Stakes>> =
+        gameDao.observePlayedStakes()
+            .map { rows ->
+                val played = rows.map { Stakes(Money(it.smallBlindMicros), Money(it.bigBlindMicros)) }
+                // Sorted by size rather than by how recently they were used, so the list a host
+                // scans does not reorder itself between one game and the next. What they played
+                // last is already waiting in the fields.
+                (Stakes.COMMON + played)
+                    .distinct()
+                    .sortedWith(compareBy({ it.bigBlind.micros }, { it.smallBlind.micros }))
+            }
+            .distinctUntilChanged()
+
+    override suspend fun lastPlayedStakes(): Stakes? =
+        gameDao.lastPlayedStakes()
+            ?.let { Stakes(Money(it.smallBlindMicros), Money(it.bigBlindMicros)) }
 
     override suspend fun createGame(setup: NewGameSetup): Long {
         require(setup.name.isNotBlank()) { "A game needs a name" }

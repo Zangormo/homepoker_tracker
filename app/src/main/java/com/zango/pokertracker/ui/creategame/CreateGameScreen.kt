@@ -1,18 +1,24 @@
 package com.zango.pokertracker.ui.creategame
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -21,6 +27,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -42,6 +49,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -51,6 +59,7 @@ import com.zango.pokertracker.core.money.ChipRate
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.Player
+import com.zango.pokertracker.domain.model.Stakes
 import com.zango.pokertracker.ui.common.AmountPreview
 import com.zango.pokertracker.ui.common.CashAmountField
 import com.zango.pokertracker.ui.common.CashAmountText
@@ -159,6 +168,7 @@ data class CreateGameActions(
     val onNameChange: (String) -> Unit = {},
     val onSmallBlindChange: (String) -> Unit = {},
     val onBigBlindChange: (String) -> Unit = {},
+    val onStakesSelected: (StakeOption) -> Unit = {},
     val onDeriveChipValueChange: (Boolean) -> Unit = {},
     val onChipValueChange: (String) -> Unit = {},
     val onChipsPerBigBlindChange: (String) -> Unit = {},
@@ -186,6 +196,7 @@ private fun rememberCreateGameActions(viewModel: CreateGameViewModel): CreateGam
             onNameChange = viewModel::onNameChange,
             onSmallBlindChange = viewModel::onSmallBlindChange,
             onBigBlindChange = viewModel::onBigBlindChange,
+            onStakesSelected = viewModel::onStakesSelected,
             onDeriveChipValueChange = viewModel::onDeriveChipValueChange,
             onChipValueChange = viewModel::onChipValueChange,
             onChipsPerBigBlindChange = viewModel::onChipsPerBigBlindChange,
@@ -266,6 +277,163 @@ private fun CreateGameContent(
     }
 }
 
+/**
+ * The stakes shortcut: one green bar under the blind fields, and a sheet of levels behind it.
+ *
+ * The bar carries the accent because it is the one thing on this screen that fills fields in
+ * rather than asking to be filled in, and it states the level the typed blinds are already on so
+ * it doubles as a readout. Picking happens on a sheet rather than in a menu hanging off a field:
+ * the choices are short, round numbers that read best side by side, and a stake level is a single
+ * decision that deserves the whole width for a moment rather than a list squeezed under a label.
+ */
+@Composable
+private fun StakesPicker(
+    options: List<StakeOption>,
+    selected: StakeOption?,
+    onSelect: (StakeOption) -> Unit,
+) {
+    var showSheet by rememberSaveable { mutableStateOf(false) }
+
+    Surface(
+        onClick = { showSheet = true },
+        modifier = Modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = MinTouchTarget),
+        shape = MaterialTheme.shapes.small,
+        color = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                "COMMON STAKES",
+                style = MaterialTheme.typography.labelMedium,
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(
+                    selected?.label ?: "Custom",
+                    style = if (selected != null) {
+                        PokerTheme.type.numericMedium
+                    } else {
+                        MaterialTheme.typography.titleSmall
+                    },
+                )
+                Icon(
+                    Icons.Filled.UnfoldMore,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        }
+    }
+
+    if (showSheet) {
+        StakesSheet(
+            options = options,
+            selected = selected,
+            onSelect = {
+                showSheet = false
+                onSelect(it)
+            },
+            onDismiss = { showSheet = false },
+        )
+    }
+}
+
+@Composable
+private fun StakesSheet(
+    options: List<StakeOption>,
+    selected: StakeOption?,
+    onSelect: (StakeOption) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        StakesSheetContent(options = options, selected = selected, onSelect = onSelect)
+    }
+}
+
+@Composable
+private fun StakesSheetContent(
+    options: List<StakeOption>,
+    selected: StakeOption?,
+    onSelect: (StakeOption) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 24.dp, end = 24.dp, bottom = 40.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text("Common stakes", style = MaterialTheme.typography.titleLarge)
+        Text(
+            "Pick a level and both blinds are filled in. Whatever you play joins the list.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        FlowRow(
+            modifier = Modifier.padding(top = 14.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            options.forEach { option ->
+                StakePill(
+                    option = option,
+                    selected = option == selected,
+                    onClick = { onSelect(option) },
+                )
+            }
+        }
+    }
+}
+
+/** One level, sized so the figures rather than the box are what the eye lands on. */
+@Composable
+private fun StakePill(option: StakeOption, selected: Boolean, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .defaultMinSize(minHeight = MinTouchTarget)
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
+        shape = MaterialTheme.shapes.small,
+        color = if (selected) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerHigh
+        },
+        border = BorderStroke(
+            width = if (selected) 1.5.dp else 1.dp,
+            color = if (selected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.outline
+            },
+        ),
+    ) {
+        Box(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                option.label,
+                style = PokerTheme.type.numericMedium,
+                color = if (selected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
+            )
+        }
+    }
+}
+
 @Composable
 private fun StakesSection(
     state: CreateGameUiState,
@@ -295,6 +463,12 @@ private fun StakesSection(
             error = state.validation.bigBlindError,
             forceShowError = revealAllProblems,
             modifier = focus(FormField.BIG_BLIND),
+        )
+
+        StakesPicker(
+            options = state.stakeOptions,
+            selected = state.selectedStake,
+            onSelect = actions.onStakesSelected,
         )
 
         HorizontalDivider(color = PokerTheme.colors.divider)
@@ -759,3 +933,23 @@ private fun CreateGameProblemPreview() = PreviewShell(problemState(), revealAllP
 @Preview(name = "Create game — 200% font", showBackground = true, fontScale = 2.0f, heightDp = 2200)
 @Composable
 private fun CreateGameLargeFontPreview() = PreviewShell(filledState(), revealAllProblems = false)
+
+private fun stakeOptions() = Stakes.COMMON.map { StakeOption(it.label(), it) }
+
+@Preview(name = "Stakes — bar and sheet", showBackground = true, heightDp = 420)
+@Composable
+private fun StakesPickerPreview() {
+    val options = stakeOptions()
+    PokerTrackerTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+            ) {
+                StakesPicker(options, options[1], {})
+                StakesPicker(options, null, {})
+                StakesSheetContent(options, options[1], {})
+            }
+        }
+    }
+}

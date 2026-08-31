@@ -3,6 +3,7 @@ package com.zango.pokertracker.ui.creategame
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.Player
+import com.zango.pokertracker.domain.model.Stakes
 import com.zango.pokertracker.ui.common.AmountPreview
 
 /** One roster player as the picker sees them. */
@@ -29,6 +30,9 @@ data class OverrideEditor(
     val canApply: Boolean get() = error == null && !preview.isEmpty
 }
 
+/** One stake level in the picker under the blind fields. */
+data class StakeOption(val label: String, val stakes: Stakes)
+
 data class CreateGameUiState(
     val form: CreateGameForm = CreateGameForm(),
     val validation: CreateGameValidation = CreateGameValidation(),
@@ -40,6 +44,9 @@ data class CreateGameUiState(
     /** The default buy-in as a whole multiple of the big blind, when it is one. */
     val defaultBuyInBigBlinds: Long? = null,
     val totalOnTable: AmountPreview = AmountPreview(),
+    val stakeOptions: List<StakeOption> = emptyList(),
+    /** The option matching what is typed, or null when the host has entered their own. */
+    val selectedStake: StakeOption? = null,
     val overrideEditor: OverrideEditor? = null,
     val isStarting: Boolean = false,
 ) {

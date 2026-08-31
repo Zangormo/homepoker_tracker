@@ -18,10 +18,12 @@ import com.zango.pokertracker.domain.model.PlayerGameResult
 import com.zango.pokertracker.domain.model.PlayerStats
 import com.zango.pokertracker.domain.model.Seat
 import com.zango.pokertracker.domain.model.SettledPayment
+import com.zango.pokertracker.domain.model.Stakes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 /** A clock the test drives by hand, so elapsed readouts are deterministic. */
@@ -51,6 +53,9 @@ class FakePokerRepository(private val clock: TestClock = TestClock()) : PokerRep
     val writes = mutableListOf<String>()
 
     var seatPlayerFailure: Throwable? = null
+
+    /** Overrides what a new game opens on; otherwise the newest summary is used. */
+    var lastPlayedStakes: Stakes? = null
     private var nextId = 1_000L
 
     override fun observeRoster(): Flow<List<Player>> = roster.asStateFlow()
@@ -113,6 +118,19 @@ class FakePokerRepository(private val clock: TestClock = TestClock()) : PokerRep
     override fun observeGame(gameId: Long): Flow<GameSnapshot?> = game.asStateFlow()
 
     override fun observeGameSummaries(): Flow<List<GameSummary>> = summaries.asStateFlow()
+
+    /** Mirrors the real query: the standard ladder plus whatever has been played, by size. */
+    override fun observeStakeOptions(): Flow<List<Stakes>> =
+        summaries.map { games ->
+            val played = games.map { Stakes(it.game.smallBlind, it.game.bigBlind) }
+            (Stakes.COMMON + played)
+                .distinct()
+                .sortedWith(compareBy({ it.bigBlind.micros }, { it.smallBlind.micros }))
+        }
+
+    override suspend fun lastPlayedStakes(): Stakes? =
+        lastPlayedStakes ?: summaries.value.firstOrNull()
+            ?.let { Stakes(it.game.smallBlind, it.game.bigBlind) }
 
     override suspend fun createGame(setup: NewGameSetup): Long {
         writes += "createGame(${setup.name})"

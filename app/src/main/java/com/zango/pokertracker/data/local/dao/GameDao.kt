@@ -6,6 +6,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import com.zango.pokertracker.data.local.entity.GameEntity
 import com.zango.pokertracker.data.local.entity.GameSummaryRow
+import com.zango.pokertracker.data.local.entity.StakesRow
 import com.zango.pokertracker.data.local.entity.GameWithPlayers
 import com.zango.pokertracker.domain.model.GameStatus
 import kotlinx.coroutines.flow.Flow
@@ -42,6 +43,32 @@ interface GameDao {
         """
     )
     fun observeSummaries(): Flow<List<GameSummaryRow>>
+
+    /**
+     * Every distinct stake level that has been played, most recently used first.
+     *
+     * Grouped in SQL rather than by reading every game, because this only ever feeds a short
+     * list of choices and the number of stake levels a host uses does not grow with their
+     * history the way the number of games does.
+     */
+    @Query(
+        """
+        SELECT smallBlindMicros, bigBlindMicros, MAX(startedAt) AS lastPlayedAt
+        FROM games
+        GROUP BY smallBlindMicros, bigBlindMicros
+        ORDER BY lastPlayedAt DESC
+        """
+    )
+    fun observePlayedStakes(): Flow<List<StakesRow>>
+
+    /** The blinds of the most recent game, for opening a new one on the same stakes. */
+    @Query(
+        """
+        SELECT smallBlindMicros, bigBlindMicros, startedAt AS lastPlayedAt
+        FROM games ORDER BY startedAt DESC LIMIT 1
+        """
+    )
+    suspend fun lastPlayedStakes(): StakesRow?
 
     @Transaction
     @Query("SELECT * FROM games WHERE id = :id")

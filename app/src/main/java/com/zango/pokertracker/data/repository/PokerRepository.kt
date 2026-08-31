@@ -8,6 +8,7 @@ import com.zango.pokertracker.domain.model.NewGameSetup
 import com.zango.pokertracker.domain.model.Player
 import com.zango.pokertracker.domain.model.PlayerStats
 import com.zango.pokertracker.domain.model.SettledPayment
+import com.zango.pokertracker.domain.model.Stakes
 import kotlinx.coroutines.flow.Flow
 
 sealed interface CreatePlayerResult {
@@ -66,6 +67,18 @@ interface PokerRepository {
 
     /** Every game, newest first, with the totals the history list shows. */
     fun observeGameSummaries(): Flow<List<GameSummary>>
+
+    /**
+     * Every stake level worth offering when setting a game up: the standard ladder, plus every
+     * pair of blinds the host has actually played, in ascending order of size.
+     *
+     * Games already record their blinds, so a custom stake joins this list by being played once
+     * rather than by being saved anywhere separately.
+     */
+    fun observeStakeOptions(): Flow<List<Stakes>>
+
+    /** The blinds of the most recent game, so a new one can open on the same stakes. */
+    suspend fun lastPlayedStakes(): Stakes?
 
     /** Creates the game, its seats and one opening buy-in each, all or nothing. */
     suspend fun createGame(setup: NewGameSetup): Long

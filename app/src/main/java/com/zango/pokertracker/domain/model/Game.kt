@@ -62,3 +62,29 @@ data class SettledPayment(
     val toPlayerId: Long,
     val amount: Money,
 )
+
+/**
+ * A stake level: the two blinds a game is played at.
+ *
+ * Hosts think in stakes rather than in two separate numbers — "we play 0.05/0.10" — so the pair
+ * travels together wherever it is offered as a choice.
+ */
+data class Stakes(val smallBlind: Money, val bigBlind: Money) {
+
+    /** How the table talks about itself, e.g. "0.05 / 0.10". */
+    fun label(): String = "${smallBlind.format()} / ${bigBlind.format()}"
+
+    companion object {
+        /**
+         * The ladder almost every home game sits somewhere on. These are always offered, and
+         * whatever the host has actually played joins them.
+         */
+        val COMMON: List<Stakes> = listOf(
+            Stakes(Money(10_000), Money(20_000)),
+            Stakes(Money(50_000), Money(100_000)),
+            Stakes(Money(100_000), Money(200_000)),
+            Stakes(Money(500_000), Money(1_000_000)),
+            Stakes(Money(1_000_000), Money(2_000_000)),
+        )
+    }
+}

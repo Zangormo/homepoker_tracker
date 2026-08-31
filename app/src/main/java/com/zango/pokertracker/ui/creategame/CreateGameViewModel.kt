@@ -8,6 +8,7 @@ import com.zango.pokertracker.core.money.sum
 import com.zango.pokertracker.data.repository.CreatePlayerResult
 import com.zango.pokertracker.data.repository.PokerRepository
 import com.zango.pokertracker.domain.model.Player
+import com.zango.pokertracker.domain.model.Stakes
 import com.zango.pokertracker.ui.common.AmountPreview
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -34,12 +35,37 @@ class CreateGameViewModel @Inject constructor(
     val events: Flow<CreateGameEvent> = eventChannel.receiveAsFlow()
 
     val uiState: StateFlow<CreateGameUiState> =
-        combine(form, editing, repository.observeRoster(), ::buildState)
+        combine(
+            form,
+            editing,
+            repository.observeRoster(),
+            repository.observeStakeOptions(),
+            ::buildState,
+        )
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
                 initialValue = CreateGameUiState(),
             )
+
+    init {
+        // Blinds almost never change between one night and the next, so the form opens on the
+        // stakes last played. Only ever written into fields the host has not touched, because
+        // the read is asynchronous and must not overwrite anything typed while it was in flight.
+        viewModelScope.launch {
+            val last = repository.lastPlayedStakes() ?: return@launch
+            form.update { current ->
+                if (current.smallBlind.isBlank() && current.bigBlind.isBlank()) {
+                    current.copy(
+                        smallBlind = last.smallBlind.format(),
+                        bigBlind = last.bigBlind.format(),
+                    )
+                } else {
+                    current
+                }
+            }
+        }
+    }
 
     fun onNameChange(value: String) = form.update { it.copy(name = value) }
 
@@ -47,7 +73,16 @@ class CreateGameViewModel @Inject constructor(
 
     fun onBigBlindChange(value: String) = form.update { it.copy(bigBlind = value) }
 
+    /** Fills both blind fields from one pick, because a stake level is one decision, not two. */
+    fun onStakesSelected(option: StakeOption) = form.update {
+        it.copy(
+            smallBlind = option.stakes.smallBlind.format(),
+            bigBlind = option.stakes.bigBlind.format(),
+        )
+    }
+
     fun onChipValueChange(value: String) = form.update { it.copy(chipValue = value) }
+
 
     fun onChipsPerBigBlindChange(value: String) = form.update { it.copy(chipsPerBigBlind = value) }
 
@@ -185,6 +220,7 @@ class CreateGameViewModel @Inject constructor(
         form: CreateGameForm,
         editing: EditingState,
         roster: List<Player>,
+        stakes: List<Stakes>,
     ): CreateGameUiState {
         val validation = form.validate()
         val rate = validation.chipRate
@@ -208,9 +244,16 @@ class CreateGameViewModel @Inject constructor(
             .takeIf { it.size == form.selection.size && it.isNotEmpty() }
             ?.sum()
 
+        val stakeOptions = stakes.map { StakeOption(it.label(), it) }
+        val typed = validation.smallBlind?.let { small ->
+            validation.bigBlind?.let { Stakes(small, it) }
+        }
+
         return CreateGameUiState(
             form = form,
             validation = validation,
+            stakeOptions = stakeOptions,
+            selectedStake = stakeOptions.firstOrNull { it.stakes == typed },
             roster = rows,
             newPlayerName = editing.newPlayerName,
             newPlayerError = editing.newPlayerError,
