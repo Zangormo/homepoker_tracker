@@ -166,6 +166,34 @@ class HistoryViewModelTest {
         assertNull(state().inProgress.single().chipsOnTable)
     }
 
+    /**
+     * The game hub outlines a finished game in green once every settlement payment has been
+     * ticked off. The flag is recorded on the game rather than recomputed, so what matters here
+     * is that it reaches the row unchanged.
+     */
+    @Test
+    fun `a game whose payments are all made is marked paid up`() = runTest {
+        repository.summaries.value = listOf(
+            summary(1, "Settled", GameStatus.FINISHED).let {
+                it.copy(game = it.game.copy(isFullyPaid = true))
+            },
+            summary(2, "Still owing", GameStatus.FINISHED),
+        )
+
+        val rows = state().finished.associateBy { it.name }
+        assertTrue(rows.getValue("Settled").isFullyPaid)
+        assertFalse(rows.getValue("Still owing").isFullyPaid)
+    }
+
+    @Test
+    fun `a running game is never paid up, however it is stored`() = runTest {
+        repository.summaries.value = listOf(summary(1, "Tonight", GameStatus.IN_PROGRESS))
+
+        val row = state().inProgress.single()
+        assertTrue(row.isInProgress)
+        assertFalse(row.isFullyPaid)
+    }
+
     @Test
     fun `asking to delete a game does not delete anything on its own`() = runTest {
         repository.summaries.value = listOf(

@@ -22,6 +22,13 @@ import com.zango.pokertracker.data.local.entity.SettlementPaymentEntity
 import com.zango.pokertracker.data.local.entity.StakePresetEntity
 import com.zango.pokertracker.domain.model.Stakes
 
+/**
+ * The schema version. Bumped with every change to a table, and the migrations on
+ * [PokerDatabase] must chain unbroken up to it: this database has no destructive fallback, so a
+ * bump without a matching migration crashes every device that already has the app.
+ */
+const val POKER_DATABASE_VERSION: Int = 4
+
 @Database(
     entities = [
         PlayerEntity::class,
@@ -32,7 +39,7 @@ import com.zango.pokertracker.domain.model.Stakes
         SettlementPaymentEntity::class,
         StakePresetEntity::class,
     ],
-    version = 4,
+    version = POKER_DATABASE_VERSION,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)

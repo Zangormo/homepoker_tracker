@@ -58,6 +58,7 @@ class FakePokerRepository(private val clock: TestClock = TestClock()) : PokerRep
     val writes = mutableListOf<String>()
 
     var seatPlayerFailure: Throwable? = null
+    var createGameFailure: Throwable? = null
 
     /** Overrides what a new game opens on; otherwise the newest summary is used. */
     var lastPlayedStakes: Stakes? = null
@@ -156,6 +157,7 @@ class FakePokerRepository(private val clock: TestClock = TestClock()) : PokerRep
             ?.let { Stakes(it.game.smallBlind, it.game.bigBlind) }
 
     override suspend fun createGame(setup: NewGameSetup): Long {
+        createGameFailure?.let { throw it }
         writes += "createGame(${setup.name})"
         return nextId++
     }
