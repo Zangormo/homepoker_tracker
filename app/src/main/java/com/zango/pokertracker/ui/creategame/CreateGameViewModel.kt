@@ -7,6 +7,7 @@ import com.zango.pokertracker.core.money.MoneyParser
 import com.zango.pokertracker.core.money.sum
 import com.zango.pokertracker.data.repository.CreatePlayerResult
 import com.zango.pokertracker.data.repository.PokerRepository
+import com.zango.pokertracker.domain.model.NameRules
 import com.zango.pokertracker.domain.model.Player
 import com.zango.pokertracker.domain.model.Stakes
 import com.zango.pokertracker.ui.common.AmountPreview
@@ -131,6 +132,10 @@ class CreateGameViewModel @Inject constructor(
 
                 CreatePlayerResult.BlankName ->
                     editing.update { it.copy(newPlayerError = "Enter a name") }
+
+                CreatePlayerResult.NameTooLong -> editing.update {
+                    it.copy(newPlayerError = NameRules.tooLongMessage("A name"))
+                }
             }
         }
     }

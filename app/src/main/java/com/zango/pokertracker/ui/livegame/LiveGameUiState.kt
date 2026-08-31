@@ -79,9 +79,12 @@ sealed interface LiveGameDialog {
         val buyIn: String,
         val preview: AmountPreview = AmountPreview(),
         val error: String? = null,
+        /** A problem with the typed name, kept apart so it shows on the right field. */
+        val nameError: String? = null,
     ) : LiveGameDialog {
         val hasSubject: Boolean get() = selectedPlayerId != null || newPlayerName.isNotBlank()
-        val canConfirm: Boolean get() = error == null && !preview.isEmpty && hasSubject
+        val canConfirm: Boolean
+            get() = error == null && nameError == null && !preview.isEmpty && hasSubject
     }
 }
 

@@ -9,6 +9,7 @@ import com.zango.pokertracker.core.time.tick
 import com.zango.pokertracker.data.repository.CreatePlayerResult
 import com.zango.pokertracker.data.repository.PokerRepository
 import com.zango.pokertracker.domain.model.GameSnapshot
+import com.zango.pokertracker.domain.model.NameRules
 import com.zango.pokertracker.domain.model.Player
 import com.zango.pokertracker.domain.model.Seat
 import com.zango.pokertracker.ui.common.AmountPreview
@@ -163,6 +164,13 @@ class LiveGameViewModel @Inject constructor(
                     eventChannel.send(LiveGameEvent.Message("Enter a name"))
                     return@launch
                 }
+
+                CreatePlayerResult.NameTooLong -> {
+                    eventChannel.send(
+                        LiveGameEvent.Message(NameRules.tooLongMessage("A name")),
+                    )
+                    return@launch
+                }
             }
             runCatching { repository.seatPlayer(gameId, playerId, buyIn) }
                 .onFailure { failure ->
@@ -307,6 +315,8 @@ class LiveGameViewModel @Inject constructor(
                     buyIn = buyIn,
                     preview = if (chipError == null) AmountPreview.of(parsed.money, rate) else AmountPreview(),
                     error = parsed.error ?: chipError,
+                    nameError = NameRules.tooLongMessage("A name")
+                        .takeIf { NameRules.isTooLong(newPlayerName) },
                 )
             }
         }

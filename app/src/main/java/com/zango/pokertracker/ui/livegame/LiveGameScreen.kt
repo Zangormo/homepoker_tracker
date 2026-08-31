@@ -628,6 +628,8 @@ private fun AddPlayerDialog(
             value = dialog.newPlayerName,
             onValueChange = onNewNameChange,
             label = "Or add someone new",
+            error = dialog.nameError,
+            forceShowError = true,
         )
         CashAmountField(
             value = dialog.buyIn,

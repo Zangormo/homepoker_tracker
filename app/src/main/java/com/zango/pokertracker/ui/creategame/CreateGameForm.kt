@@ -4,6 +4,7 @@ import com.zango.pokertracker.core.money.ChipRate
 import com.zango.pokertracker.core.money.ChipRateDerivation
 import com.zango.pokertracker.core.money.ChipRateError
 import com.zango.pokertracker.core.money.Money
+import com.zango.pokertracker.domain.model.NameRules
 import com.zango.pokertracker.domain.model.NewGameEntry
 import com.zango.pokertracker.domain.model.NewGameSetup
 import com.zango.pokertracker.ui.common.parseChipCount
@@ -64,7 +65,11 @@ data class CreateGameValidation(
 }
 
 fun CreateGameForm.validate(): CreateGameValidation {
-    val nameError = if (name.isBlank()) "Give the game a name" else null
+    val nameError = when {
+        name.isBlank() -> "Give the game a name"
+        NameRules.isTooLong(name) -> NameRules.tooLongMessage("A game name")
+        else -> null
+    }
 
     val (smallBlindValue, smallBlindError) = parsePositiveMoney(smallBlind, "Small blind")
     val (parsedBigBlind, bigBlindParseError) = parsePositiveMoney(bigBlind, "Big blind")

@@ -6,6 +6,7 @@ import com.zango.pokertracker.data.repository.CreatePlayerResult
 import com.zango.pokertracker.data.repository.DeletePlayerResult
 import com.zango.pokertracker.data.repository.PokerRepository
 import com.zango.pokertracker.data.repository.RenamePlayerResult
+import com.zango.pokertracker.domain.model.NameRules
 import com.zango.pokertracker.domain.model.PlayerStats
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -79,6 +80,10 @@ class PlayersViewModel @Inject constructor(
 
                 CreatePlayerResult.BlankName ->
                     editing.update { it.copy(newPlayerError = "Enter a name") }
+
+                CreatePlayerResult.NameTooLong -> editing.update {
+                    it.copy(newPlayerError = NameRules.tooLongMessage("A name"))
+                }
             }
         }
     }
@@ -122,6 +127,9 @@ class PlayersViewModel @Inject constructor(
                     setRenameError("${result.existing.name} is already on the roster")
 
                 RenamePlayerResult.BlankName -> setRenameError("Enter a name")
+
+                RenamePlayerResult.NameTooLong ->
+                    setRenameError(NameRules.tooLongMessage("A name"))
 
                 RenamePlayerResult.NotFound -> {
                     editing.update { it.copy(renaming = null) }

@@ -16,6 +16,7 @@ sealed interface CreatePlayerResult {
     /** A player by that name already exists; the caller can select them instead. */
     data class NameTaken(val existing: Player) : CreatePlayerResult
     data object BlankName : CreatePlayerResult
+    data object NameTooLong : CreatePlayerResult
 }
 
 sealed interface RenamePlayerResult {
@@ -23,6 +24,7 @@ sealed interface RenamePlayerResult {
     /** Someone else on the roster already answers to that name. */
     data class NameTaken(val existing: Player) : RenamePlayerResult
     data object BlankName : RenamePlayerResult
+    data object NameTooLong : RenamePlayerResult
     data object NotFound : RenamePlayerResult
 }
 
