@@ -199,10 +199,13 @@ private fun GameRow(row: HistoryRow, onClick: () -> Unit, onDelete: () -> Unit) 
             .clickable(role = Role.Button, onClick = onClick),
         shape = MaterialTheme.shapes.small,
         color = MaterialTheme.colorScheme.surfaceContainer,
-        border = if (row.isInProgress) {
-            BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
-        } else {
-            null
+        // A running game is outlined so it can be found again; a finished one only earns an
+        // outline once every payment it called for has actually been handed over. The two never
+        // sit in the same section, and each says in words which it is.
+        border = when {
+            row.isInProgress -> BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+            row.isFullyPaid -> BorderStroke(1.dp, PokerTheme.colors.positive)
+            else -> null
         },
     ) {
         Row(
@@ -238,11 +241,26 @@ private fun GameRow(row: HistoryRow, onClick: () -> Unit, onDelete: () -> Unit) 
                     }
                 }
 
-                Text(
-                    row.dateLabel,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        row.dateLabel,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    // The outline says the same thing in colour; this says it in words, for
+                    // anyone who cannot separate the two greens or is reading a screenshot.
+                    if (row.isFullyPaid) {
+                        Text(
+                            "PAID UP",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = PokerTheme.colors.positive,
+                        )
+                    }
+                }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -384,6 +402,7 @@ private fun historyRow(
     chips: Long,
     duration: String?,
     running: Boolean,
+    paid: Boolean = false,
 ) = HistoryRow(
     gameId = id,
     name = name,
@@ -395,6 +414,7 @@ private fun historyRow(
     chipsOnTable = Chips(chips),
     durationLabel = duration,
     isInProgress = running,
+    isFullyPaid = paid,
 )
 
 private fun populated() = HistoryUiState(
@@ -403,7 +423,7 @@ private fun populated() = HistoryUiState(
         historyRow(1, "Thursday", "30 Aug 2026 · 20:15", 5, 7, 7_000_000, 1400, null, true),
     ),
     finished = listOf(
-        historyRow(2, "Last Thursday", "23 Aug 2026 · 20:05", 6, 9, 9_000_000, 1800, "4h 12m", false),
+        historyRow(2, "Last Thursday", "23 Aug 2026 · 20:05", 6, 9, 9_000_000, 1800, "4h 12m", false, paid = true),
         historyRow(3, "Boris's birthday", "16 Aug 2026 · 19:30", 8, 14, 14_000_000, 2800, "6h 03m", false),
         historyRow(4, "Quiet one", "09 Aug 2026 · 21:00", 3, 3, 3_000_000, 600, "1h 48m", false),
     ),

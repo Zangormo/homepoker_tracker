@@ -43,8 +43,16 @@ interface GameDao {
     )
     fun observeSummaries(): Flow<List<GameSummaryRow>>
 
+    @Transaction
+    @Query("SELECT * FROM games WHERE id = :id")
+    suspend fun loadWithPlayers(id: Long): GameWithPlayers?
+
     @Query("UPDATE games SET status = :status, endedAt = :endedAt WHERE id = :id")
     suspend fun finish(id: Long, status: GameStatus, endedAt: Long)
+
+    /** Records whether every payment the settlement calls for has been handed over. */
+    @Query("UPDATE games SET isFullyPaid = :fullyPaid WHERE id = :id")
+    suspend fun setFullyPaid(id: Long, fullyPaid: Boolean)
 
     /**
      * Seats and buy-ins go with it: both cascade from their foreign keys. Roster players are

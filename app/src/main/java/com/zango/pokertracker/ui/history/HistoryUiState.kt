@@ -16,6 +16,8 @@ data class HistoryRow(
     /** How long the game ran. Null while it is still going. */
     val durationLabel: String?,
     val isInProgress: Boolean,
+    /** True once every settlement payment has been ticked off as handed over. */
+    val isFullyPaid: Boolean = false,
 )
 
 data class HistoryUiState(

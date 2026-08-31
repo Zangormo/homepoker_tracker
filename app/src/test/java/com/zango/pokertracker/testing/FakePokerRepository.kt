@@ -17,6 +17,7 @@ import com.zango.pokertracker.domain.model.Player
 import com.zango.pokertracker.domain.model.PlayerGameResult
 import com.zango.pokertracker.domain.model.PlayerStats
 import com.zango.pokertracker.domain.model.Seat
+import com.zango.pokertracker.domain.model.SettledPayment
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,6 +43,9 @@ class FakePokerRepository(private val clock: TestClock = TestClock()) : PokerRep
 
     /** Games each player has played, keyed by player id. */
     val playerGames = MutableStateFlow<Map<Long, List<PlayerGameResult>>>(emptyMap())
+
+    /** Settlement payments ticked off as handed over. */
+    val settledPayments = MutableStateFlow<List<SettledPayment>>(emptyList())
 
     /** Every write the ViewModel made, in order, for assertions. */
     val writes = mutableListOf<String>()
@@ -175,6 +179,27 @@ class FakePokerRepository(private val clock: TestClock = TestClock()) : PokerRep
     override suspend fun setFinalChipCount(gamePlayerId: Long, chips: Chips?) {
         writes += "setFinalChipCount($gamePlayerId, $chips)"
         updateSeat(gamePlayerId) { it.copy(finalChips = chips) }
+    }
+
+    override fun observeSettledPayments(gameId: Long): Flow<List<SettledPayment>> =
+        settledPayments.asStateFlow()
+
+    override suspend fun setPaymentSettled(
+        payment: SettledPayment,
+        settled: Boolean,
+        allSettled: Boolean,
+    ) {
+        writes += "setPaymentSettled(${payment.fromPlayerId}->${payment.toPlayerId}, " +
+            "$settled, all=$allSettled)"
+        settledPayments.update { marks ->
+            val without = marks.filterNot {
+                it.fromPlayerId == payment.fromPlayerId && it.toPlayerId == payment.toPlayerId
+            }
+            if (settled) without + payment else without
+        }
+        game.update { snapshot ->
+            snapshot?.copy(game = snapshot.game.copy(isFullyPaid = allSettled))
+        }
     }
 
     /** Mirrors the cascade: the game leaves the list and its snapshot goes with it. */

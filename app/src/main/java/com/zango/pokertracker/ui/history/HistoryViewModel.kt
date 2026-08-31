@@ -98,4 +98,5 @@ internal fun GameSummary.toRow(
     chipsOnTable = chipsOnTable,
     durationLabel = durationMillis?.let { formatElapsed(it) },
     isInProgress = game.isInProgress,
+    isFullyPaid = game.isFullyPaid,
 )

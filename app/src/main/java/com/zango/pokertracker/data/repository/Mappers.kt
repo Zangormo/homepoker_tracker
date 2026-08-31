@@ -11,6 +11,7 @@ import com.zango.pokertracker.data.local.entity.GameSummaryRow
 import com.zango.pokertracker.data.local.entity.GameWithPlayers
 import com.zango.pokertracker.data.local.entity.PlayerEntity
 import com.zango.pokertracker.data.local.entity.PlayerGameResultRow
+import com.zango.pokertracker.data.local.entity.SettlementPaymentEntity
 import com.zango.pokertracker.domain.model.BuyIn
 import com.zango.pokertracker.domain.model.ChipReturn
 import com.zango.pokertracker.domain.model.Game
@@ -20,6 +21,7 @@ import com.zango.pokertracker.domain.model.GameSummary
 import com.zango.pokertracker.domain.model.Player
 import com.zango.pokertracker.domain.model.PlayerGameResult
 import com.zango.pokertracker.domain.model.Seat
+import com.zango.pokertracker.domain.model.SettledPayment
 
 /**
  * The boundary where raw `Long` micros become typed [Money] and [Chips]. Above this line a bare
@@ -44,6 +46,7 @@ fun GameEntity.toDomain(): Game = Game(
     startedAt = startedAt,
     endedAt = endedAt,
     status = status,
+    isFullyPaid = isFullyPaid,
 )
 
 fun BuyInEntity.toDomain(): BuyIn = BuyIn(
@@ -91,4 +94,11 @@ fun PlayerGameResultRow.toDomain(): PlayerGameResult = PlayerGameResult(
     totalBuyIn = Money(totalBuyInMicros),
     returnedChips = Chips(returnedChips),
     finalChips = finalChipCount?.let { Chips(it) },
+)
+
+fun SettlementPaymentEntity.toDomain(): SettledPayment = SettledPayment(
+    gameId = gameId,
+    fromPlayerId = fromPlayerId,
+    toPlayerId = toPlayerId,
+    amount = Money(amountMicros),
 )

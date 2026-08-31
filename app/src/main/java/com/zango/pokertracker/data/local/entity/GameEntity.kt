@@ -22,4 +22,10 @@ data class GameEntity(
     val startedAt: Long,
     val endedAt: Long? = null,
     val status: GameStatus = GameStatus.IN_PROGRESS,
+    /**
+     * Whether every payment this game's settlement calls for has been ticked off as handed
+     * over. Recorded rather than derived: payments are computed from the results, and the game
+     * hub cannot recompute every settlement it has ever produced just to colour a border.
+     */
+    @ColumnInfo(defaultValue = "0") val isFullyPaid: Boolean = false,
 )

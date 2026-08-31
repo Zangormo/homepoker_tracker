@@ -7,6 +7,7 @@ import com.zango.pokertracker.domain.model.GameSnapshot
 import com.zango.pokertracker.domain.model.NewGameSetup
 import com.zango.pokertracker.domain.model.Player
 import com.zango.pokertracker.domain.model.PlayerStats
+import com.zango.pokertracker.domain.model.SettledPayment
 import kotlinx.coroutines.flow.Flow
 
 sealed interface CreatePlayerResult {
@@ -97,6 +98,20 @@ interface PokerRepository {
      * without a result and dropped out of the settlement.
      */
     suspend fun endGame(gameId: Long, seatsCountedAsZero: List<Long> = emptyList())
+
+    /** The payments of this game's settlement that have been ticked off as handed over. */
+    fun observeSettledPayments(gameId: Long): Flow<List<SettledPayment>>
+
+    /**
+     * Ticks one settlement payment off, or puts it back.
+     *
+     * [allSettled] says whether that leaves every payment of the game made. It is passed in
+     * rather than worked out here because payments are derived from the results, so only the
+     * screen holding the settlement knows the full list; recording the conclusion alongside the
+     * mark is what lets the game hub show a settled game without recomputing every settlement
+     * the host has ever produced. Both go in one transaction so they cannot disagree.
+     */
+    suspend fun setPaymentSettled(payment: SettledPayment, settled: Boolean, allSettled: Boolean)
 
     /** Erases a game and everything recorded against it. Not reversible. */
     suspend fun deleteGame(gameId: Long)

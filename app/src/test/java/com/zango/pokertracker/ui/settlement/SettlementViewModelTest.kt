@@ -7,6 +7,7 @@ import com.zango.pokertracker.domain.model.Fixture
 import com.zango.pokertracker.domain.model.GameSnapshot
 import com.zango.pokertracker.domain.model.GameStatus
 import com.zango.pokertracker.domain.model.Seat
+import com.zango.pokertracker.domain.model.SettledPayment
 import com.zango.pokertracker.testing.FakePokerRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -72,9 +73,81 @@ class SettlementViewModelTest {
             listOf("Anna pays Boris 1.20", "Anna pays Chris 0.30"),
             state.sentences(),
         )
-        assertEquals(Money(1_500_000), state.totalMoved)
         assertTrue(state.notes.isEmpty())
         assertTrue(state.isFinished)
+    }
+
+    @Test
+    fun `the night is summed up above the payments`() = runTest {
+        // Four buy-ins of 1.00 between three players, and the game ran from 1s to 9s.
+        seat(
+            Fixture.seat(1, "Anna", buyIns = listOf(Fixture.buyIn, Fixture.buyIn), finalChips = Chips(100)),
+            Fixture.seat(2, "Boris", finalChips = Chips(440)),
+            Fixture.seat(3, "Chris", finalChips = Chips(260)),
+        )
+
+        val state = state()
+        assertEquals(4, state.buyInCount)
+        assertEquals(Money(4_000_000), state.totalOnTable)
+        assertEquals("0m", state.durationLabel)
+    }
+
+    /**
+     * Anna owes Boris 1.20 and Chris 0.30. Ticking both is what makes the game square, and only
+     * the second tick may report it, because the hub colours a row on that conclusion alone.
+     */
+    @Test
+    fun `a game is only square once the last payment is ticked off`() = runTest {
+        seat(
+            Fixture.seat(1, "Anna", buyIns = listOf(Fixture.buyIn, Fixture.buyIn), finalChips = Chips(100)),
+            Fixture.seat(2, "Boris", finalChips = Chips(440)),
+            Fixture.seat(3, "Chris", finalChips = Chips(260)),
+        )
+        val viewModel = viewModel()
+        val payments = viewModel.uiState.first { !it.isLoading }.payments
+
+        viewModel.onPaymentToggled(payments[0])
+        assertEquals(listOf("setPaymentSettled(1->2, true, all=false)"), repository.writes)
+
+        val afterFirst = viewModel.uiState.first { it.paidCount == 1 }
+        assertFalse(afterFirst.isFullyPaid)
+        assertTrue(afterFirst.payments[0].isPaid)
+        assertFalse(afterFirst.payments[1].isPaid)
+
+        viewModel.onPaymentToggled(afterFirst.payments[1])
+        assertEquals("setPaymentSettled(1->3, true, all=true)", repository.writes.last())
+        assertTrue(viewModel.uiState.first { it.paidCount == 2 }.isFullyPaid)
+    }
+
+    @Test
+    fun `unticking a payment says the game is no longer square`() = runTest {
+        seat(
+            Fixture.seat(1, "Anna", finalChips = Chips(100)),
+            Fixture.seat(2, "Boris", finalChips = Chips(300)),
+        )
+        val viewModel = viewModel()
+        val payment = viewModel.uiState.first { !it.isLoading }.payments.single()
+
+        viewModel.onPaymentToggled(payment)
+        val paid = viewModel.uiState.first { it.isFullyPaid }
+        viewModel.onPaymentToggled(paid.payments.single())
+
+        assertEquals("setPaymentSettled(1->2, false, all=false)", repository.writes.last())
+        assertFalse(viewModel.uiState.first { it.paidCount == 0 }.isFullyPaid)
+    }
+
+    /** A mark is against a figure, not just a pair, so it cannot survive a different amount. */
+    @Test
+    fun `a mark for a different amount does not tick the payment off`() = runTest {
+        seat(
+            Fixture.seat(1, "Anna", finalChips = Chips(100)),
+            Fixture.seat(2, "Boris", finalChips = Chips(300)),
+        )
+        repository.settledPayments.value = listOf(
+            SettledPayment(GAME_ID, fromPlayerId = 1, toPlayerId = 2, amount = Money(999_000)),
+        )
+
+        assertFalse(state().payments.single().isPaid)
     }
 
     @Test
@@ -103,7 +176,6 @@ class SettlementViewModelTest {
 
         val state = state()
         assertFalse(state.hasPayments)
-        assertEquals(Money.ZERO, state.totalMoved)
         assertTrue(state.shareText.contains("Everyone broke even"))
     }
 

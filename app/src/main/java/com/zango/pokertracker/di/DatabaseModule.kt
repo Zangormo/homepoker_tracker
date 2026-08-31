@@ -10,6 +10,7 @@ import com.zango.pokertracker.data.local.dao.ChipReturnDao
 import com.zango.pokertracker.data.local.dao.GameDao
 import com.zango.pokertracker.data.local.dao.GamePlayerDao
 import com.zango.pokertracker.data.local.dao.PlayerDao
+import com.zango.pokertracker.data.local.dao.SettlementPaymentDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,7 +28,7 @@ object DatabaseModule {
         Room.databaseBuilder(context, PokerDatabase::class.java, PokerDatabase.NAME)
             // No fallbackToDestructiveMigration: a host's game history is not disposable, so a
             // future schema change must ship a real migration rather than wiping the database.
-            .addMigrations(PokerDatabase.MIGRATION_1_2)
+            .addMigrations(PokerDatabase.MIGRATION_1_2, PokerDatabase.MIGRATION_2_3)
             .build()
 
     @Provides
@@ -44,6 +45,10 @@ object DatabaseModule {
 
     @Provides
     fun provideChipReturnDao(database: PokerDatabase): ChipReturnDao = database.chipReturnDao()
+
+    @Provides
+    fun provideSettlementPaymentDao(database: PokerDatabase): SettlementPaymentDao =
+        database.settlementPaymentDao()
 
     @Provides
     @Singleton

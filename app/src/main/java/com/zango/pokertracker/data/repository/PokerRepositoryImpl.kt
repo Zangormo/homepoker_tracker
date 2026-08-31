@@ -10,17 +10,21 @@ import com.zango.pokertracker.data.local.dao.ChipReturnDao
 import com.zango.pokertracker.data.local.dao.GameDao
 import com.zango.pokertracker.data.local.dao.GamePlayerDao
 import com.zango.pokertracker.data.local.dao.PlayerDao
+import com.zango.pokertracker.data.local.dao.SettlementPaymentDao
 import com.zango.pokertracker.data.local.entity.BuyInEntity
 import com.zango.pokertracker.data.local.entity.ChipReturnEntity
 import com.zango.pokertracker.data.local.entity.GameEntity
 import com.zango.pokertracker.data.local.entity.GamePlayerEntity
 import com.zango.pokertracker.data.local.entity.PlayerEntity
+import com.zango.pokertracker.data.local.entity.SettlementPaymentEntity
 import com.zango.pokertracker.domain.model.GameSummary
 import com.zango.pokertracker.domain.model.GameSnapshot
 import com.zango.pokertracker.domain.model.GameStatus
 import com.zango.pokertracker.domain.model.NewGameSetup
 import com.zango.pokertracker.domain.model.Player
 import com.zango.pokertracker.domain.model.PlayerStats
+import com.zango.pokertracker.domain.model.SettledPayment
+import com.zango.pokertracker.domain.settlement.settle
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -36,6 +40,7 @@ class PokerRepositoryImpl @Inject constructor(
     private val gamePlayerDao: GamePlayerDao,
     private val buyInDao: BuyInDao,
     private val chipReturnDao: ChipReturnDao,
+    private val settlementPaymentDao: SettlementPaymentDao,
     private val clock: Clock,
 ) : PokerRepository {
 
@@ -224,6 +229,38 @@ class PokerRepositoryImpl @Inject constructor(
         gamePlayerDao.setFinalChipCount(gamePlayerId, chips?.count)
     }
 
+    override fun observeSettledPayments(gameId: Long): Flow<List<SettledPayment>> =
+        settlementPaymentDao.observeForGame(gameId)
+            .map { rows -> rows.map { it.toDomain() } }
+            .distinctUntilChanged()
+
+    override suspend fun setPaymentSettled(
+        payment: SettledPayment,
+        settled: Boolean,
+        allSettled: Boolean,
+    ) {
+        database.withTransaction {
+            if (settled) {
+                settlementPaymentDao.insert(
+                    SettlementPaymentEntity(
+                        gameId = payment.gameId,
+                        fromPlayerId = payment.fromPlayerId,
+                        toPlayerId = payment.toPlayerId,
+                        amountMicros = payment.amount.micros,
+                        markedAt = clock.nowMillis(),
+                    ),
+                )
+            } else {
+                settlementPaymentDao.delete(
+                    payment.gameId,
+                    payment.fromPlayerId,
+                    payment.toPlayerId,
+                )
+            }
+            gameDao.setFullyPaid(payment.gameId, allSettled)
+        }
+    }
+
     override suspend fun deleteGame(gameId: Long) {
         gameDao.delete(gameId)
     }
@@ -234,6 +271,13 @@ class PokerRepositoryImpl @Inject constructor(
             seatsCountedAsZero.forEach { gamePlayerDao.setFinalChipCount(it, 0) }
             gamePlayerDao.cashOutRemaining(gameId, now)
             gameDao.finish(gameId, GameStatus.FINISHED, now)
+            // A table where everyone came out even is square the moment it ends: its settlement
+            // calls for no payments, so there is nothing for the host to tick off and nothing
+            // else would ever record the game as paid up.
+            val settlement = gameDao.loadWithPlayers(gameId)?.toDomain()?.settle()
+            if (settlement != null && settlement.payments.isEmpty()) {
+                gameDao.setFullyPaid(gameId, true)
+            }
         }
     }
 }

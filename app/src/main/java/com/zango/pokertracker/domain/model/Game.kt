@@ -44,6 +44,21 @@ data class Game(
     val startedAt: Long,
     val endedAt: Long?,
     val status: GameStatus,
+    /** Whether every payment the settlement calls for has been ticked off as handed over. */
+    val isFullyPaid: Boolean = false,
 ) {
     val isInProgress: Boolean get() = status == GameStatus.IN_PROGRESS
 }
+
+/**
+ * A settlement payment the host has marked as actually paid.
+ *
+ * Identified by the pair and the amount rather than by an id, because payments are derived from
+ * the results rather than stored; there is no payment row for a mark to point at.
+ */
+data class SettledPayment(
+    val gameId: Long,
+    val fromPlayerId: Long,
+    val toPlayerId: Long,
+    val amount: Money,
+)

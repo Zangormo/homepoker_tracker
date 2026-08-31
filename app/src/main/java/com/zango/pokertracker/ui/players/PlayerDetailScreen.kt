@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -35,6 +34,9 @@ import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.ui.common.CashAmountText
 import com.zango.pokertracker.ui.common.NetCashText
 import com.zango.pokertracker.ui.common.SectionLabel
+import com.zango.pokertracker.ui.common.StatCount
+import com.zango.pokertracker.ui.common.StatRow
+import com.zango.pokertracker.ui.common.StatTile
 import com.zango.pokertracker.ui.theme.PokerTheme
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
 
@@ -171,40 +173,15 @@ private fun LifetimeHeadline(state: PlayerDetailUiState) {
 
 @Composable
 private fun StatTiles(state: PlayerDetailUiState) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
+    StatRow {
         StatTile(label = "Paid in") {
             CashAmountText(state.totalPaidIn, style = PokerTheme.type.numericMedium)
         }
         StatTile(label = "Buy-ins") {
-            Text(
-                state.buyInCount.toString(),
-                style = PokerTheme.type.numericMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
+            StatCount(state.buyInCount)
         }
         StatTile(label = "Cashed out") {
             CashAmountText(state.cashedOut, style = PokerTheme.type.numericMedium)
-        }
-    }
-}
-
-@Composable
-private fun RowScope.StatTile(label: String, content: @Composable () -> Unit) {
-    Surface(
-        modifier = Modifier.weight(1f),
-        shape = MaterialTheme.shapes.small,
-        color = MaterialTheme.colorScheme.surfaceContainer,
-    ) {
-        Column(
-            modifier = Modifier.padding(vertical = 12.dp, horizontal = 10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            SectionLabel(label)
-            content()
         }
     }
 }

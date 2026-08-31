@@ -5,18 +5,23 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -39,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.AnnotatedString
@@ -52,10 +58,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
+import com.zango.pokertracker.ui.common.CashAmountText
 import com.zango.pokertracker.ui.common.MinTouchTarget
 import com.zango.pokertracker.ui.common.ResultRow
 import com.zango.pokertracker.ui.common.ResultsTable
 import com.zango.pokertracker.ui.common.SectionLabel
+import com.zango.pokertracker.ui.common.StatCount
+import com.zango.pokertracker.ui.common.StatRow
+import com.zango.pokertracker.ui.common.StatText
+import com.zango.pokertracker.ui.common.StatTile
 import com.zango.pokertracker.ui.theme.NumericFamily
 import com.zango.pokertracker.ui.theme.PokerTheme
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
@@ -133,6 +144,7 @@ fun SettlementScreen(
                 state = state,
                 onDone = onDone,
                 modifier = Modifier.padding(padding),
+                onPaymentToggled = viewModel::onPaymentToggled,
             )
         }
     }
@@ -154,22 +166,38 @@ private fun SettlementContent(
     state: SettlementUiState,
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
+    onPaymentToggled: (PaymentLine) -> Unit = {},
 ) {
     LazyColumn(
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(20.dp, 8.dp, 20.dp, 24.dp),
     ) {
+        if (state.isFinished) {
+            item { GameStats(state) }
+        }
+
         if (state.hasPayments) {
-            items(state.payments) { line ->
-                PaymentLineRow(line)
+            items(state.payments, key = { it.fromPlayerId to it.toPlayerId }) { line ->
+                PaymentLineRow(
+                    line = line,
+                    canTick = state.isFinished,
+                    onToggle = { onPaymentToggled(line) },
+                )
                 HorizontalDivider(color = PokerTheme.colors.divider)
             }
             item {
                 Text(
-                    "${state.payments.size} payment${if (state.payments.size == 1) "" else "s"} · " +
-                        "${state.totalMoved.format()} changes hands",
+                    if (state.isFinished) {
+                        "${state.paidCount} of ${state.payments.size} paid"
+                    } else {
+                        "${state.payments.size} payment${if (state.payments.size == 1) "" else "s"}"
+                    },
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (state.isFullyPaid) {
+                        PokerTheme.colors.positive
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                     modifier = Modifier.padding(top = 12.dp),
                 )
             }
@@ -205,14 +233,49 @@ private fun SettlementContent(
 }
 
 /**
- * The line a player acts on. Names carry the sentence and the amount is set in the numeric face,
- * which is why the payment travels as three fields rather than as a finished string.
+ * What the night came to, above the payments.
  *
- * No card, no icon: on a screen that gets passed across a table, anything beside the words is
- * something else for the reader to look past.
+ * These three answer the questions asked once the cards are away and before anyone starts paying
+ * each other: how many times people went back to the bank, how long it took, and how much money
+ * the bank was holding by the end.
  */
 @Composable
-private fun PaymentLineRow(line: PaymentLine) {
+private fun GameStats(state: SettlementUiState) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        SectionLabel("The night")
+        StatRow {
+            StatTile(label = "Buy-ins") { StatCount(state.buyInCount) }
+            StatTile(label = "Lasted") { StatText(state.durationLabel ?: "—") }
+            StatTile(label = "In the bank") {
+                CashAmountText(state.totalOnTable, style = PokerTheme.type.numericMedium)
+            }
+        }
+    }
+}
+
+/**
+ * The line a player acts on, with a box to tick once the money has actually changed hands.
+ *
+ * Names carry the sentence and the amount is set in the numeric face, which is why the payment
+ * travels as separate fields rather than as a finished string. A paid line drops to the quiet
+ * colour throughout, so a glance down the list finds what is still owed without reading it.
+ *
+ * No card, no icon: on a screen that gets passed across a table, anything beside the words and
+ * the box is something else for the reader to look past.
+ */
+@Composable
+private fun PaymentLineRow(line: PaymentLine, canTick: Boolean, onToggle: () -> Unit) {
+    val paid = line.isPaid
+    val bodyColor = if (paid) {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
     val sentence = buildAnnotatedString {
         append(line.from)
         withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
@@ -225,23 +288,58 @@ private fun PaymentLineRow(line: PaymentLine) {
                 fontFamily = NumericFamily,
                 fontWeight = FontWeight.SemiBold,
                 fontFeatureSettings = "tnum",
-                color = MaterialTheme.colorScheme.primary,
+                color = if (paid) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.primary
+                },
             ),
         ) {
             append('$')
             append(line.amount.format())
         }
     }
-    Text(
-        text = sentence,
-        style = MaterialTheme.typography.headlineMedium,
+
+    val spoken = buildString {
+        append("${line.from} pays ${line.to} ${line.amount.format()}")
+        if (canTick) append(if (paid) ", paid" else ", not paid yet")
+    }
+
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp)
-            .clearAndSetSemantics {
-                contentDescription = "${line.from} pays ${line.to} ${line.amount.format()}"
-            },
-    )
+            .then(
+                if (canTick) {
+                    Modifier.toggleable(value = paid, role = Role.Checkbox, onValueChange = {
+                        onToggle()
+                    })
+                } else {
+                    Modifier
+                },
+            )
+            .padding(vertical = if (canTick) 10.dp else 16.dp)
+            .clearAndSetSemantics { contentDescription = spoken },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (canTick) {
+            Checkbox(
+                checked = paid,
+                onCheckedChange = null,
+                colors = CheckboxDefaults.colors(
+                    checkedColor = MaterialTheme.colorScheme.primary,
+                    checkmarkColor = MaterialTheme.colorScheme.onPrimary,
+                    uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
+            )
+            Spacer(Modifier.width(12.dp))
+        }
+        Text(
+            text = sentence,
+            style = MaterialTheme.typography.headlineMedium,
+            color = bodyColor,
+            modifier = Modifier.weight(1f),
+        )
+    }
 }
 
 @Composable
@@ -345,10 +443,12 @@ private fun settledState() = SettlementUiState(
     gameName = "Thursday",
     isFinished = true,
     payments = listOf(
-        PaymentLine("Anna", "Boris", Money(4_500_000)),
-        PaymentLine("Chris", "Boris", Money(1_200_000)),
+        PaymentLine(1, "Anna", 2, "Boris", Money(4_500_000), isPaid = true),
+        PaymentLine(3, "Chris", 2, "Boris", Money(1_200_000)),
     ),
-    totalMoved = Money(5_700_000),
+    buyInCount = 9,
+    durationLabel = "4h 12m",
+    totalOnTable = Money(8_000_000),
     results = listOf(
         result("Boris", 1_000_000, 1340, 6_700_000, 5_700_000),
         result("Anna", 5_000_000, 100, 500_000, -4_500_000),
@@ -358,8 +458,9 @@ private fun settledState() = SettlementUiState(
 )
 
 private fun unsettledState() = settledState().copy(
-    payments = listOf(PaymentLine("Boris", "Anna", Money(250_000))),
-    totalMoved = Money(250_000),
+    payments = listOf(PaymentLine(2, "Boris", 1, "Anna", Money(250_000))),
+    buyInCount = 2,
+    totalOnTable = Money(2_000_000),
     hasProblem = true,
     notes = listOf(
         "Chip counts came out 0.06 short of the buy-ins, so these payments do not fully " +
@@ -374,7 +475,8 @@ private fun unsettledState() = settledState().copy(
 
 private fun evenState() = settledState().copy(
     payments = emptyList(),
-    totalMoved = Money.ZERO,
+    buyInCount = 2,
+    totalOnTable = Money(2_000_000),
     notes = emptyList(),
     results = listOf(
         result("Anna", 1_000_000, 200, 1_000_000, 0),
