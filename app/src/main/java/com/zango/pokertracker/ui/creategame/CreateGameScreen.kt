@@ -375,7 +375,11 @@ private fun StakesSheetContent(
     ) {
         Text("Common stakes", style = MaterialTheme.typography.titleLarge)
         Text(
-            "Pick a level and both blinds are filled in. Whatever you play joins the list.",
+            if (options.isEmpty()) {
+                "No levels saved. Type the blinds above, or add levels in Settings."
+            } else {
+                "Pick a level and both blinds are filled in. Whatever you play joins the list."
+            },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

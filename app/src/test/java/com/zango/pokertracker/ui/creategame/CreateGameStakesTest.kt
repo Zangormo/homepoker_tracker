@@ -1,8 +1,6 @@
 package com.zango.pokertracker.ui.creategame
 
 import com.zango.pokertracker.core.money.Money
-import com.zango.pokertracker.domain.model.Fixture
-import com.zango.pokertracker.domain.model.GameSummary
 import com.zango.pokertracker.domain.model.Stakes
 import com.zango.pokertracker.testing.FakePokerRepository
 import kotlinx.coroutines.Dispatchers
@@ -21,8 +19,8 @@ import org.junit.Test
 /**
  * The stake picker under the blind fields, and the stakes a new game opens on.
  *
- * A host plays the same blinds week after week, so a level they have used once is worth offering
- * for good; games already record their blinds, which is where the list comes from.
+ * The list is the host's own: seeded with the standard ladder, grown by playing a game on new
+ * blinds, and pruned in settings.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class CreateGameStakesTest {
@@ -35,18 +33,11 @@ class CreateGameStakesTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun playedAt(small: Long, big: Long) = GameSummary(
-        game = Fixture.game().copy(smallBlind = Money(small), bigBlind = Money(big)),
-        playerCount = 4,
-        buyInCount = 4,
-        totalOnTable = Money(4_000_000),
-    )
-
     private suspend fun state() =
         CreateGameViewModel(repository).uiState.first { it.stakeOptions.isNotEmpty() }
 
     @Test
-    fun `the standard ladder is offered before anything has been played`() = runTest {
+    fun `the standard ladder is offered before the host changes anything`() = runTest {
         assertEquals(
             listOf("0.01 / 0.02", "0.05 / 0.10", "0.10 / 0.20", "0.50 / 1.00", "1.00 / 2.00"),
             state().stakeOptions.map { it.label },
@@ -54,8 +45,8 @@ class CreateGameStakesTest {
     }
 
     @Test
-    fun `a stake the host has played joins the list, in size order`() = runTest {
-        repository.summaries.value = listOf(playedAt(2_000, 5_000))
+    fun `a level on the host's own list is offered, in size order`() = runTest {
+        repository.stakePresets.value += Stakes(Money(2_000), Money(5_000))
 
         assertEquals(
             listOf(
@@ -68,13 +59,6 @@ class CreateGameStakesTest {
             ),
             state().stakeOptions.map { it.label },
         )
-    }
-
-    @Test
-    fun `playing a standard level does not list it twice`() = runTest {
-        repository.summaries.value = listOf(playedAt(50_000, 100_000), playedAt(50_000, 100_000))
-
-        assertEquals(1, state().stakeOptions.count { it.label == "0.05 / 0.10" })
     }
 
     @Test

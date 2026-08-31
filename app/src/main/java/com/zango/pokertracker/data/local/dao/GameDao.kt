@@ -44,23 +44,6 @@ interface GameDao {
     )
     fun observeSummaries(): Flow<List<GameSummaryRow>>
 
-    /**
-     * Every distinct stake level that has been played, most recently used first.
-     *
-     * Grouped in SQL rather than by reading every game, because this only ever feeds a short
-     * list of choices and the number of stake levels a host uses does not grow with their
-     * history the way the number of games does.
-     */
-    @Query(
-        """
-        SELECT smallBlindMicros, bigBlindMicros, MAX(startedAt) AS lastPlayedAt
-        FROM games
-        GROUP BY smallBlindMicros, bigBlindMicros
-        ORDER BY lastPlayedAt DESC
-        """
-    )
-    fun observePlayedStakes(): Flow<List<StakesRow>>
-
     /** The blinds of the most recent game, for opening a new one on the same stakes. */
     @Query(
         """

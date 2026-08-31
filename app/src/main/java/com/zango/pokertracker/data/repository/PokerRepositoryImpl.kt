@@ -11,12 +11,14 @@ import com.zango.pokertracker.data.local.dao.GameDao
 import com.zango.pokertracker.data.local.dao.GamePlayerDao
 import com.zango.pokertracker.data.local.dao.PlayerDao
 import com.zango.pokertracker.data.local.dao.SettlementPaymentDao
+import com.zango.pokertracker.data.local.dao.StakePresetDao
 import com.zango.pokertracker.data.local.entity.BuyInEntity
 import com.zango.pokertracker.data.local.entity.ChipReturnEntity
 import com.zango.pokertracker.data.local.entity.GameEntity
 import com.zango.pokertracker.data.local.entity.GamePlayerEntity
 import com.zango.pokertracker.data.local.entity.PlayerEntity
 import com.zango.pokertracker.data.local.entity.SettlementPaymentEntity
+import com.zango.pokertracker.data.local.entity.StakePresetEntity
 import com.zango.pokertracker.domain.model.GameSummary
 import com.zango.pokertracker.domain.model.GameSnapshot
 import com.zango.pokertracker.domain.model.GameStatus
@@ -42,6 +44,7 @@ class PokerRepositoryImpl @Inject constructor(
     private val buyInDao: BuyInDao,
     private val chipReturnDao: ChipReturnDao,
     private val settlementPaymentDao: SettlementPaymentDao,
+    private val stakePresetDao: StakePresetDao,
     private val clock: Clock,
 ) : PokerRepository {
 
@@ -128,17 +131,37 @@ class PokerRepositoryImpl @Inject constructor(
             .distinctUntilChanged()
 
     override fun observeStakeOptions(): Flow<List<Stakes>> =
-        gameDao.observePlayedStakes()
-            .map { rows ->
-                val played = rows.map { Stakes(Money(it.smallBlindMicros), Money(it.bigBlindMicros)) }
-                // Sorted by size rather than by how recently they were used, so the list a host
-                // scans does not reorder itself between one game and the next. What they played
-                // last is already waiting in the fields.
-                (Stakes.COMMON + played)
-                    .distinct()
-                    .sortedWith(compareBy({ it.bigBlind.micros }, { it.smallBlind.micros }))
-            }
+        stakePresetDao.observeAll()
+            .map { rows -> rows.map { Stakes(Money(it.smallBlindMicros), Money(it.bigBlindMicros)) } }
             .distinctUntilChanged()
+
+    override suspend fun addStakes(stakes: Stakes): AddStakesResult {
+        require(stakes.smallBlind.isPositive) { "Small blind must be greater than zero" }
+        require(stakes.smallBlind < stakes.bigBlind) { "Small blind must be below the big blind" }
+        return database.withTransaction {
+            when {
+                stakePresetDao.exists(stakes.smallBlind.micros, stakes.bigBlind.micros) ->
+                    AddStakesResult.AlreadyListed
+
+                stakePresetDao.count() >= Stakes.MAX_PRESETS -> AddStakesResult.ListFull
+
+                else -> {
+                    stakePresetDao.insert(
+                        StakePresetEntity(
+                            smallBlindMicros = stakes.smallBlind.micros,
+                            bigBlindMicros = stakes.bigBlind.micros,
+                            createdAt = clock.nowMillis(),
+                        ),
+                    )
+                    AddStakesResult.Added
+                }
+            }
+        }
+    }
+
+    override suspend fun removeStakes(stakes: Stakes) {
+        stakePresetDao.delete(stakes.smallBlind.micros, stakes.bigBlind.micros)
+    }
 
     override suspend fun lastPlayedStakes(): Stakes? =
         gameDao.lastPlayedStakes()
@@ -182,6 +205,18 @@ class PokerRepositoryImpl @Inject constructor(
                     )
                 },
             )
+            // Blinds actually played are worth offering next time. Nothing is evicted to make
+            // room: a full list is the host's to prune in settings, and silently dropping a
+            // level they put there themselves would be worse than not adding this one.
+            if (stakePresetDao.count() < Stakes.MAX_PRESETS) {
+                stakePresetDao.insert(
+                    StakePresetEntity(
+                        smallBlindMicros = setup.smallBlind.micros,
+                        bigBlindMicros = setup.bigBlind.micros,
+                        createdAt = now,
+                    ),
+                )
+            }
             gameId
         }
     }

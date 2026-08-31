@@ -2,6 +2,8 @@ package com.zango.pokertracker.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.zango.pokertracker.core.time.Clock
 import com.zango.pokertracker.core.time.SystemClock
 import com.zango.pokertracker.data.local.PokerDatabase
@@ -11,6 +13,7 @@ import com.zango.pokertracker.data.local.dao.GameDao
 import com.zango.pokertracker.data.local.dao.GamePlayerDao
 import com.zango.pokertracker.data.local.dao.PlayerDao
 import com.zango.pokertracker.data.local.dao.SettlementPaymentDao
+import com.zango.pokertracker.data.local.dao.StakePresetDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -28,7 +31,18 @@ object DatabaseModule {
         Room.databaseBuilder(context, PokerDatabase::class.java, PokerDatabase.NAME)
             // No fallbackToDestructiveMigration: a host's game history is not disposable, so a
             // future schema change must ship a real migration rather than wiping the database.
-            .addMigrations(PokerDatabase.MIGRATION_1_2, PokerDatabase.MIGRATION_2_3)
+            .addMigrations(
+                PokerDatabase.MIGRATION_1_2,
+                PokerDatabase.MIGRATION_2_3,
+                PokerDatabase.MIGRATION_3_4,
+            )
+            // A fresh install never runs a migration, so the standard stake ladder is laid
+            // down here instead. Upgrades get the same list from MIGRATION_3_4.
+            .addCallback(object : RoomDatabase.Callback() {
+                override fun onCreate(db: SupportSQLiteDatabase) {
+                    PokerDatabase.seedStandardStakes(db)
+                }
+            })
             .build()
 
     @Provides
@@ -49,6 +63,9 @@ object DatabaseModule {
     @Provides
     fun provideSettlementPaymentDao(database: PokerDatabase): SettlementPaymentDao =
         database.settlementPaymentDao()
+
+    @Provides
+    fun provideStakePresetDao(database: PokerDatabase): StakePresetDao = database.stakePresetDao()
 
     @Provides
     @Singleton

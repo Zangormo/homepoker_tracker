@@ -36,6 +36,13 @@ sealed interface DeletePlayerResult {
     data class HasHistory(val gamesPlayed: Int) : DeletePlayerResult
 }
 
+sealed interface AddStakesResult {
+    data object Added : AddStakesResult
+    data object AlreadyListed : AddStakesResult
+    /** The list is at [Stakes.MAX_PRESETS]; something has to come off before anything goes on. */
+    data object ListFull : AddStakesResult
+}
+
 /**
  * The app's single door to stored data. Reads are [Flow]s so the live game screen recomposes as
  * buy-ins and cash-outs land, and writes are suspending and transactional.
@@ -69,13 +76,18 @@ interface PokerRepository {
     fun observeGameSummaries(): Flow<List<GameSummary>>
 
     /**
-     * Every stake level worth offering when setting a game up: the standard ladder, plus every
-     * pair of blinds the host has actually played, in ascending order of size.
+     * The stake levels offered when setting a game up, in ascending order of size.
      *
-     * Games already record their blinds, so a custom stake joins this list by being played once
-     * rather than by being saved anywhere separately.
+     * The host owns this list: it starts as the standard ladder, gains a level when a game is
+     * played on new blinds, and is edited in settings. Capped at [Stakes.MAX_PRESETS].
      */
     fun observeStakeOptions(): Flow<List<Stakes>>
+
+    /** Adds a level the host wants without having to play a game on it first. */
+    suspend fun addStakes(stakes: Stakes): AddStakesResult
+
+    /** Drops a level from the picker. The games played on it are untouched. */
+    suspend fun removeStakes(stakes: Stakes)
 
     /** The blinds of the most recent game, so a new one can open on the same stakes. */
     suspend fun lastPlayedStakes(): Stakes?

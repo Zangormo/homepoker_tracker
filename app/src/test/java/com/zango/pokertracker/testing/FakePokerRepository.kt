@@ -3,6 +3,7 @@ package com.zango.pokertracker.testing
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.core.time.Clock
+import com.zango.pokertracker.data.repository.AddStakesResult
 import com.zango.pokertracker.data.repository.CreatePlayerResult
 import com.zango.pokertracker.data.repository.DeletePlayerResult
 import com.zango.pokertracker.data.repository.PokerRepository
@@ -48,6 +49,9 @@ class FakePokerRepository(private val clock: TestClock = TestClock()) : PokerRep
 
     /** Settlement payments ticked off as handed over. */
     val settledPayments = MutableStateFlow<List<SettledPayment>>(emptyList())
+
+    /** The stake levels the picker offers, seeded the way a fresh install is. */
+    val stakePresets = MutableStateFlow(Stakes.COMMON)
 
     /** Every write the ViewModel made, in order, for assertions. */
     val writes = mutableListOf<String>()
@@ -119,14 +123,30 @@ class FakePokerRepository(private val clock: TestClock = TestClock()) : PokerRep
 
     override fun observeGameSummaries(): Flow<List<GameSummary>> = summaries.asStateFlow()
 
-    /** Mirrors the real query: the standard ladder plus whatever has been played, by size. */
+    /** Mirrors the real table: the host's own list, ordered by size. */
     override fun observeStakeOptions(): Flow<List<Stakes>> =
-        summaries.map { games ->
-            val played = games.map { Stakes(it.game.smallBlind, it.game.bigBlind) }
-            (Stakes.COMMON + played)
-                .distinct()
-                .sortedWith(compareBy({ it.bigBlind.micros }, { it.smallBlind.micros }))
+        stakePresets.map { presets ->
+            presets.sortedWith(compareBy({ it.bigBlind.micros }, { it.smallBlind.micros }))
         }
+
+    override suspend fun addStakes(stakes: Stakes): AddStakesResult {
+        require(stakes.smallBlind.isPositive) { "Small blind must be greater than zero" }
+        require(stakes.smallBlind < stakes.bigBlind) { "Small blind must be below the big blind" }
+        return when {
+            stakes in stakePresets.value -> AddStakesResult.AlreadyListed
+            stakePresets.value.size >= Stakes.MAX_PRESETS -> AddStakesResult.ListFull
+            else -> {
+                writes += "addStakes(${stakes.label()})"
+                stakePresets.update { it + stakes }
+                AddStakesResult.Added
+            }
+        }
+    }
+
+    override suspend fun removeStakes(stakes: Stakes) {
+        writes += "removeStakes(${stakes.label()})"
+        stakePresets.update { list -> list.filterNot { it == stakes } }
+    }
 
     override suspend fun lastPlayedStakes(): Stakes? =
         lastPlayedStakes ?: summaries.value.firstOrNull()

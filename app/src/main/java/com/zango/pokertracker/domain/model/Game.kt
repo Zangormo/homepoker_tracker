@@ -76,6 +76,12 @@ data class Stakes(val smallBlind: Money, val bigBlind: Money) {
 
     companion object {
         /**
+         * How many levels the picker will hold. Past about this many the list stops being a
+         * shortcut and becomes something to read, so the host prunes it instead.
+         */
+        const val MAX_PRESETS: Int = 10
+
+        /**
          * The ladder almost every home game sits somewhere on. These are always offered, and
          * whatever the host has actually played joins them.
          */

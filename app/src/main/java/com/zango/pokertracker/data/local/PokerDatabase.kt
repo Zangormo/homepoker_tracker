@@ -12,12 +12,15 @@ import com.zango.pokertracker.data.local.dao.GameDao
 import com.zango.pokertracker.data.local.dao.GamePlayerDao
 import com.zango.pokertracker.data.local.dao.PlayerDao
 import com.zango.pokertracker.data.local.dao.SettlementPaymentDao
+import com.zango.pokertracker.data.local.dao.StakePresetDao
 import com.zango.pokertracker.data.local.entity.BuyInEntity
 import com.zango.pokertracker.data.local.entity.ChipReturnEntity
 import com.zango.pokertracker.data.local.entity.GameEntity
 import com.zango.pokertracker.data.local.entity.GamePlayerEntity
 import com.zango.pokertracker.data.local.entity.PlayerEntity
 import com.zango.pokertracker.data.local.entity.SettlementPaymentEntity
+import com.zango.pokertracker.data.local.entity.StakePresetEntity
+import com.zango.pokertracker.domain.model.Stakes
 
 @Database(
     entities = [
@@ -27,8 +30,9 @@ import com.zango.pokertracker.data.local.entity.SettlementPaymentEntity
         BuyInEntity::class,
         ChipReturnEntity::class,
         SettlementPaymentEntity::class,
+        StakePresetEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -39,6 +43,7 @@ abstract class PokerDatabase : RoomDatabase() {
     abstract fun buyInDao(): BuyInDao
     abstract fun chipReturnDao(): ChipReturnDao
     abstract fun settlementPaymentDao(): SettlementPaymentDao
+    abstract fun stakePresetDao(): StakePresetDao
 
     companion object {
         const val NAME = "poker.db"
@@ -96,6 +101,65 @@ abstract class PokerDatabase : RoomDatabase() {
                 )
                 db.execSQL(
                     "ALTER TABLE `games` ADD COLUMN `isFullyPaid` INTEGER NOT NULL DEFAULT 0",
+                )
+            }
+        }
+
+        /**
+         * Turns the stake picker's list into something the host owns.
+         *
+         * Until now it was read back out of the games that used it, which meant a one-off night
+         * at odd blinds sat in the picker forever and a level could not be added without playing
+         * it. The list is seeded with the standard ladder plus whatever has actually been played,
+         * newest first, so nothing on offer before the upgrade disappears at it.
+         */
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `stake_presets` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `smallBlindMicros` INTEGER NOT NULL,
+                        `bigBlindMicros` INTEGER NOT NULL,
+                        `createdAt` INTEGER NOT NULL
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS " +
+                        "`index_stake_presets_smallBlindMicros_bigBlindMicros` " +
+                        "ON `stake_presets` (`smallBlindMicros`, `bigBlindMicros`)",
+                )
+                seedStandardStakes(db)
+                db.execSQL(
+                    """
+                    INSERT OR IGNORE INTO stake_presets
+                        (smallBlindMicros, bigBlindMicros, createdAt)
+                    SELECT g.smallBlindMicros, g.bigBlindMicros, MAX(g.startedAt)
+                    FROM games g
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM stake_presets p
+                        WHERE p.smallBlindMicros = g.smallBlindMicros
+                            AND p.bigBlindMicros = g.bigBlindMicros
+                    )
+                    GROUP BY g.smallBlindMicros, g.bigBlindMicros
+                    ORDER BY MAX(g.startedAt) DESC
+                    LIMIT ${Stakes.MAX_PRESETS - Stakes.COMMON.size}
+                    """.trimIndent(),
+                )
+            }
+        }
+
+        /**
+         * Lays down the standard ladder. Run both when the database is created and when an older
+         * one is upgraded, because neither path covers the other.
+         */
+        fun seedStandardStakes(db: SupportSQLiteDatabase) {
+            Stakes.COMMON.forEach { stakes ->
+                db.execSQL(
+                    "INSERT OR IGNORE INTO stake_presets " +
+                        "(smallBlindMicros, bigBlindMicros, createdAt) VALUES (?, ?, 0)",
+                    arrayOf<Any>(stakes.smallBlind.micros, stakes.bigBlind.micros),
                 )
             }
         }
