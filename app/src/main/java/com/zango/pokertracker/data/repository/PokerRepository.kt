@@ -6,6 +6,7 @@ import com.zango.pokertracker.domain.model.GameSummary
 import com.zango.pokertracker.domain.model.GameSnapshot
 import com.zango.pokertracker.domain.model.NewGameSetup
 import com.zango.pokertracker.domain.model.Player
+import com.zango.pokertracker.domain.model.PlayerStats
 import kotlinx.coroutines.flow.Flow
 
 sealed interface CreatePlayerResult {
@@ -13,6 +14,24 @@ sealed interface CreatePlayerResult {
     /** A player by that name already exists; the caller can select them instead. */
     data class NameTaken(val existing: Player) : CreatePlayerResult
     data object BlankName : CreatePlayerResult
+}
+
+sealed interface RenamePlayerResult {
+    data class Renamed(val player: Player) : RenamePlayerResult
+    /** Someone else on the roster already answers to that name. */
+    data class NameTaken(val existing: Player) : RenamePlayerResult
+    data object BlankName : RenamePlayerResult
+    data object NotFound : RenamePlayerResult
+}
+
+sealed interface DeletePlayerResult {
+    data object Deleted : DeletePlayerResult
+
+    /**
+     * The player has sat in games, so removing them would rewrite results that have already been
+     * settled. Hiding them from the roster is the way out.
+     */
+    data class HasHistory(val gamesPlayed: Int) : DeletePlayerResult
 }
 
 /**
@@ -23,7 +42,24 @@ interface PokerRepository {
 
     fun observeRoster(): Flow<List<Player>>
 
+    /**
+     * The whole roster, hidden players included, each with everything they have ever played.
+     * Sorted by name, and each player's games newest first.
+     */
+    fun observePlayerStats(): Flow<List<PlayerStats>>
+
     suspend fun createPlayer(name: String): CreatePlayerResult
+
+    suspend fun renamePlayer(playerId: Long, name: String): RenamePlayerResult
+
+    /** Hides a player from the game setup picker, or brings them back, without touching history. */
+    suspend fun setPlayerArchived(playerId: Long, archived: Boolean)
+
+    /**
+     * Removes a player from the roster for good. Only possible while they have never played;
+     * anyone with history comes back as [DeletePlayerResult.HasHistory] instead.
+     */
+    suspend fun deletePlayer(playerId: Long): DeletePlayerResult
 
     fun observeGame(gameId: Long): Flow<GameSnapshot?>
 

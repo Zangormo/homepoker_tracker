@@ -20,7 +20,9 @@ import com.zango.pokertracker.domain.model.GameSnapshot
 import com.zango.pokertracker.domain.model.GameStatus
 import com.zango.pokertracker.domain.model.NewGameSetup
 import com.zango.pokertracker.domain.model.Player
+import com.zango.pokertracker.domain.model.PlayerStats
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -54,6 +56,60 @@ class PokerRepositoryImpl @Inject constructor(
             Player(id = id, name = trimmed, createdAt = createdAt),
         )
     }
+
+    /**
+     * The roster and every seat ever taken, joined in memory rather than in one wide SQL join.
+     * Room emits both flows again whenever any of the underlying tables change, so a rename or a
+     * buy-in landing mid-game is reflected without the screen asking for it.
+     */
+    override fun observePlayerStats(): Flow<List<PlayerStats>> =
+        combine(
+            playerDao.observeAllPlayers(),
+            playerDao.observePlayerGameResults(),
+        ) { players, results ->
+            val byPlayer = results.groupBy { it.playerId }
+            players.map { player ->
+                PlayerStats(
+                    player = player.toDomain(),
+                    games = byPlayer[player.id].orEmpty().map { it.toDomain() },
+                )
+            }
+        }.distinctUntilChanged()
+
+    override suspend fun renamePlayer(playerId: Long, name: String): RenamePlayerResult {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return RenamePlayerResult.BlankName
+        return database.withTransaction {
+            val current = playerDao.findById(playerId)
+                ?: return@withTransaction RenamePlayerResult.NotFound
+            // Matching the player's own row is not a clash: it is how a correction of case or
+            // spacing arrives, and refusing it would make "bob" impossible to fix to "Bob".
+            playerDao.findByName(trimmed)
+                ?.takeIf { it.id != playerId }
+                ?.let { return@withTransaction RenamePlayerResult.NameTaken(it.toDomain()) }
+            playerDao.rename(playerId, trimmed)
+            RenamePlayerResult.Renamed(current.toDomain().copy(name = trimmed))
+        }
+    }
+
+    override suspend fun setPlayerArchived(playerId: Long, archived: Boolean) {
+        playerDao.setArchived(playerId, archived)
+    }
+
+    /**
+     * Checked before deleting rather than catching the foreign key failure afterwards, so the
+     * caller is told what stands in the way instead of being handed a constraint error.
+     */
+    override suspend fun deletePlayer(playerId: Long): DeletePlayerResult =
+        database.withTransaction {
+            val played = playerDao.gamesPlayed(playerId)
+            if (played > 0) {
+                DeletePlayerResult.HasHistory(played)
+            } else {
+                playerDao.delete(playerId)
+                DeletePlayerResult.Deleted
+            }
+        }
 
     override fun observeGame(gameId: Long): Flow<GameSnapshot?> =
         gameDao.observeWithPlayers(gameId)

@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -58,6 +59,7 @@ import com.zango.pokertracker.ui.theme.PokerTrackerTheme
 
 @Composable
 fun HistoryScreen(
+    onOpenMenu: () -> Unit,
     onNewGame: () -> Unit,
     onResumeGame: (Long) -> Unit,
     onOpenSettlement: (Long) -> Unit,
@@ -79,7 +81,12 @@ fun HistoryScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Poker Tracker") },
+                title = { Text("Game hub") },
+                navigationIcon = {
+                    IconButton(onClick = onOpenMenu) {
+                        Icon(Icons.Filled.Menu, contentDescription = "Open menu")
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                 ),

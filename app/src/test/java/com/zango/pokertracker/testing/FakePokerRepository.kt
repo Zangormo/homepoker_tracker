@@ -4,7 +4,9 @@ import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.core.time.Clock
 import com.zango.pokertracker.data.repository.CreatePlayerResult
+import com.zango.pokertracker.data.repository.DeletePlayerResult
 import com.zango.pokertracker.data.repository.PokerRepository
+import com.zango.pokertracker.data.repository.RenamePlayerResult
 import com.zango.pokertracker.domain.model.BuyIn
 import com.zango.pokertracker.domain.model.ChipReturn
 import com.zango.pokertracker.domain.model.GameSummary
@@ -12,10 +14,13 @@ import com.zango.pokertracker.domain.model.GameSnapshot
 import com.zango.pokertracker.domain.model.GameStatus
 import com.zango.pokertracker.domain.model.NewGameSetup
 import com.zango.pokertracker.domain.model.Player
+import com.zango.pokertracker.domain.model.PlayerGameResult
+import com.zango.pokertracker.domain.model.PlayerStats
 import com.zango.pokertracker.domain.model.Seat
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 
 /** A clock the test drives by hand, so elapsed readouts are deterministic. */
@@ -35,6 +40,9 @@ class FakePokerRepository(private val clock: TestClock = TestClock()) : PokerRep
     val game = MutableStateFlow<GameSnapshot?>(null)
     val summaries = MutableStateFlow<List<GameSummary>>(emptyList())
 
+    /** Games each player has played, keyed by player id. */
+    val playerGames = MutableStateFlow<Map<Long, List<PlayerGameResult>>>(emptyMap())
+
     /** Every write the ViewModel made, in order, for assertions. */
     val writes = mutableListOf<String>()
 
@@ -52,6 +60,50 @@ class FakePokerRepository(private val clock: TestClock = TestClock()) : PokerRep
         roster.update { it + player }
         writes += "createPlayer(${player.name})"
         return CreatePlayerResult.Created(player)
+    }
+
+    /**
+     * Mirrors the real query: the whole roster in name order, each with the games they have
+     * played, newest first. Tests seed [playerGames] with whatever history they need.
+     */
+    override fun observePlayerStats(): Flow<List<PlayerStats>> =
+        combine(roster, playerGames) { players, games ->
+            players.sortedBy { it.name.lowercase() }.map { player ->
+                PlayerStats(
+                    player = player,
+                    games = games[player.id].orEmpty().sortedByDescending { it.startedAt },
+                )
+            }
+        }
+
+    override suspend fun renamePlayer(playerId: Long, name: String): RenamePlayerResult {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return RenamePlayerResult.BlankName
+        val player = roster.value.firstOrNull { it.id == playerId }
+            ?: return RenamePlayerResult.NotFound
+        roster.value
+            .firstOrNull { it.name.equals(trimmed, ignoreCase = true) && it.id != playerId }
+            ?.let { return RenamePlayerResult.NameTaken(it) }
+        writes += "renamePlayer($playerId, $trimmed)"
+        val renamed = player.copy(name = trimmed)
+        roster.update { list -> list.map { if (it.id == playerId) renamed else it } }
+        return RenamePlayerResult.Renamed(renamed)
+    }
+
+    override suspend fun setPlayerArchived(playerId: Long, archived: Boolean) {
+        writes += "setPlayerArchived($playerId, $archived)"
+        roster.update { list ->
+            list.map { if (it.id == playerId) it.copy(isArchived = archived) else it }
+        }
+    }
+
+    /** Mirrors the foreign key: anyone who has ever been seated stays put. */
+    override suspend fun deletePlayer(playerId: Long): DeletePlayerResult {
+        val played = playerGames.value[playerId].orEmpty().size
+        if (played > 0) return DeletePlayerResult.HasHistory(played)
+        writes += "deletePlayer($playerId)"
+        roster.update { list -> list.filterNot { it.id == playerId } }
+        return DeletePlayerResult.Deleted
     }
 
     override fun observeGame(gameId: Long): Flow<GameSnapshot?> = game.asStateFlow()

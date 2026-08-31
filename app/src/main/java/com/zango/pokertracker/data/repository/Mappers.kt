@@ -10,12 +10,15 @@ import com.zango.pokertracker.data.local.entity.GamePlayerWithDetails
 import com.zango.pokertracker.data.local.entity.GameSummaryRow
 import com.zango.pokertracker.data.local.entity.GameWithPlayers
 import com.zango.pokertracker.data.local.entity.PlayerEntity
+import com.zango.pokertracker.data.local.entity.PlayerGameResultRow
 import com.zango.pokertracker.domain.model.BuyIn
 import com.zango.pokertracker.domain.model.ChipReturn
 import com.zango.pokertracker.domain.model.Game
 import com.zango.pokertracker.domain.model.GameSnapshot
+import com.zango.pokertracker.domain.model.GameStatus
 import com.zango.pokertracker.domain.model.GameSummary
 import com.zango.pokertracker.domain.model.Player
+import com.zango.pokertracker.domain.model.PlayerGameResult
 import com.zango.pokertracker.domain.model.Seat
 
 /**
@@ -75,4 +78,17 @@ fun GameSummaryRow.toDomain(): GameSummary = GameSummary(
     playerCount = playerCount,
     buyInCount = buyInCount,
     totalOnTable = Money(totalBuyInMicros),
+)
+
+fun PlayerGameResultRow.toDomain(): PlayerGameResult = PlayerGameResult(
+    gameId = gameId,
+    gameName = gameName,
+    startedAt = startedAt,
+    endedAt = endedAt,
+    isInProgress = status == GameStatus.IN_PROGRESS,
+    chipRate = ChipRate(chipValueMicros),
+    buyInCount = buyInCount,
+    totalBuyIn = Money(totalBuyInMicros),
+    returnedChips = Chips(returnedChips),
+    finalChips = finalChipCount?.let { Chips(it) },
 )
