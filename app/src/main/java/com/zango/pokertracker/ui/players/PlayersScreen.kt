@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
@@ -22,12 +24,15 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -101,6 +106,16 @@ fun PlayersScreen(
                         Icon(Icons.Filled.Menu, contentDescription = stringResource(R.string.action_open_menu))
                     }
                 },
+                actions = {
+                    // Hidden behind an action rather than sitting above the list: the order is set
+                    // once in a while, and the rows themselves are what the screen is for.
+                    ListingMenu(
+                        sort = state.sort,
+                        onlyWithGames = state.onlyWithGames,
+                        onSortSelected = viewModel::onSortSelected,
+                        onOnlyWithGamesChange = viewModel::onOnlyWithGamesChange,
+                    )
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                 ),
@@ -118,6 +133,10 @@ fun PlayersScreen(
         when {
             state.isLoading -> Centered(Modifier.padding(padding)) { CircularProgressIndicator() }
             state.isEmpty -> Centered(Modifier.padding(padding)) { EmptyRoster() }
+            state.isFilteredEmpty -> Centered(Modifier.padding(padding)) {
+                FilteredOutRoster(onClearFilter = { viewModel.onOnlyWithGamesChange(false) })
+            }
+
             else -> PlayerList(
                 state = state,
                 onOpenPlayer = onOpenPlayer,
@@ -168,6 +187,82 @@ private fun Centered(modifier: Modifier = Modifier, content: @Composable () -> U
     ) { content() }
 }
 
+/**
+ * The order the roster is listed in, and the one thing worth filtering it by.
+ *
+ * Choosing an order closes the menu, because that is the whole errand. The filter is a switch and
+ * leaves it open, so it can be flicked on and the order changed in the same visit.
+ */
+@Composable
+private fun ListingMenu(
+    sort: PlayerSort,
+    onlyWithGames: Boolean,
+    onSortSelected: (PlayerSort) -> Unit,
+    onOnlyWithGamesChange: (Boolean) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(
+                Icons.AutoMirrored.Filled.Sort,
+                contentDescription = stringResource(R.string.players_sort_and_filter),
+                // A filter that is on changes what the list contains, so it says so from the bar
+                // rather than only from inside the menu that set it.
+                tint = if (onlyWithGames) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    LocalContentColor.current
+                },
+            )
+        }
+
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            MenuHeader(stringResource(R.string.players_sort_header))
+            PlayerSort.entries.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(option.label)) },
+                    onClick = {
+                        onSortSelected(option)
+                        expanded = false
+                    },
+                    trailingIcon = {
+                        if (option == sort) {
+                            Icon(
+                                Icons.Filled.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    },
+                )
+            }
+
+            HorizontalDivider(Modifier.padding(vertical = 4.dp))
+
+            MenuHeader(stringResource(R.string.players_filter_header))
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.players_filter_played)) },
+                onClick = { onOnlyWithGamesChange(!onlyWithGames) },
+                leadingIcon = {
+                    // The row carries the click, so the box itself must not take a second one.
+                    Checkbox(checked = onlyWithGames, onCheckedChange = null)
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun MenuHeader(text: String) {
+    Text(
+        text,
+        modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 4.dp),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
 @Composable
 private fun EmptyRoster() {
     Column(
@@ -180,6 +275,31 @@ private fun EmptyRoster() {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+/**
+ * There are players, but the filter matches none of them. Said plainly, with the way out beside
+ * it, so it cannot be mistaken for an empty roster.
+ */
+@Composable
+private fun FilteredOutRoster(onClearFilter: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            stringResource(R.string.players_filtered_empty_title),
+            style = MaterialTheme.typography.titleMedium,
+        )
+        Text(
+            stringResource(R.string.players_filtered_empty_body),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        TextButton(onClick = onClearFilter) {
+            Text(stringResource(R.string.players_filter_clear))
+        }
     }
 }
 

@@ -37,17 +37,28 @@ class PlayersViewModel @Inject constructor(
 
     private val editing = MutableStateFlow(Editing())
 
+    private val listing = MutableStateFlow(Listing())
+
     private val eventChannel = Channel<PlayersEvent>(Channel.BUFFERED)
     val events: Flow<PlayersEvent> = eventChannel.receiveAsFlow()
 
     val uiState: StateFlow<PlayersUiState> =
-        combine(repository.observePlayerStats(), editing, ::buildState)
+        combine(repository.observePlayerStats(), editing, listing, ::buildState)
             .distinctUntilChanged()
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
                 initialValue = PlayersUiState(),
             )
+
+    // -----------------------------------------------------------------------------------------
+    // Ordering and filtering
+    // -----------------------------------------------------------------------------------------
+
+    fun onSortSelected(sort: PlayerSort) = listing.update { it.copy(sort = sort) }
+
+    fun onOnlyWithGamesChange(enabled: Boolean) =
+        listing.update { it.copy(onlyWithGames = enabled) }
 
     // -----------------------------------------------------------------------------------------
     // Adding
@@ -216,12 +227,25 @@ class PlayersViewModel @Inject constructor(
     private fun rowFor(playerId: Long): PlayerRow? =
         uiState.value.let { it.active + it.archived }.firstOrNull { it.playerId == playerId }
 
-    private fun buildState(stats: List<PlayerStats>, editing: Editing): PlayersUiState {
+    private fun buildState(
+        stats: List<PlayerStats>,
+        editing: Editing,
+        listing: Listing,
+    ): PlayersUiState {
         val rows = stats.map { it.toRow() }
+        // The hidden section is ordered and filtered alongside the roster proper: it is the same
+        // list of people, and a host who asked for "most games first" means it there too.
+        fun arrange(archived: Boolean) = rows
+            .filter { it.isArchived == archived }
+            .arrange(listing.sort, listing.onlyWithGames)
+
         return PlayersUiState(
             isLoading = false,
-            active = rows.filterNot { it.isArchived },
-            archived = rows.filter { it.isArchived },
+            active = arrange(archived = false),
+            archived = arrange(archived = true),
+            totalPlayers = rows.size,
+            sort = listing.sort,
+            onlyWithGames = listing.onlyWithGames,
             isAdding = editing.isAdding,
             newPlayerName = editing.newPlayerName,
             newPlayerError = editing.newPlayerError,
@@ -229,6 +253,15 @@ class PlayersViewModel @Inject constructor(
             deleting = editing.deleting,
         )
     }
+
+    /**
+     * How the host wants the roster listed. Kept apart from [Editing] because it outlives any one
+     * dialog, and apart from the database because it is a way of looking, not a fact about anyone.
+     */
+    private data class Listing(
+        val sort: PlayerSort = PlayerSort.NAME_A_Z,
+        val onlyWithGames: Boolean = false,
+    )
 
     /** Whatever the host is part-way through, kept apart from what the database reports. */
     private data class Editing(
