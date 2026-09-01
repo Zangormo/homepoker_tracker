@@ -19,3 +19,6 @@
 .cxx
 
 .DS_Store
+
+# Release build outputs
+/app/release
