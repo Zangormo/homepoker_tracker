@@ -141,9 +141,7 @@ class CreateGameViewModel @Inject constructor(
 
                 CreatePlayerResult.NameTooLong -> editing.update {
                     it.copy(
-                        newPlayerError = NameRules.tooLongMessage(
-                            UiText.of(R.string.error_name_label_player),
-                        ),
+                        newPlayerError = NameRules.playerNameTooLongMessage(),
                     )
                 }
             }

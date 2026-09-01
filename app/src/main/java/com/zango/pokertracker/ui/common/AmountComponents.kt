@@ -130,9 +130,17 @@ fun PokerTextField(
     forceShowError: Boolean = false,
     supporting: UiText? = null,
     imeAction: ImeAction = ImeAction.Next,
+    maxLength: Int? = null,
 ) = AmountField(
     value = value,
-    onValueChange = onValueChange,
+    // A field with a limit stops at it rather than letting a name grow too long and only then
+    // complaining: the keystroke past the end simply does not arrive. Pasting something longer
+    // keeps the part that fits, which is friendlier than dropping the paste on the floor.
+    onValueChange = if (maxLength == null) {
+        onValueChange
+    } else {
+        { text -> onValueChange(text.take(maxLength)) }
+    },
     label = label,
     modifier = modifier,
     error = error,

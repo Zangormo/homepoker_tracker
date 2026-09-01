@@ -31,11 +31,17 @@ import org.junit.Test
 
 private const val GAME_ID = 42L
 
-/** Thirteen characters: one past the limit, wherever it is typed. */
+/** Thirteen characters: one past the limit on a player, wherever it is typed. */
 private const val TOO_LONG = "Bartholomewww"
 
-/** Exactly the limit, which must still be accepted everywhere. */
+/** Exactly the player limit, which must still be accepted everywhere. */
 private const val AT_LIMIT = "Bartholomeww"
+
+/** Twenty-six characters: one past the longer limit a game name gets. */
+private const val GAME_TOO_LONG = "Thursday night home games!"
+
+/** Exactly the game limit. */
+private const val GAME_AT_LIMIT = "Thursday night home game!"
 
 /**
  * The name limit, checked at every door into the roster and at the one into a game.
@@ -56,8 +62,7 @@ class NameLimitTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private val expectedMessage =
-        NameRules.tooLongMessage(UiText.of(R.string.error_name_label_player))
+    private val expectedMessage = NameRules.playerNameTooLongMessage()
 
     // -----------------------------------------------------------------------------------------
     // The game's own name
@@ -65,16 +70,13 @@ class NameLimitTest {
 
     @Test
     fun `a game name over the limit is refused on the setup form`() {
-        val validation = CreateGameForm(name = TOO_LONG).validate()
-        assertEquals(
-            NameRules.tooLongMessage(UiText.of(R.string.error_name_label_game)),
-            validation.nameError,
-        )
+        val validation = CreateGameForm(name = GAME_TOO_LONG).validate()
+        assertEquals(NameRules.gameNameTooLongMessage(), validation.nameError)
     }
 
     @Test
     fun `a game name exactly at the limit is fine`() {
-        assertNull(CreateGameForm(name = AT_LIMIT).validate().nameError)
+        assertNull(CreateGameForm(name = GAME_AT_LIMIT).validate().nameError)
     }
 
     // -----------------------------------------------------------------------------------------

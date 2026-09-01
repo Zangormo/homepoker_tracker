@@ -52,6 +52,7 @@ import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.ChipRate
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
+import com.zango.pokertracker.domain.model.NameRules
 import com.zango.pokertracker.domain.model.Player
 import com.zango.pokertracker.ui.common.AmountPreview
 import com.zango.pokertracker.ui.common.CashAmountField
@@ -653,6 +654,7 @@ private fun AddPlayerDialog(
             value = dialog.newPlayerName,
             onValueChange = onNewNameChange,
             label = stringResource(R.string.live_add_player_new_name),
+            maxLength = NameRules.MAX_PLAYER_LENGTH,
             error = dialog.nameError,
             forceShowError = true,
         )

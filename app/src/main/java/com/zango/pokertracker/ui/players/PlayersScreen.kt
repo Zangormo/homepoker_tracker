@@ -57,6 +57,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zango.pokertracker.R
 import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Money
+import com.zango.pokertracker.domain.model.NameRules
 import com.zango.pokertracker.ui.common.CashAmountText
 import com.zango.pokertracker.ui.common.MinTouchTarget
 import com.zango.pokertracker.ui.common.NetCashText
@@ -428,6 +429,7 @@ private fun AddPlayerDialog(
                 value = name,
                 onValueChange = onNameChange,
                 label = stringResource(R.string.players_name_field),
+                maxLength = NameRules.MAX_PLAYER_LENGTH,
                 error = error,
                 forceShowError = error != null,
                 imeAction = ImeAction.Done,
@@ -461,6 +463,7 @@ private fun RenamePlayerDialog(
                     value = editor.name,
                     onValueChange = onNameChange,
                     label = stringResource(R.string.players_name_field),
+                    maxLength = NameRules.MAX_PLAYER_LENGTH,
                     error = editor.error,
                     forceShowError = editor.error != null,
                     imeAction = ImeAction.Done,

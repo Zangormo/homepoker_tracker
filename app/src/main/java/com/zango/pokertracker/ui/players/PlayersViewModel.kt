@@ -96,9 +96,7 @@ class PlayersViewModel @Inject constructor(
 
                 CreatePlayerResult.NameTooLong -> editing.update {
                     it.copy(
-                        newPlayerError = NameRules.tooLongMessage(
-                            UiText.of(R.string.error_name_label_player),
-                        ),
+                        newPlayerError = NameRules.playerNameTooLongMessage(),
                     )
                 }
             }
@@ -152,9 +150,7 @@ class PlayersViewModel @Inject constructor(
                 RenamePlayerResult.BlankName ->
                     setRenameError(UiText.of(R.string.error_name_required))
 
-                RenamePlayerResult.NameTooLong -> setRenameError(
-                    NameRules.tooLongMessage(UiText.of(R.string.error_name_label_player)),
-                )
+                RenamePlayerResult.NameTooLong -> setRenameError(NameRules.playerNameTooLongMessage())
 
                 RenamePlayerResult.NotFound -> {
                     editing.update { it.copy(renaming = null) }

@@ -170,9 +170,7 @@ class LiveGameViewModel @Inject constructor(
                 CreatePlayerResult.NameTooLong -> {
                     eventChannel.send(
                         LiveGameEvent.Message(
-                            NameRules.tooLongMessage(
-                                UiText.of(R.string.error_name_label_player),
-                            ),
+                            NameRules.playerNameTooLongMessage(),
                         ),
                     )
                     return@launch
@@ -329,9 +327,8 @@ class LiveGameViewModel @Inject constructor(
                     buyIn = buyIn,
                     preview = if (chipError == null) AmountPreview.of(parsed.money, rate) else AmountPreview(),
                     error = parsed.error ?: chipError,
-                    nameError = NameRules
-                        .tooLongMessage(UiText.of(R.string.error_name_label_player))
-                        .takeIf { NameRules.isTooLong(newPlayerName) },
+                    nameError = NameRules.playerNameTooLongMessage()
+                        .takeIf { NameRules.isPlayerNameTooLong(newPlayerName) },
                 )
             }
         }

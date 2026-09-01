@@ -69,7 +69,7 @@ class FakePokerRepository(private val clock: TestClock = TestClock()) : PokerRep
     override suspend fun createPlayer(name: String): CreatePlayerResult {
         val trimmed = name.trim()
         if (trimmed.isEmpty()) return CreatePlayerResult.BlankName
-        if (NameRules.isTooLong(trimmed)) return CreatePlayerResult.NameTooLong
+        if (NameRules.isPlayerNameTooLong(trimmed)) return CreatePlayerResult.NameTooLong
         roster.value.firstOrNull { it.name.equals(trimmed, ignoreCase = true) }
             ?.let { return CreatePlayerResult.NameTaken(it) }
         val player = Player(id = nextId++, name = trimmed, createdAt = clock.now)
@@ -95,7 +95,7 @@ class FakePokerRepository(private val clock: TestClock = TestClock()) : PokerRep
     override suspend fun renamePlayer(playerId: Long, name: String): RenamePlayerResult {
         val trimmed = name.trim()
         if (trimmed.isEmpty()) return RenamePlayerResult.BlankName
-        if (NameRules.isTooLong(trimmed)) return RenamePlayerResult.NameTooLong
+        if (NameRules.isPlayerNameTooLong(trimmed)) return RenamePlayerResult.NameTooLong
         val player = roster.value.firstOrNull { it.id == playerId }
             ?: return RenamePlayerResult.NotFound
         roster.value

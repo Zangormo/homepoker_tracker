@@ -62,6 +62,7 @@ import com.zango.pokertracker.R
 import com.zango.pokertracker.core.money.ChipRate
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
+import com.zango.pokertracker.domain.model.NameRules
 import com.zango.pokertracker.domain.model.Player
 import com.zango.pokertracker.domain.model.Stakes
 import com.zango.pokertracker.ui.common.AmountPreview
@@ -249,6 +250,7 @@ private fun CreateGameContent(
                 value = state.form.name,
                 onValueChange = actions.onNameChange,
                 label = stringResource(R.string.create_game_name),
+                maxLength = NameRules.MAX_GAME_LENGTH,
                 required = true,
                 error = state.validation.nameError,
                 forceShowError = revealAllProblems,
@@ -681,6 +683,7 @@ private fun PlayersSection(
                 value = state.newPlayerName,
                 onValueChange = actions.onNewPlayerNameChange,
                 label = stringResource(R.string.create_add_someone_new),
+                maxLength = NameRules.MAX_PLAYER_LENGTH,
                 error = state.newPlayerError,
                 imeAction = ImeAction.Done,
                 modifier = Modifier

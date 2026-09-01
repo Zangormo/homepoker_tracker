@@ -58,7 +58,7 @@ class PokerRepositoryImpl @Inject constructor(
         val trimmed = name.trim()
         if (trimmed.isEmpty()) return CreatePlayerResult.BlankName
         // Enforced here as well as in every field, so no path into the roster can get around it.
-        if (NameRules.isTooLong(trimmed)) return CreatePlayerResult.NameTooLong
+        if (NameRules.isPlayerNameTooLong(trimmed)) return CreatePlayerResult.NameTooLong
         // Checked explicitly rather than leaning on the unique index alone, so the caller gets
         // the existing player back and can just select them instead of seeing a failure.
         playerDao.findByName(trimmed)?.let { return CreatePlayerResult.NameTaken(it.toDomain()) }
@@ -91,7 +91,7 @@ class PokerRepositoryImpl @Inject constructor(
     override suspend fun renamePlayer(playerId: Long, name: String): RenamePlayerResult {
         val trimmed = name.trim()
         if (trimmed.isEmpty()) return RenamePlayerResult.BlankName
-        if (NameRules.isTooLong(trimmed)) return RenamePlayerResult.NameTooLong
+        if (NameRules.isPlayerNameTooLong(trimmed)) return RenamePlayerResult.NameTooLong
         return database.withTransaction {
             val current = playerDao.findById(playerId)
                 ?: return@withTransaction RenamePlayerResult.NotFound
@@ -173,8 +173,8 @@ class PokerRepositoryImpl @Inject constructor(
 
     override suspend fun createGame(setup: NewGameSetup): Long {
         require(setup.name.isNotBlank()) { "A game needs a name" }
-        require(!NameRules.isTooLong(setup.name)) {
-            "A game name must be at most ${NameRules.MAX_LENGTH} characters"
+        require(!NameRules.isGameNameTooLong(setup.name)) {
+            "A game name must be at most ${NameRules.MAX_GAME_LENGTH} characters"
         }
         require(setup.smallBlind.isPositive) { "Small blind must be greater than zero" }
         require(setup.smallBlind < setup.bigBlind) { "Small blind must be below the big blind" }

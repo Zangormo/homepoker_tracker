@@ -69,8 +69,7 @@ data class CreateGameValidation(
 fun CreateGameForm.validate(): CreateGameValidation {
     val nameError: UiText? = when {
         name.isBlank() -> UiText.of(R.string.error_game_name_required)
-        NameRules.isTooLong(name) ->
-            NameRules.tooLongMessage(UiText.of(R.string.error_name_label_game))
+        NameRules.isGameNameTooLong(name) -> NameRules.gameNameTooLongMessage()
 
         else -> null
     }
