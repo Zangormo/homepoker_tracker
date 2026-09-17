@@ -26,16 +26,19 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.LoadAdError
 import com.zango.pokertracker.ads.ConsentManager
+import com.zango.pokertracker.billing.BillingManager
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 
-/** Reaches the consent gate from a leaf composable, which has no ViewModel of its own. */
+/** Reaches the consent and billing gates from a leaf composable, which has no ViewModel of its own. */
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface AdsEntryPoint {
     fun consentManager(): ConsentManager
+
+    fun billingManager(): BillingManager
 }
 
 /**
@@ -43,8 +46,10 @@ interface AdsEntryPoint {
  *
  * Takes no space at all until an ad has actually loaded, so a user who declined consent, is
  * offline, or has no fill sees the screen exactly as it was before ads existed. Nothing is
- * requested until [ConsentManager.adsReady] is true. Once shown, it pads itself clear of the
- * navigation bar, since the app draws edge to edge and an ad must never sit under system UI.
+ * requested until [ConsentManager.adsReady] is true, and nothing is rendered at all while
+ * [BillingManager.isAdsRemoved] is, or before Play has been asked. Once shown, it pads itself
+ * clear of the navigation bar, since the app draws edge to edge and an ad must never sit under
+ * system UI.
  */
 @Composable
 fun BannerAd(adUnitId: String, modifier: Modifier = Modifier) {
@@ -52,12 +57,14 @@ fun BannerAd(adUnitId: String, modifier: Modifier = Modifier) {
     if (LocalInspectionMode.current) return
 
     val context = LocalContext.current
-    val consentManager = remember(context) {
+    val entryPoint = remember(context) {
         EntryPointAccessors.fromApplication(context.applicationContext, AdsEntryPoint::class.java)
-            .consentManager()
     }
-    val adsReady by consentManager.adsReady.collectAsStateWithLifecycle()
-    if (!adsReady) return
+    val adsReady by entryPoint.consentManager().adsReady.collectAsStateWithLifecycle()
+    val entitlementChecked by entryPoint.billingManager().isEntitlementChecked.collectAsStateWithLifecycle()
+    val adsRemoved by entryPoint.billingManager().isAdsRemoved.collectAsStateWithLifecycle()
+    // Leaving composition also destroys an AdView already on screen, the moment a purchase lands.
+    if (!adsReady || !entitlementChecked || adsRemoved) return
 
     BoxWithConstraints(modifier.fillMaxWidth()) {
         val widthDp = maxWidth.value.toInt()

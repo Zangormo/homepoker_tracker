@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -63,7 +64,7 @@ import com.zango.pokertracker.ui.theme.PokerTheme
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
 
 /**
- * Settings, which so far is the stake levels the new-game picker offers.
+ * Settings: the language, the stake levels the new-game picker offers, and removing ads.
  *
  * It carries a back arrow rather than the menu button the other drawer destinations use: this is
  * somewhere the host steps into and comes straight back out of, not a place to sit during a game.
@@ -131,6 +132,7 @@ fun SettingsScreen(
                 },
                 onAdd = viewModel::onAddRequested,
                 onRemove = viewModel::onRemove,
+                onRemoveAds = { context.findActivity()?.let(viewModel::onRemoveAds) },
                 modifier = Modifier.padding(padding),
             )
         }
@@ -154,6 +156,7 @@ private fun SettingsContent(
     onSelectLanguage: (AppLanguage) -> Unit,
     onAdd: () -> Unit,
     onRemove: (Stakes) -> Unit,
+    onRemoveAds: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -211,6 +214,57 @@ private fun SettingsContent(
             Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
             Text(stringResource(R.string.settings_add_blinds))
+        }
+
+        RemoveAdsSection(state = state.removeAds, onRemoveAds = onRemoveAds)
+    }
+}
+
+/**
+ * The one thing the app sells. The button carries the price Google Play quotes for this user, so
+ * the cost is known before the purchase sheet opens. Without a price (Play not reached yet) the
+ * button still works: tapping it asks Play again and says so if it cannot be reached.
+ */
+@Composable
+private fun RemoveAdsSection(state: RemoveAdsUiState, onRemoveAds: () -> Unit) {
+    SectionLabel(
+        stringResource(R.string.settings_section_remove_ads),
+        modifier = Modifier.padding(top = 20.dp),
+    )
+    when {
+        state.isRemoved -> Text(
+            stringResource(R.string.settings_remove_ads_done),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+        )
+
+        state.isPending -> Text(
+            stringResource(R.string.settings_remove_ads_pending),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
+        else -> {
+            Text(
+                stringResource(R.string.settings_remove_ads_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 4.dp),
+            )
+            Button(
+                onClick = onRemoveAds,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = MinTouchTarget),
+            ) {
+                Text(
+                    if (state.price != null) {
+                        stringResource(R.string.settings_remove_ads_button_price, state.price)
+                    } else {
+                        stringResource(R.string.settings_remove_ads_button)
+                    },
+                )
+            }
         }
     }
 }
@@ -357,6 +411,7 @@ private fun AddStakesDialog(
 
 private fun settingsState(extra: List<Stakes> = emptyList()) = SettingsUiState(
     isLoading = false,
+    removeAds = RemoveAdsUiState(price = "€2.99"),
     stakes = (Stakes.COMMON + extra)
         .sortedWith(compareBy({ it.bigBlind.micros }, { it.smallBlind.micros }))
         .map { StakeRow(it, it.label()) },
@@ -373,6 +428,7 @@ private fun SettingsPreview() {
                 onSelectLanguage = {},
                 onAdd = {},
                 onRemove = {},
+                onRemoveAds = {},
             )
         }
     }
@@ -383,7 +439,7 @@ private fun SettingsPreview() {
 private fun SettingsEmptyPreview() {
     PokerTrackerTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            SettingsContent(SettingsUiState(isLoading = false), AppLanguage.ENGLISH, {}, {}, {})
+            SettingsContent(SettingsUiState(isLoading = false), AppLanguage.ENGLISH, {}, {}, {}, {})
         }
     }
 }
@@ -407,7 +463,11 @@ private fun AddStakesPreview() {
 private fun SettingsLargeFontPreview() {
     PokerTrackerTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            SettingsContent(settingsState(), AppLanguage.RUSSIAN, {}, {}, {})
+            SettingsContent(
+                settingsState().copy(removeAds = RemoveAdsUiState(isPending = true)),
+                AppLanguage.RUSSIAN,
+                {}, {}, {}, {},
+            )
         }
     }
 }

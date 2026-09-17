@@ -1,10 +1,13 @@
 package com.zango.pokertracker.ui.settings
 
+import android.app.Activity
 import com.zango.pokertracker.R
 import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.Stakes
+import com.zango.pokertracker.billing.RemoveAdsBilling
 import com.zango.pokertracker.testing.FakePokerRepository
+import com.zango.pokertracker.testing.FakeRemoveAdsBilling
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -12,6 +15,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -28,6 +32,7 @@ import org.junit.Test
 class SettingsViewModelTest {
 
     private val repository = FakePokerRepository()
+    private val billing = FakeRemoveAdsBilling()
 
     @Before
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
@@ -37,7 +42,7 @@ class SettingsViewModelTest {
 
     private fun stakes(small: Long, big: Long) = Stakes(Money(small), Money(big))
 
-    private fun viewModel() = SettingsViewModel(repository)
+    private fun viewModel() = SettingsViewModel(repository, billing)
 
     private suspend fun SettingsViewModel.stateWhere(predicate: (SettingsUiState) -> Boolean) =
         uiState.first { !it.isLoading && predicate(it) }
@@ -167,5 +172,41 @@ class SettingsViewModelTest {
         assertTrue(viewModel.stateWhere { it.count == Stakes.MAX_PRESETS }.stakes.any {
             it.label == "2.00 / 4.00"
         })
+    }
+
+    @Test
+    fun `the remove ads section follows Play`() = runTest {
+        val viewModel = viewModel()
+        assertEquals(RemoveAdsUiState(), viewModel.stateWhere { true }.removeAds)
+
+        billing.removeAdsPrice.value = "€2.99"
+        billing.isPurchasePending.value = true
+        assertEquals(
+            RemoveAdsUiState(isPending = true, price = "€2.99"),
+            viewModel.stateWhere { it.removeAds.isPending }.removeAds,
+        )
+
+        billing.isPurchasePending.value = false
+        billing.isAdsRemoved.value = true
+        assertTrue(viewModel.stateWhere { it.removeAds.isRemoved }.removeAds.price == "€2.99")
+    }
+
+    @Test
+    fun `a purchase sheet that opened says nothing`() = runTest {
+        val viewModel = viewModel()
+        viewModel.onRemoveAds(Activity())
+        assertEquals(1, billing.launches)
+        assertNull(withTimeoutOrNull(100) { viewModel.events.first() })
+    }
+
+    @Test
+    fun `play being unreachable is reported`() = runTest {
+        billing.nextLaunch = RemoveAdsBilling.LaunchResult.UNAVAILABLE
+        val viewModel = viewModel()
+        viewModel.onRemoveAds(Activity())
+        assertEquals(
+            SettingsEvent.Message(UiText.of(R.string.error_purchase_unavailable)),
+            viewModel.events.first(),
+        )
     }
 }

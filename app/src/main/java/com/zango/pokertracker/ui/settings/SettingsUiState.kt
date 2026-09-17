@@ -15,10 +15,21 @@ data class StakesEditor(
     val canAdd: Boolean get() = smallBlind.isNotBlank() && bigBlind.isNotBlank()
 }
 
+/**
+ * The "Remove ads" purchase. [price] is null until Google Play has been reached, and stays null in
+ * builds Play does not know, such as debug builds with their own package name.
+ */
+data class RemoveAdsUiState(
+    val isRemoved: Boolean = false,
+    val isPending: Boolean = false,
+    val price: String? = null,
+)
+
 data class SettingsUiState(
     val isLoading: Boolean = true,
     val stakes: List<StakeRow> = emptyList(),
     val editor: StakesEditor? = null,
+    val removeAds: RemoveAdsUiState = RemoveAdsUiState(),
 ) {
     val count: Int get() = stakes.size
 

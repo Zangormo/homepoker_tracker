@@ -1,8 +1,10 @@
 package com.zango.pokertracker.ui.settings
 
+import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zango.pokertracker.R
+import com.zango.pokertracker.billing.RemoveAdsBilling
 import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.data.repository.AddStakesResult
 import com.zango.pokertracker.data.repository.PokerRepository
@@ -23,7 +25,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * Settings. So far that means the stake levels the game picker offers.
+ * Settings: the stake levels the game picker offers, and the "Remove ads" purchase.
  *
  * The list fills itself as games are played, which is convenient right up until a one-off night
  * at odd blinds is stuck in the picker for good. This is where the host prunes it, and where a
@@ -32,6 +34,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val repository: PokerRepository,
+    private val billing: RemoveAdsBilling,
 ) : ViewModel() {
 
     private val editing = MutableStateFlow<StakesEditor?>(null)
@@ -40,11 +43,12 @@ class SettingsViewModel @Inject constructor(
     val events: Flow<SettingsEvent> = eventChannel.receiveAsFlow()
 
     val uiState: StateFlow<SettingsUiState> =
-        combine(repository.observeStakeOptions(), editing) { stakes, editor ->
+        combine(repository.observeStakeOptions(), editing, removeAdsState()) { stakes, editor, removeAds ->
             SettingsUiState(
                 isLoading = false,
                 stakes = stakes.map { StakeRow(it, it.label()) },
                 editor = editor,
+                removeAds = removeAds,
             )
         }
             .distinctUntilChanged()
@@ -146,6 +150,21 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Opens Google Play's purchase sheet. The outcome of the payment arrives through
+     * [RemoveAdsBilling.isAdsRemoved]; only a failure to open the sheet at all is reported here.
+     */
+    fun onRemoveAds(activity: Activity) {
+        viewModelScope.launch {
+            val message = when (billing.launchPurchaseFlow(activity)) {
+                RemoveAdsBilling.LaunchResult.LAUNCHED -> return@launch
+                RemoveAdsBilling.LaunchResult.ALREADY_OWNED -> R.string.message_ads_already_removed
+                RemoveAdsBilling.LaunchResult.UNAVAILABLE -> R.string.error_purchase_unavailable
+            }
+            eventChannel.send(SettingsEvent.Message(UiText.of(message)))
+        }
+    }
+
     /** Puts back a level taken off by mistake, straight from the snackbar. */
     fun onUndoRemove(stakes: Stakes) {
         viewModelScope.launch {
@@ -158,6 +177,12 @@ class SettingsViewModel @Inject constructor(
             }
         }
     }
+
+    private fun removeAdsState(): Flow<RemoveAdsUiState> = combine(
+        billing.isAdsRemoved,
+        billing.isPurchasePending,
+        billing.removeAdsPrice,
+    ) { removed, pending, price -> RemoveAdsUiState(isRemoved = removed, isPending = pending, price = price) }
 
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5_000L

@@ -347,6 +347,15 @@
     <string name="language_english">English</string>
     <string name="language_russian">Русский</string>
 
+    <!-- Remove ads -->
+    <string name="settings_section_remove_ads">Remove ads</string>
+    <string name="settings_remove_ads_body">A one-time purchase. Banners and full-screen ads go away for good, including on a new phone signed in to the same Google account.</string>
+    <string name="settings_remove_ads_button">Remove ads</string>
+    <!-- %1$s: the price as Google Play formats it, e.g. "€2.99" -->
+    <string name="settings_remove_ads_button_price">Remove ads · %1$s</string>
+    <string name="settings_remove_ads_pending">Payment pending. Ads switch off as soon as Google Play confirms it.</string>
+    <string name="settings_remove_ads_done">Ads are removed. Thank you for supporting the app.</string>
+
     <!-- ==================================================================================== -->
     <!-- The results table, shared by the end-game and settlement screens                     -->
     <!-- ==================================================================================== -->
@@ -525,6 +534,8 @@
     <!-- %1$d: the maximum number of levels -->
     <!-- %1$s: the level that could not be put back -->
     <string name="message_stakes_stayed_off">The list filled up, so %1$s stayed off.</string>
+    <string name="error_purchase_unavailable">Google Play is not available right now. Try again later.</string>
+    <string name="message_ads_already_removed">Ads are already removed on this Google account</string>
 
     <!-- Ending a game -->
     <string name="end_headline_balanced">Every chip is accounted for</string>

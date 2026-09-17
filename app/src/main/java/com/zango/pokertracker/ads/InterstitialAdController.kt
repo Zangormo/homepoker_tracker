@@ -12,11 +12,14 @@ import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.zango.pokertracker.BuildConfig
+import com.zango.pokertracker.billing.BillingManager
 import com.zango.pokertracker.di.AdsPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -34,12 +37,16 @@ import javax.inject.Singleton
  * nothing has been typed on the next screen yet. Ads are loaded ahead of time so neither slot ever
  * makes the host wait. When a game's turn comes and the first slot has nothing loaded, the turn is
  * not lost: the paid-up slot of the same game, or the next game, takes it.
+ *
+ * Once [BillingManager.isAdsRemoved] is true nothing is loaded at all, and anything already loaded
+ * is dropped without being shown.
  */
 @Singleton
 class InterstitialAdController @Inject constructor(
     @ApplicationContext private val context: Context,
     private val consentManager: ConsentManager,
     @AdsPreferences private val preferences: SharedPreferences,
+    private val billingManager: BillingManager,
 ) {
     enum class Slot(val adUnitId: String) {
         BEFORE_SETTLEMENT(BuildConfig.ADMOB_INTERSTITIAL_BEFORE_SETTLEMENT_UNIT_ID),
@@ -52,10 +59,20 @@ class InterstitialAdController @Inject constructor(
     private val loading = mutableSetOf<Slot>()
 
     init {
-        // Nothing is requested before consent: the first load waits for the SDK to be initialized.
+        // Nothing is requested before consent: the first load waits for the SDK to be initialized. It
+        // also waits for Play to confirm the user has not paid to remove ads.
         scope.launch {
-            consentManager.adsReady.first { it }
+            combine(
+                consentManager.adsReady,
+                billingManager.isEntitlementChecked,
+                billingManager.isAdsRemoved,
+            ) { ready, checked, removed -> ready && checked && !removed }
+                .first { it }
             preload()
+        }
+        // A purchase made mid-session: what is already in memory is never shown.
+        scope.launch {
+            billingManager.isAdsRemoved.filter { it }.collect { loaded.clear() }
         }
     }
 
@@ -71,7 +88,7 @@ class InterstitialAdController @Inject constructor(
      * objects would need a synthetic accessor.
      */
     fun preload() {
-        if (!consentManager.adsReady.value) return
+        if (!consentManager.adsReady.value || !adsAllowed) return
         Slot.entries.forEach { slot ->
             if (slot in loaded || slot in loading) return@forEach
             loading += slot
@@ -81,8 +98,8 @@ class InterstitialAdController @Inject constructor(
                 AdRequest.Builder().build(),
                 object : InterstitialAdLoadCallback() {
                     override fun onAdLoaded(interstitialAd: InterstitialAd) {
-                        loaded[slot] = interstitialAd
                         loading -= slot
+                        if (adsAllowed) loaded[slot] = interstitialAd
                     }
 
                     override fun onAdFailedToLoad(adError: LoadAdError) {
@@ -95,7 +112,15 @@ class InterstitialAdController @Inject constructor(
         }
     }
 
+    /**
+     * Whether ads may be loaded as far as billing is concerned. Waits until Play has answered, so a
+     * purchase restored on a new phone is known first. Not private for the same reason as [preload].
+     */
+    val adsAllowed: Boolean
+        get() = billingManager.isEntitlementChecked.value && !billingManager.isAdsRemoved.value
+
     private fun onBreak(activity: Activity, gameId: Long, slot: Slot) {
+        if (billingManager.isAdsRemoved.value) return
         countGameOnce(gameId)
 
         val ready = loaded[slot]

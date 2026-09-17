@@ -280,6 +280,13 @@
     <string name="language_english">English</string>
     <string name="language_russian">Русский</string>
 
+    <string name="settings_section_remove_ads">Отключить рекламу</string>
+    <string name="settings_remove_ads_body">Разовая покупка. Баннеры и полноэкранная реклама исчезнут навсегда, в том числе на новом телефоне с тем же аккаунтом Google.</string>
+    <string name="settings_remove_ads_button">Отключить рекламу</string>
+    <string name="settings_remove_ads_button_price">Отключить рекламу · %1$s</string>
+    <string name="settings_remove_ads_pending">Оплата обрабатывается. Реклама отключится, как только Google Play её подтвердит.</string>
+    <string name="settings_remove_ads_done">Реклама отключена. Спасибо за поддержку приложения.</string>
+
     <!-- The results table -->
     <string name="results_column_player">Игрок</string>
     <string name="results_column_in">Внёс</string>
@@ -344,6 +351,8 @@
     <string name="message_stakes_removed">%1$s удалены</string>
     <string name="error_stakes_already_listed">%1$s уже есть в списке</string>
     <string name="message_stakes_stayed_off">Список заполнился, поэтому %1$s остались вне его</string>
+    <string name="error_purchase_unavailable">Google Play сейчас недоступен. Попробуйте позже.</string>
+    <string name="message_ads_already_removed">На этом аккаунте Google реклама уже отключена</string>
 
     <string name="end_headline_balanced">Все фишки сошлись</string>
     <string name="end_headline_missing">Не хватает %1$s — это %2$s</string>

@@ -13,6 +13,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.zango.pokertracker.ads.ConsentManager
 import com.zango.pokertracker.ads.InterstitialAdController
+import com.zango.pokertracker.billing.BillingManager
 import com.zango.pokertracker.core.locale.AppLanguageStore
 import com.zango.pokertracker.ui.navigation.PokerNavHost
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
@@ -27,6 +28,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var interstitialAds: InterstitialAdController
+
+    @Inject
+    lateinit var billingManager: BillingManager
 
     /**
      * Applies the chosen language before any resource is read. Below Android 13 there is no
@@ -64,5 +68,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Google's guide: re-read purchases on return, to pick up a pending payment that cleared
+        // or a purchase made elsewhere while the app was in the background.
+        billingManager.queryExistingPurchases()
     }
 }

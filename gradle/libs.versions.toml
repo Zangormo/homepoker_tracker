@@ -22,6 +22,7 @@ turbine = "1.1.0"
 # Kotlin 2.2+ upgrade (which also means KSP, and likely Hilt and Room).
 playServicesAds = "24.8.0"
 userMessagingPlatform = "4.0.0"
+billing = "9.1.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -60,6 +61,7 @@ turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine
 
 play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAds" }
 user-messaging-platform = { group = "com.google.android.ump", name = "user-messaging-platform", version.ref = "userMessagingPlatform" }
+billing = { group = "com.android.billingclient", name = "billing", version.ref = "billing" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

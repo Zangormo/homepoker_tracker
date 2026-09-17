@@ -21,6 +21,15 @@
 #     main dispatcher factory. Continuation needs nothing further. The app declares no
 #     CoroutineExceptionHandler of its own.
 #
+#   Play Billing 9.1.0 (billing proguard.txt)
+#     Keeps the names of ProxyBillingActivity / ProxyBillingActivityV2 (declared in the library's
+#     manifest) and the fields of its internal protobuf classes. Its com.android.vending.billing.**
+#     keep is a leftover: 9.1.0 has no classes in that package. The public API the app uses - BillingClient,
+#     Purchase, ProductDetails, BillingResult and the params builders - is called directly from
+#     BillingManager, never by reflection, and Purchase / ProductDetails parse Play's JSON with
+#     string keys inside the library. R8 renaming them consistently is safe, so no blanket
+#     -keep class com.android.billingclient.api.** is added; it would only keep dead code.
+#
 #   Compose 1.9.2 (runtime / ui proguard.txt), Navigation 2.9.8, Lifecycle 2.10.0
 #     Ship their own rules. No kotlinx.serialization is used (routes are plain strings), so no
 #     serializer rules are needed.
