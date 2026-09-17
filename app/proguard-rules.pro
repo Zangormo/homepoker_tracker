@@ -1,21 +1,35 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
+# App-specific R8 rules for the release build.
 #
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# AGP 8.x runs R8 in full mode. Most of what this app needs is already shipped as consumer rules
+# inside the libraries themselves, and was checked in the artifacts of the exact versions this
+# build resolves (not assumed). Those are deliberately NOT repeated here:
+#
+#   Room 2.6.1 (room-runtime proguard.txt)
+#     -keep class * extends androidx.room.RoomDatabase
+#     Covers PokerDatabase and the generated PokerDatabase_Impl, which Room finds by name.
+#     DAO *_Impl classes, @Entity classes and @TypeConverters are called directly from generated
+#     code (room.generateKotlin), with no reflection, so they need no rule of their own.
+#
+#   Hilt / Dagger 2.52 (hilt-android proguard.txt, dagger META-INF/com.android.tools/r8/r8.pro)
+#     Keeps @EntryPoint / @ComponentEntryPoint / @GeneratedEntryPoint types, @KeepFieldType fields,
+#     and uses -identifiernamestring so the @HiltViewModel class-name keys follow renaming.
+#     Hilt_PokerTrackerApp is referenced directly by the bytecode transform; PokerTrackerApp and
+#     MainActivity are kept by the rules aapt2 generates from AndroidManifest.xml.
+#
+#   kotlinx-coroutines 1.9.0 (META-INF/com.android.tools/r8*/coroutines.pro)
+#     Keeps AtomicFieldUpdater volatile fields, kotlin.coroutines.SafeContinuation and the Android
+#     main dispatcher factory. Continuation needs nothing further. The app declares no
+#     CoroutineExceptionHandler of its own.
+#
+#   Compose 1.9.2 (runtime / ui proguard.txt), Navigation 2.9.8, Lifecycle 2.10.0
+#     Ship their own rules. No kotlinx.serialization is used (routes are plain strings), so no
+#     serializer rules are needed.
+#
+# GameStatus is stored in Room by Enum.name and read back with valueOf. The name string is a
+# constructor argument, not the field's identifier, so renaming does not change it, and
+# proguard-android-optimize.txt already keeps values()/valueOf() for enums. No rule added.
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
-
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Keep file and line information so crash stack traces from Play Console can be retraced with
+# the mapping.txt that the App Bundle carries. The real source file name is hidden.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile

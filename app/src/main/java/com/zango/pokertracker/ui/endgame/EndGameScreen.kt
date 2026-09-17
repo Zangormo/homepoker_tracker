@@ -58,6 +58,11 @@ import com.zango.pokertracker.ui.common.resolve
 import com.zango.pokertracker.ui.theme.PokerTheme
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
 
+/**
+ * No ads on this screen: final chip counts are typed in here and decide every payment that
+ * follows, so nothing may compete with those fields for a tap. The full-screen ad that may follow
+ * a finished game opens only once [onFinished] has fired, after the counts are saved.
+ */
 @Composable
 fun EndGameScreen(
     onBack: () -> Unit,

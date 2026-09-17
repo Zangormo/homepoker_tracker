@@ -18,6 +18,7 @@ import androidx.navigation.NavGraph
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
+import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -99,12 +100,20 @@ private fun NavHostController.popFrom(entry: NavBackStackEntry) {
     }
 }
 
+/**
+ * The two callbacks are the only points in the app where a full-screen ad may appear.
+ *
+ * @param onGameEnded called with the game's id when the host ends a game, as its settlement opens.
+ * @param onGamePaidUp called with the game's id when the host leaves a paid-up game's settlement
+ *   for the games list.
+ */
 @Composable
 fun PokerNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
+    onGameEnded: (gameId: Long) -> Unit = {},
+    onGamePaidUp: (gameId: Long) -> Unit = {},
 ) {
-    RecoverFromDeadNavHost(navController)
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -140,6 +149,8 @@ fun PokerNavHost(
         PokerRoutes(
             navController = navController,
             onOpenMenu = { scope.launch { drawerState.open() } },
+            onGameEnded = onGameEnded,
+            onGamePaidUp = onGamePaidUp,
         )
     }
 }
@@ -161,10 +172,16 @@ private val DEAD_SCREEN_GRACE = 700.milliseconds
  * Either way the screen is unusable and the user has no way out, so it is worth catching both. The
  * grace period matters: a transition legitimately has nothing visible for a frame or two, and only
  * a gap longer than any real animation means the navigation is genuinely wedged.
+ *
+ * Must be composed after the NavHost, never before it. The NavHost attaches its navigators when it
+ * sets the graph during its own composition, and reading [ComposeNavigator.backStack] from a
+ * navigator that is not attached yet throws - which crashed the app on every launch.
  */
 @Composable
 private fun RecoverFromDeadNavHost(navController: NavHostController) {
-    val entries by navController.currentBackStack.collectAsState()
+    val entries by navController.navigatorProvider
+        .getNavigator(ComposeNavigator::class.java)
+        .backStack.collectAsState()
     val visible by navController.visibleEntries.collectAsState()
 
     // The graph entry itself is always there and is not a screen, so it does not count.
@@ -185,7 +202,12 @@ private fun RecoverFromDeadNavHost(navController: NavHostController) {
 }
 
 @Composable
-private fun PokerRoutes(navController: NavHostController, onOpenMenu: () -> Unit) {
+private fun PokerRoutes(
+    navController: NavHostController,
+    onOpenMenu: () -> Unit,
+    onGameEnded: (gameId: Long) -> Unit,
+    onGamePaidUp: (gameId: Long) -> Unit,
+) {
     NavHost(
         navController = navController,
         startDestination = Routes.HISTORY,
@@ -257,6 +279,10 @@ private fun PokerRoutes(navController: NavHostController, onOpenMenu: () -> Unit
                 onBack = { navController.popFrom(entry) },
                 onFinished = { gameId ->
                     navController.whileOn(entry) {
+                        // The ad opens as its own activity, so the settlement composes underneath
+                        // and is what the host sees once the ad is closed. The game is already
+                        // saved as ended by the time this runs.
+                        onGameEnded(gameId)
                         navController.navigate(Routes.settlement(gameId)) {
                             // The game is over: back from the settlement belongs at history, not in
                             // a live screen for a game that no longer exists.
@@ -276,14 +302,21 @@ private fun PokerRoutes(navController: NavHostController, onOpenMenu: () -> Unit
             GuardedBack(navController, entry)
             SettlementScreen(
                 onBack = { navController.popFrom(entry) },
-                onDone = {
+                onDone = { isPaidUp ->
                     navController.whileOn(entry) {
                         navController.navigate(Routes.HISTORY) {
                             popUpTo(Routes.HISTORY) { inclusive = true }
+                        }
+                        // After the navigation, so the interstitial covers the games list and
+                        // never the payments.
+                        if (isPaidUp) {
+                            onGamePaidUp(requireNotNull(entry.arguments).getLong(Routes.GAME_ID))
                         }
                     }
                 },
             )
         }
     }
+    // Only now is the graph set and the Compose navigator attached; see RecoverFromDeadNavHost.
+    RecoverFromDeadNavHost(navController)
 }

@@ -11,13 +11,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import com.zango.pokertracker.ads.ConsentManager
+import com.zango.pokertracker.ads.InterstitialAdController
 import com.zango.pokertracker.core.locale.AppLanguageStore
 import com.zango.pokertracker.ui.navigation.PokerNavHost
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var consentManager: ConsentManager
+
+    @Inject
+    lateinit var interstitialAds: InterstitialAdController
 
     /**
      * Applies the chosen language before any resource is read. Below Android 13 there is no
@@ -36,13 +45,22 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
         )
         super.onCreate(savedInstanceState)
+        // First thing after injection: no ad can load until ConsentManager has cleared it.
+        consentManager.gatherConsent(this)
         setContent {
             PokerTrackerTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
                 ) {
-                    PokerNavHost()
+                    PokerNavHost(
+                        onGameEnded = { gameId ->
+                            interstitialAds.onGameEnded(this@MainActivity, gameId)
+                        },
+                        onGamePaidUp = { gameId ->
+                            interstitialAds.onGamePaidUp(this@MainActivity, gameId)
+                        },
+                    )
                 }
             }
         }

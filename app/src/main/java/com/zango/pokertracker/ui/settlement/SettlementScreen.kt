@@ -77,10 +77,19 @@ import com.zango.pokertracker.ui.theme.PokerTheme
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
 import kotlinx.coroutines.launch
 
+/**
+ * No ads on this screen, deliberately. It is where the host works out and ticks off who pays whom:
+ * a banner next to the payment rows invites a mis-tap that marks the wrong transfer as paid, and
+ * anything that looks like it belongs to the money here costs the app the trust it depends on.
+ * Full-screen ads come only at the edges: one may open over the way in when a game has just been
+ * ended, and one after [onDone] has left for the games list - never while this screen is in use.
+ *
+ * @param onDone called with whether the game is paid up as the host goes back to the games list.
+ */
 @Composable
 fun SettlementScreen(
     onBack: () -> Unit,
-    onDone: () -> Unit,
+    onDone: (isPaidUp: Boolean) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettlementViewModel = hiltViewModel(),
 ) {
@@ -153,7 +162,7 @@ fun SettlementScreen(
 
             else -> SettlementContent(
                 state = state,
-                onDone = onDone,
+                onDone = { onDone(state.isPaidUp) },
                 modifier = Modifier.padding(padding),
                 onPaymentToggled = viewModel::onPaymentToggled,
             )

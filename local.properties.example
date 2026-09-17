@@ -1,0 +1,25 @@
+# Copy to local.properties (which is git-ignored) and fill in real values.
+# Android Studio writes sdk.dir itself; the release signing keys below are read by app/build.gradle.kts.
+# Each RELEASE_* key can instead be supplied as an environment variable of the same name (e.g. on CI).
+
+sdk.dir=/path/to/Android/Sdk
+
+# Release signing (upload key). Path is relative to the project root.
+RELEASE_STORE_FILE=keys/upload-keystore.jks
+RELEASE_STORE_PASSWORD=changeme
+RELEASE_KEY_ALIAS=upload
+RELEASE_KEY_PASSWORD=changeme
+
+# AdMob. All optional: when a key is missing the build uses Google's public test IDs (below), which
+# only ever serve test ads. Replace with the real IDs from the AdMob console before release.
+ADMOB_APP_ID=ca-app-pub-3940256099942544~3347511713
+ADMOB_BANNER_CREATE_GAME_UNIT_ID=ca-app-pub-3940256099942544/9214589741
+ADMOB_BANNER_HISTORY_UNIT_ID=ca-app-pub-3940256099942544/9214589741
+ADMOB_BANNER_LIVE_GAME_UNIT_ID=ca-app-pub-3940256099942544/9214589741
+# Create this one as an interstitial with video enabled in the AdMob console.
+ADMOB_INTERSTITIAL_BEFORE_SETTLEMENT_UNIT_ID=ca-app-pub-3940256099942544/1033173712
+ADMOB_INTERSTITIAL_PAID_UP_UNIT_ID=ca-app-pub-3940256099942544/1033173712
+
+# Debug builds only. The hashed device id UMP prints to logcat on first run; when set, the consent
+# form is requested as if this phone were in the EEA.
+UMP_TEST_DEVICE_HASHED_ID=

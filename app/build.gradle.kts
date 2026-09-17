@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,6 +7,47 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
 }
+
+// Release signing secrets come from local.properties (git-ignored) or, failing that, from
+// environment variables of the same name, so nothing secret lives in version control.
+// See local.properties.example for the keys.
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
+fun releaseSigning(key: String): String? =
+    localProperties.getProperty(key)?.takeIf { it.isNotBlank() }
+        ?: System.getenv(key)?.takeIf { it.isNotBlank() }
+
+val releaseStoreFile = releaseSigning("RELEASE_STORE_FILE")
+
+// AdMob IDs come from the same places as the signing keys. Each falls back to Google's public test
+// ID, so a checkout without local.properties builds and can only ever request test ads. Real IDs
+// are added later, in local.properties or CI - never in this file.
+fun adsSetting(key: String, fallback: String): String =
+    localProperties.getProperty(key)?.takeIf { it.isNotBlank() }
+        ?: System.getenv(key)?.takeIf { it.isNotBlank() }
+        ?: fallback
+
+val testAdMobAppId = "ca-app-pub-3940256099942544~3347511713"
+val testAdaptiveBannerUnitId = "ca-app-pub-3940256099942544/9214589741"
+val testInterstitialUnitId = "ca-app-pub-3940256099942544/1033173712"
+
+fun String.quoted(): String = "\"$this\""
+
+// Versioning, changed by hand for every release uploaded to Play Console.
+//
+// appVersionCode: +1 for every upload, whatever the change. Play rejects a code it has already seen,
+//   and it is what decides which build is newer, so it only ever goes up.
+// appVersionName: semantic versioning, MAJOR.MINOR.PATCH, as shown to users.
+//   PATCH - bug fixes only, nothing new for the user to learn.
+//   MINOR - a new feature or screen; existing data and results are untouched.
+//   MAJOR - a breaking change to stored data or to how money, reconciliation or settlement are
+//           calculated, so the same game could now come out differently.
+// Codes 1 and earlier were the unpublished betas ("1.0 Beta" to "Beta 1.2").
+val appVersionCode = 2
+val appVersionName = "1.0.0"
 
 android {
     namespace = "com.zango.pokertracker"
@@ -14,15 +57,75 @@ android {
         applicationId = "com.zango.pokertracker"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "Beta 1.2"
+        versionCode = appVersionCode
+        versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        manifestPlaceholders["admobAppId"] = adsSetting("ADMOB_APP_ID", testAdMobAppId)
+        // One unit per placement, so AdMob reports each placement separately.
+        buildConfigField(
+            "String",
+            "ADMOB_BANNER_CREATE_GAME_UNIT_ID",
+            adsSetting("ADMOB_BANNER_CREATE_GAME_UNIT_ID", testAdaptiveBannerUnitId).quoted(),
+        )
+        buildConfigField(
+            "String",
+            "ADMOB_BANNER_HISTORY_UNIT_ID",
+            adsSetting("ADMOB_BANNER_HISTORY_UNIT_ID", testAdaptiveBannerUnitId).quoted(),
+        )
+        buildConfigField(
+            "String",
+            "ADMOB_BANNER_LIVE_GAME_UNIT_ID",
+            adsSetting("ADMOB_BANNER_LIVE_GAME_UNIT_ID", testAdaptiveBannerUnitId).quoted(),
+        )
+        // Google's current test IDs have no separate video interstitial: the one interstitial test
+        // unit serves both. A real unit's formats, video included, are set in the AdMob console.
+        buildConfigField(
+            "String",
+            "ADMOB_INTERSTITIAL_BEFORE_SETTLEMENT_UNIT_ID",
+            adsSetting("ADMOB_INTERSTITIAL_BEFORE_SETTLEMENT_UNIT_ID", testInterstitialUnitId).quoted(),
+        )
+        buildConfigField(
+            "String",
+            "ADMOB_INTERSTITIAL_PAID_UP_UNIT_ID",
+            adsSetting("ADMOB_INTERSTITIAL_PAID_UP_UNIT_ID", testInterstitialUnitId).quoted(),
+        )
+        // Debug builds only: the hashed id UMP logs for this phone. When set, the consent form is
+        // requested as if the phone were in the EEA, so the flow can be tested from anywhere.
+        buildConfigField(
+            "String",
+            "UMP_TEST_DEVICE_HASHED_ID",
+            adsSetting("UMP_TEST_DEVICE_HASHED_ID", "").quoted(),
+        )
+    }
+
+    signingConfigs {
+        // Only declared when a keystore is configured. The release build type looks it up with
+        // getByName, so without the keys Gradle fails at configuration instead of producing an
+        // unsigned release.
+        if (releaseStoreFile != null) {
+            create("release") {
+                storeFile = rootProject.file(releaseStoreFile)
+                storePassword = releaseSigning("RELEASE_STORE_PASSWORD")
+                keyAlias = releaseSigning("RELEASE_KEY_ALIAS")
+                keyPassword = releaseSigning("RELEASE_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
+        debug {
+            // A package of its own, so a debug build installs next to the release from Play instead
+            // of on top of it - the two are signed with different keys, and Android would otherwise
+            // refuse the install until the release was removed. It also keeps its own database.
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
         release {
-            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -43,6 +146,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     lint {
         // Everything the IDE would flag is treated as a build concern, so warnings cannot
@@ -82,6 +186,16 @@ android {
     }
 }
 
+// One command before every Play upload: the unit tests and lint against the release variant, then
+// the minified, signed bundle. Unit tests run on the JVM against the unminified release classes;
+// R8's output is dex and can only be exercised on a device, so this does not replace installing
+// the release build and using it.
+tasks.register("verifyRelease") {
+    group = "verification"
+    description = "Runs release unit tests and lint, then builds the minified release bundle."
+    dependsOn("testReleaseUnitTest", "lintRelease", "bundleRelease")
+}
+
 // Room schema export: keeps a JSON schema per version under app/schemas for migration testing.
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
@@ -114,6 +228,9 @@ dependencies {
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
     ksp(libs.hilt.compiler)
+
+    implementation(libs.play.services.ads)
+    implementation(libs.user.messaging.platform)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

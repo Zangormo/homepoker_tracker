@@ -1,6 +1,7 @@
 package com.zango.pokertracker.ui.livegame
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -47,6 +48,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.zango.pokertracker.BuildConfig
 import com.zango.pokertracker.R
 import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.ChipRate
@@ -54,6 +56,7 @@ import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.NameRules
 import com.zango.pokertracker.domain.model.Player
+import com.zango.pokertracker.ui.ads.BannerAd
 import com.zango.pokertracker.ui.common.AmountPreview
 import com.zango.pokertracker.ui.common.CashAmountField
 import com.zango.pokertracker.ui.common.CashAmountText
@@ -69,6 +72,13 @@ import com.zango.pokertracker.ui.common.resolve
 import com.zango.pokertracker.ui.theme.PokerTheme
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
 
+/**
+ * Carries a banner, kept as far from the money as the layout allows. Buy-ins, rebuys and cash-outs
+ * are entered here in a hurry with the table waiting, so the ad sits in the bottom bar: the
+ * Scaffold lifts the player list and the add-player button above it, and nothing that records
+ * money shares its row. Dialogs open on top of the screen, so the banner is never beside an amount
+ * field while one is being typed.
+ */
 @Composable
 fun LiveGameScreen(
     onBack: () -> Unit,
@@ -110,6 +120,12 @@ fun LiveGameScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                 ),
+            )
+        },
+        bottomBar = {
+            BannerAd(
+                adUnitId = BuildConfig.ADMOB_BANNER_LIVE_GAME_UNIT_ID,
+                modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer),
             )
         },
         floatingActionButton = {

@@ -20,5 +20,21 @@
 
 .DS_Store
 
-# Release build outputs
+# Release build outputs, wherever they are copied to
 /app/release
+*.apk
+*.aab
+mapping.txt
+
+# Personal working notes: release audits, checklists, prompts and briefs for AI tools
+/docs/
+
+# Claude Code per-user settings
+.claude/settings.local.json
+
+Thumbs.db
+
+# Signing keys. The upload key must never reach the repository; back it up separately.
+/keys/
+*.jks
+*.keystore

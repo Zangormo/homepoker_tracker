@@ -1,6 +1,7 @@
 package com.zango.pokertracker.ui.creategame
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,6 +59,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.zango.pokertracker.BuildConfig
 import com.zango.pokertracker.R
 import com.zango.pokertracker.core.money.ChipRate
 import com.zango.pokertracker.core.money.Chips
@@ -65,6 +67,7 @@ import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.NameRules
 import com.zango.pokertracker.domain.model.Player
 import com.zango.pokertracker.domain.model.Stakes
+import com.zango.pokertracker.ui.ads.BannerAd
 import com.zango.pokertracker.ui.common.AmountPreview
 import com.zango.pokertracker.ui.common.CashAmountField
 import com.zango.pokertracker.ui.common.CashAmountText
@@ -140,20 +143,29 @@ fun CreateGameScreen(
             )
         },
         bottomBar = {
-            StartGameBar(
-                state = state,
-                onStart = {
-                    if (state.canStart) {
-                        keyboard?.hide()
-                        actions.onStartGame()
-                    } else {
-                        revealAllProblems = true
-                        // Focus moves to the first thing that is wrong; taking focus inside a
-                        // scrolling column brings it into view as a side effect.
-                        state.validation.firstProblem()?.let { focusRequesters[it]?.requestFocus() }
-                    }
-                },
-            )
+            Column {
+                StartGameBar(
+                    state = state,
+                    onStart = {
+                        if (state.canStart) {
+                            keyboard?.hide()
+                            actions.onStartGame()
+                        } else {
+                            revealAllProblems = true
+                            // Focus moves to the first thing that is wrong; taking focus inside a
+                            // scrolling column brings it into view as a side effect.
+                            state.validation.firstProblem()?.let { focusRequesters[it]?.requestFocus() }
+                        }
+                    },
+                )
+                // Under the start button, in the bottom bar rather than the form, so the Scaffold
+                // pads the form clear of it and no field can end up behind the ad. The divider and
+                // the bar's own padding keep it apart from "Start game".
+                BannerAd(
+                    adUnitId = BuildConfig.ADMOB_BANNER_CREATE_GAME_UNIT_ID,
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer),
+                )
+            }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->

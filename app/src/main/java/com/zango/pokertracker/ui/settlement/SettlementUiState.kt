@@ -53,5 +53,11 @@ data class SettlementUiState(
     /** True once every payment has been ticked off, which is what marks the game square. */
     val isFullyPaid: Boolean get() = hasPayments && payments.all { it.isPaid }
 
+    /**
+     * The game is over and nothing is owed: what history shows as PAID UP. Unlike [isFullyPaid]
+     * this includes a table where everyone came out even, which needs no ticks at all.
+     */
+    val isPaidUp: Boolean get() = isFinished && payments.all { it.isPaid }
+
     val paidCount: Int get() = payments.count { it.isPaid }
 }

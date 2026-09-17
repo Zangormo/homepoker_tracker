@@ -1,6 +1,7 @@
 package com.zango.pokertracker.ui.history
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,9 +52,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.zango.pokertracker.BuildConfig
 import com.zango.pokertracker.R
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
+import com.zango.pokertracker.ui.ads.BannerAd
 import com.zango.pokertracker.ui.common.CashAmountText
 import com.zango.pokertracker.ui.common.ChipAmountText
 import com.zango.pokertracker.ui.common.MinTouchTarget
@@ -97,6 +100,14 @@ fun HistoryScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                 ),
+            )
+        },
+        // In the bottom bar, so the Scaffold lifts both the list's end and the new-game button
+        // above it rather than letting either sit on the ad.
+        bottomBar = {
+            BannerAd(
+                adUnitId = BuildConfig.ADMOB_BANNER_HISTORY_UNIT_ID,
+                modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer),
             )
         },
         floatingActionButton = {

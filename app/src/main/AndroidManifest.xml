@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Ads only. The app's own data never leaves the device. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!--
       localeConfig is read by Android 13 and later to list the app in the system language picker.
       Older versions ignore it and take their language from the in-app setting instead, which is
@@ -19,6 +22,10 @@
         android:localeConfig="@xml/locales_config"
         android:theme="@style/Theme.PokerTracker"
         tools:ignore="UnusedAttribute">
+        <!-- Filled in by app/build.gradle.kts: ADMOB_APP_ID, or Google's sample app ID. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${admobAppId}" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

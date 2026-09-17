@@ -70,7 +70,7 @@
     <string name="live_action_rebuy">Ребай</string>
     <string name="live_action_cash_out">Вывести</string>
     <string name="live_action_sell_back">Сдать фишки в кассу</string>
-    <string name="live_action_undo_last">Отменить последнее</string>
+    <string name="live_action_undo_last">Отменить</string>
     <string name="live_action_undo_cash_out">Отменить вывод</string>
 
     <!-- Rebuy dialog -->
