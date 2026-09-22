@@ -9,6 +9,7 @@ import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.domain.model.NameRules
 import com.zango.pokertracker.domain.model.NewGameEntry
 import com.zango.pokertracker.domain.model.NewGameSetup
+import com.zango.pokertracker.ui.common.parseBlinds
 import com.zango.pokertracker.ui.common.parseChipCount
 import com.zango.pokertracker.ui.common.parsePositiveMoney
 import com.zango.pokertracker.ui.common.wholeChipsError
@@ -80,17 +81,11 @@ fun CreateGameForm.validate(): CreateGameValidation {
         else -> null
     }
 
-    val (smallBlindValue, smallBlindError) =
-        parsePositiveMoney(smallBlind, UiText.of(R.string.create_small_blind))
-    val (parsedBigBlind, bigBlindParseError) =
-        parsePositiveMoney(bigBlind, UiText.of(R.string.create_big_blind))
-    val bigBlindError: UiText? = bigBlindParseError ?: when {
-        smallBlindValue != null && parsedBigBlind != null && parsedBigBlind <= smallBlindValue ->
-            UiText.of(R.string.error_big_blind_too_small)
-
-        else -> null
-    }
-    val bigBlindValue = if (bigBlindError == null) parsedBigBlind else null
+    val blinds = parseBlinds(smallBlind, bigBlind)
+    val smallBlindValue = blinds.smallBlind
+    val smallBlindError = blinds.smallBlindError
+    val bigBlindValue = blinds.bigBlind
+    val bigBlindError = blinds.bigBlindError
 
     val (chipRate, chipValueError) = resolveChipRate(bigBlindValue)
     val (defaultBuyIn, buyInError) = resolveDefaultBuyIn(bigBlindValue, chipRate)

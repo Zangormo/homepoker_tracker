@@ -25,6 +25,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -772,11 +773,26 @@ private fun AddPlayerDialog(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 dialog.candidates.forEach { candidate ->
+                    val selected = candidate.id == dialog.selectedPlayerId
+                    // Material drops the outline from a selected chip; here it turns green instead,
+                    // the same way a picked player is marked on the new game screen.
                     FilterChip(
-                        selected = candidate.id == dialog.selectedPlayerId,
+                        selected = selected,
                         onClick = { onSelectCandidate(candidate.id) },
                         label = { Text(candidate.name) },
                         modifier = Modifier.height(MinTouchTarget),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedLabelColor = MaterialTheme.colorScheme.primary,
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = selected,
+                            borderColor = MaterialTheme.colorScheme.outline,
+                            selectedBorderColor = MaterialTheme.colorScheme.primary,
+                            borderWidth = 1.dp,
+                            selectedBorderWidth = 1.5.dp,
+                        ),
                     )
                 }
             }

@@ -379,6 +379,8 @@
     <string name="error_amount_positive">%1$s: muss größer als null sein</string>
     <string name="error_amount_malformed">%1$s: gib eine Zahl ein, zum Beispiel 0.005</string>
     <string name="error_amount_too_large">%1$s: zu groß</string>
+    <string name="error_amount_below_min">%1$s: mindestens %2$s</string>
+    <string name="error_amount_above_max">%1$s: höchstens %2$s</string>
     <string name="error_chips_whole_number">%1$s: gib eine ganze Zahl ein</string>
     <string name="error_chips_not_whole">Chips gibt es nur ganz</string>
     <string name="error_not_whole_chips">%1$s ergibt keine ganze Zahl von Chips zu %2$s (%3$s bleiben übrig)</string>

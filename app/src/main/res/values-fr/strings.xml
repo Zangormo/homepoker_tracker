@@ -392,6 +392,8 @@
     <string name="error_amount_positive">%1$s : doit être supérieur à zéro</string>
     <string name="error_amount_malformed">%1$s : saisissez un nombre, par exemple 0.005</string>
     <string name="error_amount_too_large">%1$s : trop grand</string>
+    <string name="error_amount_below_min">%1$s : au moins %2$s</string>
+    <string name="error_amount_above_max">%1$s : au maximum %2$s</string>
     <string name="error_chips_whole_number">%1$s : saisissez un nombre entier</string>
     <string name="error_chips_not_whole">Les jetons ne vont que par nombres entiers</string>
     <string name="error_not_whole_chips">%1$s ne fait pas un nombre entier de jetons à %2$s (il reste %3$s)</string>

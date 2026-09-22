@@ -143,6 +143,8 @@ class PokerRepositoryImpl @Inject constructor(
     override suspend fun addStakes(stakes: Stakes): AddStakesResult {
         require(stakes.smallBlind.isPositive) { "Small blind must be greater than zero" }
         require(stakes.smallBlind < stakes.bigBlind) { "Small blind must be below the big blind" }
+        require(stakes.smallBlind in Stakes.MIN_SMALL_BLIND..Stakes.MAX_SMALL_BLIND) { "Small blind out of range" }
+        require(stakes.bigBlind in Stakes.MIN_BIG_BLIND..Stakes.MAX_BIG_BLIND) { "Big blind out of range" }
         return database.withTransaction {
             when {
                 stakePresetDao.exists(stakes.smallBlind.micros, stakes.bigBlind.micros) ->
@@ -179,6 +181,8 @@ class PokerRepositoryImpl @Inject constructor(
         }
         require(setup.smallBlind.isPositive) { "Small blind must be greater than zero" }
         require(setup.smallBlind < setup.bigBlind) { "Small blind must be below the big blind" }
+        require(setup.smallBlind in Stakes.MIN_SMALL_BLIND..Stakes.MAX_SMALL_BLIND) { "Small blind out of range" }
+        require(setup.bigBlind in Stakes.MIN_BIG_BLIND..Stakes.MAX_BIG_BLIND) { "Big blind out of range" }
         require(setup.payoutRounding.isPositive) { "Payout rounding unit must be positive" }
         require(setup.entries.isNotEmpty()) { "A game needs at least one player" }
         require(setup.entries.all { it.buyIn.isPositive }) { "Buy-ins must be greater than zero" }

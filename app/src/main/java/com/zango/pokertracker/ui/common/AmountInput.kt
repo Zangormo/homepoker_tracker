@@ -12,6 +12,7 @@ import com.zango.pokertracker.core.money.MoneyParseError
 import com.zango.pokertracker.core.money.MoneyParseResult
 import com.zango.pokertracker.core.money.MoneyParser
 import com.zango.pokertracker.core.text.UiText
+import com.zango.pokertracker.domain.model.Stakes
 
 /**
  * Turning typed text into money and chips, with a message the host can act on when it fails.
@@ -36,6 +37,45 @@ fun parsePositiveMoney(text: String, label: UiText): ParsedMoney =
 
         is MoneyParseResult.Invalid -> ParsedMoney(error = result.error.describe(label))
     }
+
+/** A figure outside [min]..[max], named with the field it was typed into; null when it fits. */
+fun rangeError(amount: Money, min: Money, max: Money, label: UiText): UiText? = when {
+    amount < min -> UiText.of(R.string.error_amount_below_min, label, UiText.cash(min))
+    amount > max -> UiText.of(R.string.error_amount_above_max, label, UiText.cash(max))
+    else -> null
+}
+
+/**
+ * Reads a pair of blinds as typed: each within the range the app plays at, and the big blind above
+ * the small one. The same check for a new game and for a level added in settings, so a level that
+ * can be saved is always one a game can be started on.
+ */
+fun parseBlinds(smallText: String, bigText: String): ParsedBlinds {
+    val smallLabel = UiText.of(R.string.create_small_blind)
+    val bigLabel = UiText.of(R.string.create_big_blind)
+    val (parsedSmall, smallParseError) = parsePositiveMoney(smallText, smallLabel)
+    val (parsedBig, bigParseError) = parsePositiveMoney(bigText, bigLabel)
+    val smallError = smallParseError
+        ?: parsedSmall?.let { rangeError(it, Stakes.MIN_SMALL_BLIND, Stakes.MAX_SMALL_BLIND, smallLabel) }
+    val bigError = bigParseError
+        ?: parsedBig?.let { rangeError(it, Stakes.MIN_BIG_BLIND, Stakes.MAX_BIG_BLIND, bigLabel) }
+        ?: UiText.of(R.string.error_big_blind_too_small).takeIf {
+            parsedSmall != null && parsedBig != null && parsedBig <= parsedSmall
+        }
+    return ParsedBlinds(
+        smallBlind = parsedSmall.takeIf { smallError == null },
+        bigBlind = parsedBig.takeIf { bigError == null },
+        smallBlindError = smallError,
+        bigBlindError = bigError,
+    )
+}
+
+data class ParsedBlinds(
+    val smallBlind: Money?,
+    val bigBlind: Money?,
+    val smallBlindError: UiText?,
+    val bigBlindError: UiText?,
+)
 
 /**
  * Reads a chip count. [allowZero] is true when counting a final stack, because busting out with

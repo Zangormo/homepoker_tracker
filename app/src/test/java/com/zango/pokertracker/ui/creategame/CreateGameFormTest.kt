@@ -302,4 +302,38 @@ class CreateGameFormTest {
         assertFalse(validForm().validate().setup!!.isRandomSeating)
         assertTrue(validForm().copy(isRandomSeating = true).validate().setup!!.isRandomSeating)
     }
+
+    @Test
+    fun `blinds below the smallest stakes are refused`() {
+        val validation = validForm().copy(smallBlind = "0.0005", bigBlind = "0.001").validate()
+
+        assertEquals(
+            UiText.of(R.string.error_amount_below_min, UiText.of(R.string.create_small_blind), UiText.Cash("0.001")),
+            validation.smallBlindError,
+        )
+        assertEquals(
+            UiText.of(R.string.error_amount_below_min, UiText.of(R.string.create_big_blind), UiText.Cash("0.002")),
+            validation.bigBlindError,
+        )
+        assertFalse(validation.isValid)
+    }
+
+    @Test
+    fun `blinds at the top of the range are accepted and anything past it is refused`() {
+        val atTheTop = validForm()
+            .copy(smallBlind = "10000", bigBlind = "20000", chipsPerBigBlind = "2")
+            .validate()
+        assertNull(atTheTop.smallBlindError)
+        assertNull(atTheTop.bigBlindError)
+
+        val pastIt = validForm().copy(smallBlind = "10001", bigBlind = "20001").validate()
+        assertEquals(
+            UiText.of(R.string.error_amount_above_max, UiText.of(R.string.create_small_blind), UiText.Cash("10000.00")),
+            pastIt.smallBlindError,
+        )
+        assertEquals(
+            UiText.of(R.string.error_amount_above_max, UiText.of(R.string.create_big_blind), UiText.Cash("20000.00")),
+            pastIt.bigBlindError,
+        )
+    }
 }

@@ -392,6 +392,8 @@
     <string name="error_amount_positive">%1$s: debe ser mayor que cero</string>
     <string name="error_amount_malformed">%1$s: introduce un número, por ejemplo 0.005</string>
     <string name="error_amount_too_large">%1$s: demasiado grande</string>
+    <string name="error_amount_below_min">%1$s: como mínimo %2$s</string>
+    <string name="error_amount_above_max">%1$s: como máximo %2$s</string>
     <string name="error_chips_whole_number">%1$s: introduce un número entero</string>
     <string name="error_chips_not_whole">Las fichas solo van en números enteros</string>
     <string name="error_not_whole_chips">%1$s no es un número entero de fichas de %2$s (sobran %3$s)</string>

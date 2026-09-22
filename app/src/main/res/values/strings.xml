@@ -489,6 +489,9 @@
     <string name="error_amount_malformed">Enter %1$s as a number, for example 0.005</string>
     <!-- %1$s: field label  %2$d: how many decimal places are allowed -->
     <string name="error_amount_too_large">%1$s is too large</string>
+    <!-- %1$s: field label  %2$s: the smallest or largest amount allowed -->
+    <string name="error_amount_below_min">%1$s must be at least %2$s</string>
+    <string name="error_amount_above_max">%1$s can be at most %2$s</string>
     <string name="error_chips_whole_number">Enter %1$s as a whole number</string>
     <string name="error_chips_not_whole">Chips come in whole numbers only</string>
     <!-- %1$s: the amount  %2$s: the value of one chip  %3$s: the cash left over -->

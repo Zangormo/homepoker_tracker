@@ -9,7 +9,7 @@ import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.data.repository.AddStakesResult
 import com.zango.pokertracker.data.repository.PokerRepository
 import com.zango.pokertracker.domain.model.Stakes
-import com.zango.pokertracker.ui.common.parsePositiveMoney
+import com.zango.pokertracker.ui.common.parseBlinds
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -92,18 +92,15 @@ class SettingsViewModel @Inject constructor(
      */
     fun onConfirmAdd() {
         val editor = editing.value ?: return
-        val small = parsePositiveMoney(editor.smallBlind, UiText.of(R.string.create_small_blind))
-        val big = parsePositiveMoney(editor.bigBlind, UiText.of(R.string.create_big_blind))
-        val error: UiText? = small.error
-            ?: big.error
-            ?: UiText.of(R.string.error_big_blind_too_small)
-                .takeIf { small.money != null && big.money != null && big.money <= small.money }
-        if (error != null || small.money == null || big.money == null) {
-            editing.update { it?.copy(error = error) }
+        val blinds = parseBlinds(editor.smallBlind, editor.bigBlind)
+        val small = blinds.smallBlind
+        val big = blinds.bigBlind
+        if (small == null || big == null) {
+            editing.update { it?.copy(error = blinds.smallBlindError ?: blinds.bigBlindError) }
             return
         }
 
-        val stakes = Stakes(small.money, big.money)
+        val stakes = Stakes(small, big)
         viewModelScope.launch {
             when (repository.addStakes(stakes)) {
                 AddStakesResult.Added -> {

@@ -123,6 +123,23 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `a level past the largest blinds is refused where it is typed`() = runTest {
+        val viewModel = viewModel()
+        viewModel.stateWhere { it.count == 5 }
+
+        viewModel.onAddRequested()
+        viewModel.onSmallBlindChange("20000")
+        viewModel.onBigBlindChange("40000")
+        viewModel.onConfirmAdd()
+
+        assertEquals(
+            UiText.of(R.string.error_amount_above_max, UiText.of(R.string.create_small_blind), UiText.Cash("10000.00")),
+            viewModel.stateWhere { it.editor?.error != null }.editor?.error,
+        )
+        assertTrue(repository.writes.isEmpty())
+    }
+
+    @Test
     fun `a level already on the list is not added twice`() = runTest {
         val viewModel = viewModel()
         viewModel.stateWhere { it.count == 5 }

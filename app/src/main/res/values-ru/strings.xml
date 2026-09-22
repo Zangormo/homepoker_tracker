@@ -320,6 +320,8 @@
     <string name="error_amount_positive">%1$s: должно быть больше нуля</string>
     <string name="error_amount_malformed">%1$s: введите число, например 0.005</string>
     <string name="error_amount_too_large">%1$s: слишком большое значение</string>
+    <string name="error_amount_below_min">%1$s: не меньше %2$s</string>
+    <string name="error_amount_above_max">%1$s: не больше %2$s</string>
     <string name="error_chips_whole_number">%1$s: введите целое число</string>
     <string name="error_chips_not_whole">Фишки бывают только целыми</string>
     <string name="error_not_whole_chips">%1$s не раскладывается на целые фишки по %2$s (остаётся %3$s)</string>

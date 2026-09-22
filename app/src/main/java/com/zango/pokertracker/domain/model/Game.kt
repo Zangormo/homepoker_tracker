@@ -86,6 +86,16 @@ data class Stakes(val smallBlind: Money, val bigBlind: Money) {
         const val MAX_PRESETS: Int = 10
 
         /**
+         * The blinds the app accepts. The floor is the smallest chip a home game realistically
+         * plays for; the ceiling is far past any kitchen table, and keeps a stray extra zero from
+         * turning into a game nobody meant to set up.
+         */
+        val MIN_SMALL_BLIND: Money = Money(1_000)
+        val MIN_BIG_BLIND: Money = Money(2_000)
+        val MAX_SMALL_BLIND: Money = Money(10_000 * Money.MICROS_PER_UNIT)
+        val MAX_BIG_BLIND: Money = Money(20_000 * Money.MICROS_PER_UNIT)
+
+        /**
          * The ladder almost every home game sits somewhere on. These are always offered, and
          * whatever the host has actually played joins them.
          */
