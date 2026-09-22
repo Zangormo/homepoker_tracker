@@ -189,6 +189,9 @@ class PokerRepositoryImpl @Inject constructor(
         require(setup.entries.distinctBy { it.playerId }.size == setup.entries.size) {
             "A player cannot be seated twice in the same game"
         }
+        require(!setup.isRandomSeating || setup.entries.size <= NewGameSetup.MAX_TABLE_SEATS) {
+            "A randomly seated table holds at most ${NewGameSetup.MAX_TABLE_SEATS} players"
+        }
         require(
             setup.bombPotIntervalMinutes == null ||
                 setup.bombPotIntervalMinutes in 1..NewGameSetup.MAX_BOMB_POT_MINUTES,
@@ -278,6 +281,7 @@ class PokerRepositoryImpl @Inject constructor(
             check(!gamePlayerDao.isSeated(gameId, playerId)) {
                 "That player is already seated in this game"
             }
+            checkRoomAtRandomTable(gameId)
             // A late arrival at a randomly seated table pulls up a chair at the end; the host can
             // swap them into their real place from the table view.
             val position = if (gameDao.load(gameId)?.isRandomSeating == true) {
@@ -320,7 +324,21 @@ class PokerRepositoryImpl @Inject constructor(
     }
 
     override suspend fun undoCashOut(gamePlayerId: Long) {
-        gamePlayerDao.undoCashOut(gamePlayerId)
+        database.withTransaction {
+            gamePlayerDao.gameIdOf(gamePlayerId)?.let { checkRoomAtRandomTable(it) }
+            gamePlayerDao.undoCashOut(gamePlayerId)
+        }
+    }
+
+    /**
+     * A randomly seated table holds [NewGameSetup.MAX_TABLE_SEATS]. The screens already refuse the
+     * tap; this keeps the rule true for anything that reaches the database another way.
+     */
+    private suspend fun checkRoomAtRandomTable(gameId: Long) {
+        if (gameDao.load(gameId)?.isRandomSeating != true) return
+        check(gamePlayerDao.activeSeatCount(gameId) < NewGameSetup.MAX_TABLE_SEATS) {
+            "The table already seats ${NewGameSetup.MAX_TABLE_SEATS} players"
+        }
     }
 
     override suspend fun setFinalChipCount(gamePlayerId: Long, chips: Chips?) {

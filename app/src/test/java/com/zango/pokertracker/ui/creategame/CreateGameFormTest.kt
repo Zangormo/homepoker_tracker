@@ -336,4 +336,21 @@ class CreateGameFormTest {
             pastIt.bigBlindError,
         )
     }
+
+    @Test
+    fun `random order holds up to nine players and says so past that`() {
+        val nine = (1L..9L).associateWith { null as Money? }
+        assertNull(validForm().copy(isRandomSeating = true, selection = nine).validate().playersError)
+
+        val ten = (1L..10L).associateWith { null as Money? }
+        val validation = validForm().copy(isRandomSeating = true, selection = ten).validate()
+        assertEquals(
+            UiText.plural(R.plurals.error_random_seating_too_many, 9, 9),
+            validation.playersError,
+        )
+        assertNull(validation.setup)
+
+        // Without random order the same ten can play: the limit is the table view's, not the game's.
+        assertNotNull(validForm().copy(isRandomSeating = false, selection = ten).validate().setup)
+    }
 }

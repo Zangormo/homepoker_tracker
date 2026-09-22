@@ -563,11 +563,25 @@
 
     <!-- Random seating -->
     <string name="create_random_seating">Orden aleatorio de jugadores</string>
-    <string name="create_random_seating_hint">Sienta a todos en orden aleatorio al empezar la partida. La mesa aparece en la pestaña Estadísticas.</string>
+    <plurals name="create_random_seating_hint">
+        <item quantity="one">Sienta a todos en orden aleatorio al empezar la partida, hasta %1$d jugador. La mesa aparece en la pestaña Estadísticas.</item>
+        <item quantity="many">Sienta a todos en orden aleatorio al empezar la partida, hasta %1$d jugadores. La mesa aparece en la pestaña Estadísticas.</item>
+        <item quantity="other">Sienta a todos en orden aleatorio al empezar la partida, hasta %1$d jugadores. La mesa aparece en la pestaña Estadísticas.</item>
+    </plurals>
     <string name="live_section_table">Mesa</string>
     <string name="live_table_hint">Toca dos jugadores para cambiarlos de sitio</string>
     <string name="live_table_hint_selected">Toca a alguien para cambiarlo por %1$s</string>
     <string name="error_swap_seats">No se pudieron cambiar los sitios</string>
+    <plurals name="error_table_full">
+        <item quantity="one">La mesa admite como máximo %1$d jugador</item>
+        <item quantity="many">La mesa admite como máximo %1$d jugadores</item>
+        <item quantity="other">La mesa admite como máximo %1$d jugadores</item>
+    </plurals>
+    <plurals name="error_random_seating_too_many">
+        <item quantity="one">El orden aleatorio admite como máximo %1$d jugador. Quita algunos o desactívalo.</item>
+        <item quantity="many">El orden aleatorio admite como máximo %1$d jugadores. Quita algunos o desactívalo.</item>
+        <item quantity="other">El orden aleatorio admite como máximo %1$d jugadores. Quita algunos o desactívalo.</item>
+    </plurals>
 
     <!-- Donation prompt -->
     <string name="donation_title">¿Te gusta Poker Tracker?</string>

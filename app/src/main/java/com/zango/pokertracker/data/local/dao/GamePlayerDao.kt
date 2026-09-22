@@ -28,6 +28,13 @@ interface GamePlayerDao {
     @Query("SELECT MAX(tablePosition) FROM game_players WHERE gameId = :gameId")
     suspend fun lastTablePosition(gameId: Long): Int?
 
+    /** Players still at the table: seated and not cashed out. */
+    @Query("SELECT COUNT(*) FROM game_players WHERE gameId = :gameId AND cashedOutAt IS NULL")
+    suspend fun activeSeatCount(gameId: Long): Int
+
+    @Query("SELECT gameId FROM game_players WHERE id = :id")
+    suspend fun gameIdOf(id: Long): Long?
+
     @Query("SELECT tablePosition FROM game_players WHERE id = :id")
     suspend fun tablePosition(id: Long): Int?
 

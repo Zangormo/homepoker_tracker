@@ -563,11 +563,25 @@
 
     <!-- Random seating -->
     <string name="create_random_seating">Placement aléatoire des joueurs</string>
-    <string name="create_random_seating_hint">Place tout le monde dans un ordre aléatoire au lancement de la partie. La table apparaît dans l’onglet Stats.</string>
+    <plurals name="create_random_seating_hint">
+        <item quantity="one">Place tout le monde dans un ordre aléatoire au lancement de la partie, jusqu’à %1$d joueur. La table apparaît dans l’onglet Stats.</item>
+        <item quantity="many">Place tout le monde dans un ordre aléatoire au lancement de la partie, jusqu’à %1$d joueurs. La table apparaît dans l’onglet Stats.</item>
+        <item quantity="other">Place tout le monde dans un ordre aléatoire au lancement de la partie, jusqu’à %1$d joueurs. La table apparaît dans l’onglet Stats.</item>
+    </plurals>
     <string name="live_section_table">Table</string>
     <string name="live_table_hint">Appuyez sur deux joueurs pour échanger leurs places</string>
     <string name="live_table_hint_selected">Appuyez sur un joueur pour l’échanger avec %1$s</string>
     <string name="error_swap_seats">Impossible d’échanger les places</string>
+    <plurals name="error_table_full">
+        <item quantity="one">La table accueille au plus %1$d joueur</item>
+        <item quantity="many">La table accueille au plus %1$d joueurs</item>
+        <item quantity="other">La table accueille au plus %1$d joueurs</item>
+    </plurals>
+    <plurals name="error_random_seating_too_many">
+        <item quantity="one">Le placement aléatoire accepte au plus %1$d joueur. Retirez-en ou désactivez-le.</item>
+        <item quantity="many">Le placement aléatoire accepte au plus %1$d joueurs. Retirez-en ou désactivez-le.</item>
+        <item quantity="other">Le placement aléatoire accepte au plus %1$d joueurs. Retirez-en ou désactivez-le.</item>
+    </plurals>
 
     <!-- Donation prompt -->
     <string name="donation_title">Poker Tracker vous plaît ?</string>

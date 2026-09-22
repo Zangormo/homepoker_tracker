@@ -71,6 +71,7 @@ import com.zango.pokertracker.core.money.ChipRate
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.NameRules
+import com.zango.pokertracker.domain.model.NewGameSetup
 import com.zango.pokertracker.domain.model.Player
 import com.zango.pokertracker.domain.model.Stakes
 import com.zango.pokertracker.ui.ads.BannerAd
@@ -809,7 +810,11 @@ private fun PlayersSection(
     ) {
         SideGameItem(
             title = stringResource(R.string.create_random_seating),
-            description = stringResource(R.string.create_random_seating_hint),
+            description = pluralStringResource(
+                R.plurals.create_random_seating_hint,
+                NewGameSetup.MAX_TABLE_SEATS,
+                NewGameSetup.MAX_TABLE_SEATS,
+            ),
             selected = state.form.isRandomSeating,
             onToggle = actions.onToggleRandomSeating,
         )
@@ -845,7 +850,11 @@ private fun PlayersSection(
         }
 
         val playersError = state.validation.playersError
-        if (revealAllProblems && playersError != null) {
+        // "Pick at least one player" waits for a start attempt, like every other empty field. Too
+        // many for a random table shows at once: it follows from switching random order on, and
+        // the host needs to see the cause right there.
+        val showPlayersError = revealAllProblems || state.form.selection.isNotEmpty()
+        if (showPlayersError && playersError != null) {
             Text(
                 playersError.resolve(),
                 style = MaterialTheme.typography.bodySmall,

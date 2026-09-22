@@ -374,4 +374,35 @@ class CreateGameViewModelTest {
         assertFalse(viewModel.stateWhere { !it.isStarting }.isStarting)
         assertTrue(viewModel.stateWhere().canStart)
     }
+
+    @Test
+    fun `with random order on, a tenth player cannot be picked`() = runTest {
+        repository.roster.value = (1L..10L).map { Player(it, "P$it", 0) }
+        val viewModel = viewModel()
+        viewModel.onToggleRandomSeating()
+        (1L..9L).forEach(viewModel::onTogglePlayer)
+
+        viewModel.onTogglePlayer(10L)
+
+        val state = viewModel.stateWhere { it.selectedCount == 9 }
+        assertFalse(state.form.selection.containsKey(10L))
+        assertEquals(
+            CreateGameEvent.Message(UiText.plural(R.plurals.error_table_full, 9, 9)),
+            viewModel.events.first(),
+        )
+    }
+
+    @Test
+    fun `a full random table can still drop a player and pick another`() = runTest {
+        repository.roster.value = (1L..10L).map { Player(it, "P$it", 0) }
+        val viewModel = viewModel()
+        viewModel.onToggleRandomSeating()
+        (1L..9L).forEach(viewModel::onTogglePlayer)
+
+        viewModel.onTogglePlayer(9L)
+        viewModel.onTogglePlayer(10L)
+
+        val state = viewModel.stateWhere { it.form.selection.containsKey(10L) }
+        assertEquals(9, state.selectedCount)
+    }
 }

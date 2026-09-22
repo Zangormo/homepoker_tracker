@@ -3,6 +3,7 @@ package com.zango.pokertracker.ui.livegame
 import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
+import com.zango.pokertracker.domain.model.NewGameSetup
 import com.zango.pokertracker.domain.model.Player
 import com.zango.pokertracker.ui.common.AmountPreview
 
@@ -126,6 +127,9 @@ data class LiveGameUiState(
     val canEndGame: Boolean get() = !isFinished && playerCount > 0
 
     val canRearrangeTable: Boolean get() = table != null && !isFinished
+
+    /** A randomly seated table with every seat taken: nobody more can sit down. */
+    val isTableFull: Boolean get() = (table?.size ?: 0) >= NewGameSetup.MAX_TABLE_SEATS
 }
 
 sealed interface LiveGameEvent {

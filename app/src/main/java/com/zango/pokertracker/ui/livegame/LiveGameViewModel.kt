@@ -13,9 +13,11 @@ import com.zango.pokertracker.data.local.FiretruckStore
 import com.zango.pokertracker.data.repository.PokerRepository
 import com.zango.pokertracker.domain.model.GameSnapshot
 import com.zango.pokertracker.domain.model.NameRules
+import com.zango.pokertracker.domain.model.NewGameSetup
 import com.zango.pokertracker.domain.model.Player
 import com.zango.pokertracker.domain.model.Seat
 import com.zango.pokertracker.domain.model.bombPotSchedule
+import com.zango.pokertracker.domain.model.tableFullMessage
 import com.zango.pokertracker.ui.common.AmountPreview
 import com.zango.pokertracker.ui.common.parseChipCount
 import com.zango.pokertracker.ui.common.parsePositiveMoney
@@ -257,10 +259,13 @@ class LiveGameViewModel @Inject constructor(
     }
 
     /** Puts a player who was cashed out by mistake back into the game, count and all. */
-    fun onUndoCashOut(seatId: Long) =
+    fun onUndoCashOut(seatId: Long) {
+        if (refuseAtFullTable()) return
         launchWrite(UiText.of(R.string.error_undo_cash_out)) { repository.undoCashOut(seatId) }
+    }
 
     fun onAddPlayer() {
+        if (refuseAtFullTable()) return
         draft.value = DialogDraft.AddPlayer(
             selectedPlayerId = null,
             newPlayerName = "",
@@ -318,6 +323,16 @@ class LiveGameViewModel @Inject constructor(
                     )
                 }
         }
+    }
+
+    /**
+     * A randomly seated table holds [NewGameSetup.MAX_TABLE_SEATS]; one more would overlap the
+     * others on the table view. True, with the host told why, when the action is to be refused.
+     */
+    private fun refuseAtFullTable(): Boolean {
+        if (!uiState.value.isTableFull) return false
+        viewModelScope.launch { eventChannel.send(LiveGameEvent.Message(tableFullMessage())) }
+        return true
     }
 
     fun onDismissDialog() {

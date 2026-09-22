@@ -10,8 +10,10 @@ import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.data.repository.CreatePlayerResult
 import com.zango.pokertracker.data.repository.PokerRepository
 import com.zango.pokertracker.domain.model.NameRules
+import com.zango.pokertracker.domain.model.NewGameSetup
 import com.zango.pokertracker.domain.model.Player
 import com.zango.pokertracker.domain.model.Stakes
+import com.zango.pokertracker.domain.model.tableFullMessage
 import com.zango.pokertracker.ui.common.AmountPreview
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -115,10 +117,25 @@ class CreateGameViewModel @Inject constructor(
      * player removed by mistake and re-added comes back on the standard buy-in rather than
      * silently keeping a figure the host can no longer see.
      */
-    fun onTogglePlayer(playerId: Long) = form.update { current ->
-        val selection = LinkedHashMap(current.selection)
-        if (selection.containsKey(playerId)) selection.remove(playerId) else selection[playerId] = null
-        current.copy(selection = selection)
+    fun onTogglePlayer(playerId: Long) {
+        if (playerId !in form.value.selection && refuseAtFullTable()) return
+        form.update { current ->
+            val selection = LinkedHashMap(current.selection)
+            if (selection.containsKey(playerId)) selection.remove(playerId) else selection[playerId] = null
+            current.copy(selection = selection)
+        }
+    }
+
+    /**
+     * A randomly seated table holds [NewGameSetup.MAX_TABLE_SEATS]; one more would overlap the
+     * others on the table view. True, with the host told why, when the pick is to be refused.
+     */
+    private fun refuseAtFullTable(): Boolean {
+        val current = form.value
+        val hasRoom = current.selection.size < NewGameSetup.MAX_TABLE_SEATS
+        if (!current.isRandomSeating || hasRoom) return false
+        viewModelScope.launch { eventChannel.send(CreateGameEvent.Message(tableFullMessage())) }
+        return true
     }
 
     fun onNewPlayerNameChange(value: String) =
@@ -239,11 +256,14 @@ class CreateGameViewModel @Inject constructor(
         }
     }
 
-    private fun selectPlayer(playerId: Long) = form.update { current ->
-        if (current.selection.containsKey(playerId)) {
-            current
-        } else {
-            current.copy(selection = LinkedHashMap(current.selection).apply { put(playerId, null) })
+    private fun selectPlayer(playerId: Long) {
+        if (playerId !in form.value.selection && refuseAtFullTable()) return
+        form.update { current ->
+            if (current.selection.containsKey(playerId)) {
+                current
+            } else {
+                current.copy(selection = LinkedHashMap(current.selection).apply { put(playerId, null) })
+            }
         }
     }
 

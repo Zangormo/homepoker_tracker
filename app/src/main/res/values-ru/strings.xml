@@ -588,11 +588,28 @@
     <!-- ==================================================================================== -->
 
     <string name="create_random_seating">Случайная рассадка</string>
-    <string name="create_random_seating_hint">Рассаживает всех в случайном порядке при начале игры. Стол появится на вкладке «Статистика».</string>
+    <plurals name="create_random_seating_hint">
+        <item quantity="one">Рассаживает всех в случайном порядке при начале игры, до %1$d игрока. Стол появится на вкладке «Статистика».</item>
+        <item quantity="few">Рассаживает всех в случайном порядке при начале игры, до %1$d игроков. Стол появится на вкладке «Статистика».</item>
+        <item quantity="many">Рассаживает всех в случайном порядке при начале игры, до %1$d игроков. Стол появится на вкладке «Статистика».</item>
+        <item quantity="other">Рассаживает всех в случайном порядке при начале игры, до %1$d игроков. Стол появится на вкладке «Статистика».</item>
+    </plurals>
     <string name="live_section_table">Стол</string>
     <string name="live_table_hint">Нажмите на двух игроков, чтобы поменять их местами</string>
     <string name="live_table_hint_selected">Нажмите на игрока, чтобы поменять местами с %1$s</string>
     <string name="error_swap_seats">Не удалось поменять игроков местами</string>
+    <plurals name="error_table_full">
+        <item quantity="one">За столом не больше %1$d игрока</item>
+        <item quantity="few">За столом не больше %1$d игроков</item>
+        <item quantity="many">За столом не больше %1$d игроков</item>
+        <item quantity="other">За столом не больше %1$d игроков</item>
+    </plurals>
+    <plurals name="error_random_seating_too_many">
+        <item quantity="one">Случайная рассадка — не больше %1$d игрока. Уберите лишних или выключите её.</item>
+        <item quantity="few">Случайная рассадка — не больше %1$d игроков. Уберите лишних или выключите её.</item>
+        <item quantity="many">Случайная рассадка — не больше %1$d игроков. Уберите лишних или выключите её.</item>
+        <item quantity="other">Случайная рассадка — не больше %1$d игроков. Уберите лишних или выключите её.</item>
+    </plurals>
 
     <!-- ==================================================================================== -->
     <!-- Donation prompt, shown after a game ends while ads are still on                      -->

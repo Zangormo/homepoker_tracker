@@ -482,4 +482,49 @@ class LiveGameViewModelTest {
 
         viewModel().tableNames(listOf("Boris", "Anna"))
     }
+
+    private fun fullRandomTable() {
+        val seated = (1L..9L).map { Fixture.seat(it, "P$it").copy(tablePosition = (it - 1).toInt()) }
+        val gone = Fixture.seat(10L, "Late").copy(cashedOutAt = START, finalChips = Chips(0))
+        repository.game.value = GameSnapshot(
+            game = Fixture.game().copy(id = GAME_ID, startedAt = START, isRandomSeating = true),
+            seats = seated + gone,
+        )
+    }
+
+    @Test
+    fun `a full random table turns away a new player`() = runTest {
+        fullRandomTable()
+        val viewModel = viewModel()
+        viewModel.stateWhere { it.isTableFull }
+
+        viewModel.onAddPlayer()
+
+        assertEquals(
+            LiveGameEvent.Message(UiText.plural(R.plurals.error_table_full, 9, 9)),
+            viewModel.events.first(),
+        )
+        assertNull(viewModel.state().dialog)
+    }
+
+    @Test
+    fun `a full random table does not take back a cashed-out player`() = runTest {
+        fullRandomTable()
+        val viewModel = viewModel()
+        viewModel.stateWhere { it.isTableFull }
+
+        viewModel.onUndoCashOut(10L)
+
+        viewModel.events.first()
+        assertFalse(repository.writes.any { it.startsWith("undoCashOut") })
+    }
+
+    @Test
+    fun `a game not seated at random has no seat limit`() = runTest {
+        val viewModel = viewModel()
+
+        assertFalse(viewModel.state().isTableFull)
+        viewModel.onAddPlayer()
+        assertTrue(viewModel.stateWhere { it.dialog != null }.dialog is LiveGameDialog.AddPlayer)
+    }
 }

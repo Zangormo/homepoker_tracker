@@ -541,11 +541,22 @@
 
     <!-- Random seating -->
     <string name="create_random_seating">Zufällige Sitzordnung</string>
-    <string name="create_random_seating_hint">Setzt beim Spielstart alle in zufälliger Reihenfolge. Der Tisch erscheint im Tab Statistik.</string>
+    <plurals name="create_random_seating_hint">
+        <item quantity="one">Setzt beim Spielstart alle in zufälliger Reihenfolge, bis zu %1$d Spieler. Der Tisch erscheint im Tab Statistik.</item>
+        <item quantity="other">Setzt beim Spielstart alle in zufälliger Reihenfolge, bis zu %1$d Spieler. Der Tisch erscheint im Tab Statistik.</item>
+    </plurals>
     <string name="live_section_table">Tisch</string>
     <string name="live_table_hint">Tippe auf zwei Spieler, um ihre Plätze zu tauschen</string>
     <string name="live_table_hint_selected">Tippe auf jemanden, um mit %1$s zu tauschen</string>
     <string name="error_swap_seats">Die Plätze konnten nicht getauscht werden</string>
+    <plurals name="error_table_full">
+        <item quantity="one">Am Tisch ist Platz für höchstens %1$d Spieler</item>
+        <item quantity="other">Am Tisch ist Platz für höchstens %1$d Spieler</item>
+    </plurals>
+    <plurals name="error_random_seating_too_many">
+        <item quantity="one">Zufällige Sitzordnung: höchstens %1$d Spieler. Entferne einige oder schalte sie aus.</item>
+        <item quantity="other">Zufällige Sitzordnung: höchstens %1$d Spieler. Entferne einige oder schalte sie aus.</item>
+    </plurals>
 
     <!-- Donation prompt -->
     <string name="donation_title">Gefällt dir Poker Tracker?</string>

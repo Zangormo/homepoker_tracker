@@ -94,8 +94,18 @@ fun CreateGameForm.validate(): CreateGameValidation {
 
     val (bombPotInterval, bombPotError) = resolveBombPot()
 
-    val playersError =
-        if (selection.isEmpty()) UiText.of(R.string.error_pick_a_player) else null
+    val playersError = when {
+        selection.isEmpty() -> UiText.of(R.string.error_pick_a_player)
+        // Reached only by switching random order on with a full roster already picked: picking a
+        // player past the limit is refused at the tap.
+        isRandomSeating && selection.size > NewGameSetup.MAX_TABLE_SEATS -> UiText.plural(
+            R.plurals.error_random_seating_too_many,
+            NewGameSetup.MAX_TABLE_SEATS,
+            NewGameSetup.MAX_TABLE_SEATS,
+        )
+
+        else -> null
+    }
     val overrideErrors = buildMap {
         if (chipRate == null) return@buildMap
         selection.forEach { (playerId, override) ->
