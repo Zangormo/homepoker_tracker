@@ -48,7 +48,7 @@ fun String.quoted(): String = "\"$this\""
 //           calculated, so the same game could now come out differently.
 // Codes 1 and earlier were the unpublished betas ("1.0 Beta" to "Beta 1.2").
 val appVersionCode = 4
-val appVersionName = "1.1.0"
+val appVersionName = "1.2.0"
 
 android {
     namespace = "com.zango.pokertracker"
