@@ -107,13 +107,31 @@ fun PokerTableView(
                 .fillMaxSize()
                 .padding(horizontal = SeatWidth / 3, vertical = SeatHeight / 3),
         ) {
-            val railWidth = 14.dp.toPx()
-            drawStadium(colors.tableRail, inset = 0f)
-            drawStadium(colors.tableFelt, inset = railWidth)
+            // Drawn as lines on the page rather than as solid slabs, so the table sits in the
+            // interface instead of on top of it: a thin rail at the outer edge, the page showing
+            // through between rail and felt, and the felt in the selected-card green. The edges
+            // stay where the solid table had them; only their weight changed.
+            val feltEdge = 14.dp.toPx()
+            val railStroke = 3.dp.toPx()
+            val feltStroke = 1.5.dp.toPx()
+            // A stroke is centred on its path, so each is inset by half its width to keep its
+            // outer edge on the line the solid shapes used.
+            drawStadium(
+                colors.tableRail,
+                inset = railStroke / 2,
+                style = Stroke(width = railStroke),
+            )
+            drawStadium(colors.tableFelt, inset = feltEdge)
             drawStadium(
                 colors.tableFeltLine,
-                inset = railWidth * 2.2f,
-                style = Stroke(width = 1.5.dp.toPx()),
+                inset = feltEdge + feltStroke / 2,
+                style = Stroke(width = feltStroke),
+            )
+            drawStadium(
+                colors.tableFeltLine,
+                inset = feltEdge * 2.2f,
+                style = Stroke(width = 1.dp.toPx()),
+                alpha = 0.5f,
             )
         }
 
@@ -228,6 +246,16 @@ private fun TableSeatChip(
             } else {
                 MaterialTheme.colorScheme.surfaceContainer
             },
+            // Sets the name apart from the rail and felt it sits across, so it reads at a glance.
+            // Green while picked up, matching the ring on the avatar above it.
+            border = BorderStroke(
+                width = 1.dp,
+                color = if (selected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+            ),
             modifier = Modifier.width(SeatWidth),
         ) {
             Text(
@@ -348,7 +376,12 @@ private class Stadium(val center: Offset, width: Float, height: Float) {
 }
 
 /** The table's outline inset by [inset], filled or stroked. */
-private fun DrawScope.drawStadium(color: Color, inset: Float, style: DrawStyle = Fill) {
+private fun DrawScope.drawStadium(
+    color: Color,
+    inset: Float,
+    style: DrawStyle = Fill,
+    alpha: Float = 1f,
+) {
     val height = size.height - inset * 2
     drawRoundRect(
         color = color,
@@ -356,5 +389,6 @@ private fun DrawScope.drawStadium(color: Color, inset: Float, style: DrawStyle =
         size = Size(size.width - inset * 2, height),
         cornerRadius = CornerRadius(height / 2),
         style = style,
+        alpha = alpha,
     )
 }

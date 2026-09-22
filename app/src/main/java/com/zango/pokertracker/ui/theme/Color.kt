@@ -47,10 +47,12 @@ internal object Tokens {
     val CelebrationBlue = Color(0xFF3DB8FF)
     val CelebrationPink = Color(0xFFFF5FB7)
 
-    /** The seating view: a felt table inside a dark rail, muted so the player names stay first. */
-    val TableFelt = Color(0xFF155C3B)
-    val TableFeltLine = Color(0xFF2E7A55)
-    val TableRail = Color(0xFF2C221A)
+    /**
+     * The seating view's rail: a neutral a step lighter than [Outline], so the thin ring round the
+     * table reads as the table's edge rather than as one more card border. The felt itself is drawn
+     * in the accent tokens, the same green a selected card wears.
+     */
+    val TableRail = Color(0xFF454C53)
 
     /** Darkens the whole screen behind an announcement. */
     val Scrim = Color(0xD9000000)
@@ -94,7 +96,8 @@ internal val DarkPokerColors = PokerColors(
         Tokens.CelebrationPink,
     ),
     scrim = Tokens.Scrim,
-    tableFelt = Tokens.TableFelt,
-    tableFeltLine = Tokens.TableFeltLine,
+    // The felt wears the selected-card look: accent container fill, accent edge.
+    tableFelt = Tokens.AccentContainer,
+    tableFeltLine = Tokens.AccentDim,
     tableRail = Tokens.TableRail,
 )
