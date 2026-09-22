@@ -8,6 +8,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowRightAlt
 import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -115,6 +116,34 @@ fun CashAmountField(
     iconDescription = stringResource(R.string.amount_cash_unit),
     iconTint = PokerTheme.colors.cash,
     keyboardType = KeyboardType.Decimal,
+)
+
+/** A whole number of minutes, marked with a clock so it is never read as money or chips. */
+@Composable
+fun MinutesField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    error: UiText? = null,
+    required: Boolean = false,
+    forceShowError: Boolean = false,
+    imeAction: ImeAction = ImeAction.Done,
+) = AmountField(
+    value = value,
+    onValueChange = onValueChange,
+    label = label,
+    modifier = modifier,
+    error = error,
+    enabled = true,
+    required = required,
+    forceShowError = forceShowError,
+    supporting = null,
+    imeAction = imeAction,
+    icon = Icons.Filled.Timer,
+    iconDescription = stringResource(R.string.unit_minutes),
+    iconTint = MaterialTheme.colorScheme.onSurfaceVariant,
+    keyboardType = KeyboardType.Number,
 )
 
 /** Plain text, sharing the same chrome and validation behaviour so forms stay consistent. */

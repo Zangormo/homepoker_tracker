@@ -47,6 +47,8 @@ fun GameEntity.toDomain(): Game = Game(
     endedAt = endedAt,
     status = status,
     isFullyPaid = isFullyPaid,
+    bombPotIntervalMinutes = bombPotIntervalMinutes,
+    isFiretruckGame = isFiretruckGame,
 )
 
 fun BuyInEntity.toDomain(): BuyIn = BuyIn(

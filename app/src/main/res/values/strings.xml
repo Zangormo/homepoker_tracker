@@ -610,5 +610,45 @@
     </plurals>
     <string name="error_could_not_save_count">Could not save the chip count</string>
 
+    <!-- ==================================================================================== -->
+    <!-- Side games: bomb pots and firetrucks                                                 -->
+    <!-- ==================================================================================== -->
+
+    <!-- A bomb pot is a hand where everyone antes and the flop is dealt straight away. Poker slang; most languages keep it. -->
+    <string name="side_game_bomb_pot">Bomb pot</string>
+    <!-- A firetruck: the same player winning three pots in a row. House-game slang. -->
+    <string name="side_game_firetruck">Firetruck</string>
+    <string name="unit_minutes">Minutes</string>
+
+    <string name="create_section_side_games">Side games</string>
+    <string name="create_section_side_games_subtitle">Optional extras for the night. They show up on the Game tab.</string>
+    <string name="create_bomb_pot_hint">A timer calls a bomb pot every so often, with a notification if the app is closed.</string>
+    <string name="create_bomb_pot_minutes">Every, in minutes</string>
+    <string name="create_firetruck_hint">Tap whoever wins each pot. Three in a row is a firetruck.</string>
+    <string name="error_bomb_pot_required">Enter how many minutes between bomb pots</string>
+    <!-- %1$d: the largest number of minutes allowed -->
+    <string name="error_bomb_pot_range">Enter a whole number of minutes from 1 to %1$d</string>
+
+    <string name="live_tab_stats">Stats</string>
+    <string name="live_tab_game">Game</string>
+    <string name="live_game_tab_empty">This game has no side games. Bomb pots and firetrucks are picked when a game is set up.</string>
+    <string name="live_bomb_pot_next">Next bomb pot in</string>
+    <plurals name="live_bomb_pot_every">
+        <item quantity="one">Every %1$d minute</item>
+        <item quantity="other">Every %1$d minutes</item>
+    </plurals>
+    <string name="live_bomb_pot_stopped">The game has finished, so the timer has stopped.</string>
+    <string name="live_bomb_pot_inexact">While the phone is idle, Android may deliver the bomb pot alert a few minutes late.</string>
+    <string name="live_bomb_pot_allow_exact">Allow exact alarms</string>
+    <string name="live_firetruck_hint">Tap whoever wins the pot. Someone else winning clears the dots, and three in a row is a firetruck.</string>
+    <!-- Read out by screen readers. %1$s: player, %2$d: pots won in a row, %3$d: how many make a firetruck -->
+    <string name="live_firetruck_row_description">%1$s, %2$d of %3$d in a row</string>
+
+    <!-- The word that fills the screen. Shown in capitals. -->
+    <string name="bomb_pot_announcement">Bomb pot!</string>
+    <string name="firetruck_announcement">Firetruck!</string>
+    <string name="announcement_tap_to_close">Tap anywhere to close</string>
+    <string name="bomb_pot_channel_name">Bomb pots</string>
+    <string name="bomb_pot_channel_description">Tells you a bomb pot is due while the app is closed.</string>
 
 </resources>

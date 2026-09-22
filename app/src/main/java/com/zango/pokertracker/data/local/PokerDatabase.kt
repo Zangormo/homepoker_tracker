@@ -27,7 +27,7 @@ import com.zango.pokertracker.domain.model.Stakes
  * [PokerDatabase] must chain unbroken up to it: this database has no destructive fallback, so a
  * bump without a matching migration crashes every device that already has the app.
  */
-const val POKER_DATABASE_VERSION: Int = 4
+const val POKER_DATABASE_VERSION: Int = 5
 
 @Database(
     entities = [
@@ -153,6 +153,20 @@ abstract class PokerDatabase : RoomDatabase() {
                     ORDER BY MAX(g.startedAt) DESC
                     LIMIT ${Stakes.MAX_PRESETS - Stakes.COMMON.size}
                     """.trimIndent(),
+                )
+            }
+        }
+
+        /**
+         * Adds the side games chosen when a game is set up: the bomb pot timer and the firetruck
+         * count. Every game played before this version had neither, which is what the defaults
+         * say.
+         */
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `games` ADD COLUMN `bombPotIntervalMinutes` INTEGER")
+                db.execSQL(
+                    "ALTER TABLE `games` ADD COLUMN `isFiretruckGame` INTEGER NOT NULL DEFAULT 0",
                 )
             }
         }

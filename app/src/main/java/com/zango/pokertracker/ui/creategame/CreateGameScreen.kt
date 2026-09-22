@@ -1,5 +1,11 @@
 package com.zango.pokertracker.ui.creategame
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -76,6 +82,7 @@ import com.zango.pokertracker.ui.common.ChipAmountField
 import com.zango.pokertracker.ui.common.ChipAmountText
 import com.zango.pokertracker.ui.common.FormSection
 import com.zango.pokertracker.ui.common.MinTouchTarget
+import com.zango.pokertracker.ui.common.MinutesField
 import com.zango.pokertracker.ui.common.PokerTextField
 import com.zango.pokertracker.ui.common.SectionLabel
 import com.zango.pokertracker.ui.common.SegmentedChoice
@@ -86,7 +93,7 @@ import com.zango.pokertracker.ui.theme.PokerTheme
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
 
 /** The fields a failed submit can land on, in the order the host reads them. */
-private enum class FormField { NAME, SMALL_BLIND, BIG_BLIND, CHIP_VALUE, BUY_IN, ROUNDING, PLAYERS }
+private enum class FormField { NAME, SMALL_BLIND, BIG_BLIND, CHIP_VALUE, BUY_IN, ROUNDING, BOMB_POT, PLAYERS }
 
 private fun CreateGameValidation.firstProblem(): FormField? = when {
     nameError != null -> FormField.NAME
@@ -95,6 +102,7 @@ private fun CreateGameValidation.firstProblem(): FormField? = when {
     chipValueError != null -> FormField.CHIP_VALUE
     buyInError != null -> FormField.BUY_IN
     payoutRoundingError != null -> FormField.ROUNDING
+    bombPotError != null -> FormField.BOMB_POT
     playersError != null -> FormField.PLAYERS
     else -> null
 }
@@ -196,6 +204,9 @@ data class CreateGameActions(
     val onBuyInBigBlindsChange: (String) -> Unit = {},
     val onBuyInCashChange: (String) -> Unit = {},
     val onPayoutRoundingChange: (String) -> Unit = {},
+    val onToggleBombPot: () -> Unit = {},
+    val onBombPotMinutesChange: (String) -> Unit = {},
+    val onToggleFiretruck: () -> Unit = {},
     val onTogglePlayer: (Long) -> Unit = {},
     val onEditOverride: (Long) -> Unit = {},
     val onClearOverride: (Long) -> Unit = {},
@@ -224,6 +235,9 @@ private fun rememberCreateGameActions(viewModel: CreateGameViewModel): CreateGam
             onBuyInBigBlindsChange = viewModel::onBuyInBigBlindsChange,
             onBuyInCashChange = viewModel::onBuyInCashChange,
             onPayoutRoundingChange = viewModel::onPayoutRoundingChange,
+            onToggleBombPot = viewModel::onToggleBombPot,
+            onBombPotMinutesChange = viewModel::onBombPotMinutesChange,
+            onToggleFiretruck = viewModel::onToggleFiretruck,
             onTogglePlayer = viewModel::onTogglePlayer,
             onEditOverride = viewModel::onEditOverride,
             onClearOverride = viewModel::onClearOverride,
@@ -288,6 +302,8 @@ private fun CreateGameContent(
                 modifier = focus(FormField.ROUNDING),
             )
         }
+
+        SideGamesSection(state, actions, revealAllProblems, focus)
 
         PlayersSection(
             state = state,
@@ -503,7 +519,10 @@ private fun StakesSection(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
                 Text(
                     stringResource(R.string.create_derive_chip_value),
                     style = MaterialTheme.typography.bodyMedium,
@@ -673,6 +692,101 @@ private fun Equals() {
         style = PokerTheme.type.numericLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
+}
+
+/**
+ * Optional extras for the night, picked like players are: the same cards and ticks, so there is
+ * nothing new to learn. The bomb pot minutes only appear once bomb pots are on.
+ */
+@Composable
+private fun SideGamesSection(
+    state: CreateGameUiState,
+    actions: CreateGameActions,
+    revealAllProblems: Boolean,
+    focus: (FormField) -> Modifier,
+) {
+    val requestNotifications = rememberNotificationPermissionRequest()
+    FormSection(
+        title = stringResource(R.string.create_section_side_games),
+        subtitle = stringResource(R.string.create_section_side_games_subtitle),
+    ) {
+        SideGameItem(
+            title = stringResource(R.string.side_game_bomb_pot),
+            description = stringResource(R.string.create_bomb_pot_hint),
+            selected = state.form.bombPotEnabled,
+            onToggle = {
+                // Asked at the moment it starts to matter, so the host knows why.
+                if (!state.form.bombPotEnabled) requestNotifications()
+                actions.onToggleBombPot()
+            },
+        )
+        if (state.form.bombPotEnabled) {
+            MinutesField(
+                value = state.form.bombPotMinutes,
+                onValueChange = actions.onBombPotMinutesChange,
+                label = stringResource(R.string.create_bomb_pot_minutes),
+                required = true,
+                error = state.validation.bombPotError,
+                forceShowError = revealAllProblems,
+                modifier = focus(FormField.BOMB_POT),
+            )
+        }
+        SideGameItem(
+            title = stringResource(R.string.side_game_firetruck),
+            description = stringResource(R.string.create_firetruck_hint),
+            selected = state.form.isFiretruckGame,
+            onToggle = actions.onToggleFiretruck,
+        )
+    }
+}
+
+@Composable
+private fun SideGameItem(
+    title: String,
+    description: String,
+    selected: Boolean,
+    onToggle: () -> Unit,
+) {
+    SelectableCard(selected = selected, onClick = onToggle) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            SelectionIndicator(selected)
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Asks for permission to post notifications, which Android 13 and later hold back until granted.
+ * Refusing is fine: the timer still runs on screen, it just cannot call out with the app closed.
+ */
+@Composable
+private fun rememberNotificationPermissionRequest(): () -> Unit {
+    val context = LocalContext.current
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    return remember(context, launcher) {
+        {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+                PackageManager.PERMISSION_GRANTED
+            ) {
+                launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
 }
 
 @Composable

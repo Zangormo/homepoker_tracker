@@ -524,4 +524,42 @@
         <item quantity="other">%1$d игроков ещё не посчитали фишки</item>
     </plurals>
 
+    <!-- ==================================================================================== -->
+    <!-- Side games: bomb pots and firetrucks                                                 -->
+    <!-- ==================================================================================== -->
+
+    <string name="side_game_bomb_pot">Бомб-пот</string>
+    <string name="side_game_firetruck">Пожарная машина</string>
+    <string name="unit_minutes">Минуты</string>
+
+    <string name="create_section_side_games">Дополнительно</string>
+    <string name="create_section_side_games_subtitle">Необязательные развлечения на вечер. Они появятся на вкладке «Игра».</string>
+    <string name="create_bomb_pot_hint">Таймер объявляет бомб-пот через равные промежутки, с уведомлением, если приложение закрыто.</string>
+    <string name="create_bomb_pot_minutes">Каждые, в минутах</string>
+    <string name="create_firetruck_hint">Отмечайте, кто выиграл банк. Три раза подряд — пожарная машина.</string>
+    <string name="error_bomb_pot_required">Укажите, через сколько минут бывает бомб-пот</string>
+    <string name="error_bomb_pot_range">Введите целое число минут от 1 до %1$d</string>
+
+    <string name="live_tab_stats">Статистика</string>
+    <string name="live_tab_game">Игра</string>
+    <string name="live_game_tab_empty">В этой игре нет дополнительных развлечений. Бомб-пот и пожарная машина выбираются при создании игры.</string>
+    <string name="live_bomb_pot_next">До бомб-пота</string>
+    <plurals name="live_bomb_pot_every">
+        <item quantity="one">Каждую %1$d минуту</item>
+        <item quantity="few">Каждые %1$d минуты</item>
+        <item quantity="many">Каждые %1$d минут</item>
+        <item quantity="other">Каждые %1$d минуты</item>
+    </plurals>
+    <string name="live_bomb_pot_stopped">Игра закончилась, таймер остановлен.</string>
+    <string name="live_bomb_pot_inexact">Пока телефон бездействует, Android может присылать напоминание о бомб-поте с опозданием на несколько минут.</string>
+    <string name="live_bomb_pot_allow_exact">Разрешить точные будильники</string>
+    <string name="live_firetruck_hint">Нажмите на того, кто выиграл банк. Победа другого игрока сбрасывает точки, три подряд — пожарная машина.</string>
+    <string name="live_firetruck_row_description">%1$s, %2$d из %3$d подряд</string>
+
+    <string name="bomb_pot_announcement">Бомб-пот!</string>
+    <string name="firetruck_announcement">Пожарная машина!</string>
+    <string name="announcement_tap_to_close">Нажмите, чтобы закрыть</string>
+    <string name="bomb_pot_channel_name">Бомб-поты</string>
+    <string name="bomb_pot_channel_description">Сообщает о бомб-поте, когда приложение закрыто.</string>
+
 </resources>

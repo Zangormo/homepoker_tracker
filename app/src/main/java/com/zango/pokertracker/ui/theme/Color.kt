@@ -36,6 +36,19 @@ internal object Tokens {
 
     /** Hairline between rows, quieter than [Outline], which borders interactive things. */
     val Divider = Color(0xFF23282D)
+
+    /**
+     * Party colours, for the one moment the app is allowed to be loud: a side-game announcement.
+     * Never used for anything the host has to read.
+     */
+    val CelebrationRed = Color(0xFFFF4B2B)
+    val CelebrationOrange = Color(0xFFFF9F1C)
+    val CelebrationYellow = Color(0xFFFFE14D)
+    val CelebrationBlue = Color(0xFF3DB8FF)
+    val CelebrationPink = Color(0xFFFF5FB7)
+
+    /** Darkens the whole screen behind an announcement. */
+    val Scrim = Color(0xD9000000)
 }
 
 /**
@@ -51,6 +64,9 @@ data class PokerColors(
     val chip: Color,
     val cash: Color,
     val divider: Color,
+    /** The confetti, and the announcement lettering in [celebration] first. */
+    val celebration: List<Color>,
+    val scrim: Color,
 )
 
 internal val DarkPokerColors = PokerColors(
@@ -61,4 +77,13 @@ internal val DarkPokerColors = PokerColors(
     chip = Tokens.Accent,
     cash = Tokens.TextSecondary,
     divider = Tokens.Divider,
+    celebration = listOf(
+        Tokens.CelebrationRed,
+        Tokens.CelebrationOrange,
+        Tokens.CelebrationYellow,
+        Tokens.Accent,
+        Tokens.CelebrationBlue,
+        Tokens.CelebrationPink,
+    ),
+    scrim = Tokens.Scrim,
 )

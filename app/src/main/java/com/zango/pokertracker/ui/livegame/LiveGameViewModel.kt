@@ -9,11 +9,13 @@ import com.zango.pokertracker.core.time.tick
 import com.zango.pokertracker.R
 import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.data.repository.CreatePlayerResult
+import com.zango.pokertracker.data.local.FiretruckStore
 import com.zango.pokertracker.data.repository.PokerRepository
 import com.zango.pokertracker.domain.model.GameSnapshot
 import com.zango.pokertracker.domain.model.NameRules
 import com.zango.pokertracker.domain.model.Player
 import com.zango.pokertracker.domain.model.Seat
+import com.zango.pokertracker.domain.model.bombPotSchedule
 import com.zango.pokertracker.ui.common.AmountPreview
 import com.zango.pokertracker.ui.common.parseChipCount
 import com.zango.pokertracker.ui.common.parsePositiveMoney
@@ -25,8 +27,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -37,6 +41,7 @@ import javax.inject.Inject
 class LiveGameViewModel @Inject constructor(
     private val repository: PokerRepository,
     private val clock: Clock,
+    private val firetruckStore: FiretruckStore,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -45,6 +50,25 @@ class LiveGameViewModel @Inject constructor(
     }
 
     private val draft = MutableStateFlow<DialogDraft?>(null)
+
+    // Stored rather than kept in memory, so the dots survive the app being swiped away mid-game.
+    // A run that had already made a firetruck was announced before the app went away, so it
+    // comes back cleared rather than as three dots with nothing left to do.
+    private val streak = MutableStateFlow(
+        firetruckStore.load(gameId).takeUnless { it.isFiretruck } ?: FiretruckStreak(),
+    )
+
+    private val _announcement = MutableStateFlow<LiveAnnouncement?>(null)
+
+    /** The bomb pot or firetruck taking over the screen, until it is dismissed. */
+    val announcement: StateFlow<LiveAnnouncement?> = _announcement.asStateFlow()
+
+    /**
+     * How many bomb pots had come round when the timer was last looked at. Null until the first
+     * reading after the screen is shown, so one that passed while the host was elsewhere -- and
+     * was notified about -- is not announced again the moment they come back.
+     */
+    private var bombPotsSeen: Long? = null
 
     private val eventChannel = Channel<LiveGameEvent>(Channel.BUFFERED)
     val events: Flow<LiveGameEvent> = eventChannel.receiveAsFlow()
@@ -64,6 +88,89 @@ class LiveGameViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
             initialValue = LiveGameUiState(gameId = gameId),
         )
+
+    /** The game tab: the bomb pot countdown and the firetruck count. Ticks every second. */
+    val gameTab: StateFlow<GameTabUiState> = combine(
+        repository.observeGame(gameId),
+        streak,
+        clock.tick(),
+    ) { snapshot, streak, now ->
+        watchBombPot(snapshot, now)
+        buildGameTab(snapshot, streak, now)
+    }
+        .onStart { bombPotsSeen = null }
+        .distinctUntilChanged()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
+            initialValue = GameTabUiState(),
+        )
+
+    /**
+     * One more win for the player at [seatId]. Anyone else winning wipes the previous run, and
+     * the third in a row is a firetruck.
+     */
+    fun onFiretruckTap(seatId: Long) {
+        if (_announcement.value != null) return
+        val next = streak.value.tap(seatId)
+        setStreak(next)
+        if (next.isFiretruck) {
+            val name = gameTab.value.firetruckRows?.firstOrNull { it.seatId == seatId }?.name
+            _announcement.value = LiveAnnouncement.Firetruck(name.orEmpty())
+        }
+    }
+
+    /** Closes the announcement. A firetruck has been called, so the dots start again. */
+    fun onDismissAnnouncement() {
+        if (_announcement.value is LiveAnnouncement.Firetruck) setStreak(FiretruckStreak())
+        _announcement.value = null
+    }
+
+    private fun setStreak(value: FiretruckStreak) {
+        streak.value = value
+        firetruckStore.save(gameId, value)
+    }
+
+    private fun watchBombPot(snapshot: GameSnapshot?, now: Long) {
+        val game = snapshot?.game
+        val count = game?.takeIf { it.isInProgress }?.bombPotSchedule()?.countAt(now)
+        val seen = bombPotsSeen
+        bombPotsSeen = count
+        if (count != null && seen != null && count > seen) {
+            _announcement.value = LiveAnnouncement.BombPot
+        }
+    }
+
+    private fun buildGameTab(
+        snapshot: GameSnapshot?,
+        streak: FiretruckStreak,
+        now: Long,
+    ): GameTabUiState {
+        val game = snapshot?.game ?: return GameTabUiState()
+        val bombPot = game.bombPotSchedule()?.let { schedule ->
+            // A finished game shows the timer as it stood when the game ended.
+            val at = if (game.isInProgress) now else game.endedAt ?: now
+            val remaining = schedule.remainingAt(at)
+            val interval = schedule.intervalMinutes * MILLIS_PER_MINUTE
+            BombPotUi(
+                intervalMinutes = schedule.intervalMinutes,
+                remaining = formatCountdown(remaining),
+                progress = (1f - remaining.toFloat() / interval).coerceIn(0f, 1f),
+                isRunning = game.isInProgress,
+            )
+        }
+        val firetruckRows = if (game.isFiretruckGame) {
+            snapshot.seats.filter { !it.isCashedOut }
+                .map { FiretruckRow(it.id, it.player.name, streak.winsFor(it.id)) }
+        } else {
+            null
+        }
+        return GameTabUiState(
+            bombPot = bombPot,
+            firetruckRows = firetruckRows,
+            canTapFiretruck = game.isInProgress,
+        )
+    }
 
     fun onAddBuyIn(seatId: Long) {
         draft.value = DialogDraft.BuyIn(seatId, uiState.value.defaultBuyIn?.format().orEmpty())
@@ -230,6 +337,7 @@ class LiveGameViewModel @Inject constructor(
             chipValueLabel = UiText.of(R.string.chip_value_label, rate.chipValue.format()),
             elapsed = formatElapsed(until - game.startedAt),
             isFinished = !game.isInProgress,
+            hasSideGames = game.bombPotIntervalMinutes != null || game.isFiretruckGame,
             totalOnTable = AmountPreview.of(snapshot.totalOnTable, rate),
             buyInCount = snapshot.totalBuyInCount,
             returnedChips = snapshot.returnedChips,
@@ -348,6 +456,7 @@ class LiveGameViewModel @Inject constructor(
 
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5_000L
+        const val MILLIS_PER_MINUTE = 60_000L
         val BUY_IN_LABEL = UiText.of(R.string.label_buy_in)
         val CHIP_COUNT_LABEL = UiText.of(R.string.label_chip_count)
         val RETURN_LABEL = UiText.of(R.string.live_return_field)

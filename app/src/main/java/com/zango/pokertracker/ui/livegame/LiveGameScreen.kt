@@ -3,6 +3,7 @@ package com.zango.pokertracker.ui.livegame
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,10 +27,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -37,7 +40,10 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -47,9 +53,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zango.pokertracker.BuildConfig
 import com.zango.pokertracker.R
+import com.zango.pokertracker.bombpot.BombPotPresence
 import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.ChipRate
 import com.zango.pokertracker.core.money.Chips
@@ -87,9 +95,23 @@ fun LiveGameScreen(
     viewModel: LiveGameViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val gameTab by viewModel.gameTab.collectAsStateWithLifecycle()
+    val announcement by viewModel.announcement.collectAsStateWithLifecycle()
+    var chosenTab by rememberSaveable { mutableStateOf(LiveTab.STATS) }
+    // A game without side games has nothing for a Game tab to show, so it gets no tabs at all.
+    val tab = if (state.hasSideGames) chosenTab else LiveTab.STATS
     val snackbarHostState = remember { SnackbarHostState() }
 
     val context = LocalContext.current
+
+    // While this game is on screen it announces its own bomb pots, so the alarm keeps quiet.
+    LifecycleResumeEffect(state.gameId) {
+        val gameId = state.gameId
+        BombPotPresence.visibleGameId = gameId
+        onPauseOrDispose {
+            if (BombPotPresence.visibleGameId == gameId) BombPotPresence.visibleGameId = null
+        }
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -100,60 +122,79 @@ fun LiveGameScreen(
         }
     }
 
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = { Text(state.gameName.ifEmpty { stringResource(R.string.live_title_fallback) }) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
-                    }
-                },
-                actions = {
-                    if (state.canEndGame) {
-                        TextButton(onClick = viewModel::onEndGame) {
-                            Text(stringResource(R.string.live_end_game))
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                ),
-            )
-        },
-        bottomBar = {
-            BannerAd(
-                adUnitId = BuildConfig.ADMOB_BANNER_LIVE_GAME_UNIT_ID,
-                modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer),
-            )
-        },
-        floatingActionButton = {
-            if (!state.isFinished && !state.isMissing) {
-                ExtendedFloatingActionButton(
-                    onClick = viewModel::onAddPlayer,
-                    icon = { Icon(Icons.Filled.PersonAdd, contentDescription = null) },
-                    text = { Text(stringResource(R.string.live_add_player)) },
+    // The announcement sits over the whole Scaffold, top bar and banner included, so the screen
+    // goes dark edge to edge rather than only behind the list.
+    Box(modifier = modifier) {
+        Scaffold(
+            topBar = {
+                Column {
+                    TopAppBar(
+                        title = { Text(state.gameName.ifEmpty { stringResource(R.string.live_title_fallback) }) },
+                        navigationIcon = {
+                            IconButton(onClick = onBack) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = stringResource(R.string.action_back),
+                                )
+                            }
+                        },
+                        actions = {
+                            if (state.canEndGame) {
+                                TextButton(onClick = viewModel::onEndGame) {
+                                    Text(stringResource(R.string.live_end_game))
+                                }
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.background,
+                        ),
+                    )
+                    if (state.hasSideGames) LiveTabs(selected = tab, onSelect = { chosenTab = it })
+                }
+            },
+            bottomBar = {
+                BannerAd(
+                    adUnitId = BuildConfig.ADMOB_BANNER_LIVE_GAME_UNIT_ID,
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer),
+                )
+            },
+            floatingActionButton = {
+                if (tab == LiveTab.STATS && !state.isFinished && !state.isMissing) {
+                    ExtendedFloatingActionButton(
+                        onClick = viewModel::onAddPlayer,
+                        icon = { Icon(Icons.Filled.PersonAdd, contentDescription = null) },
+                        text = { Text(stringResource(R.string.live_add_player)) },
+                    )
+                }
+            },
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+        ) { padding ->
+            when {
+                state.isLoading -> Centered(Modifier.padding(padding)) { CircularProgressIndicator() }
+                state.isMissing -> Centered(Modifier.padding(padding)) {
+                    Text(stringResource(R.string.live_game_missing))
+                }
+
+                tab == LiveTab.GAME -> GameTabContent(
+                    state = gameTab,
+                    onFiretruckTap = viewModel::onFiretruckTap,
+                    modifier = Modifier.padding(padding),
+                )
+
+                else -> LiveGameContent(
+                    state = state,
+                    onAddBuyIn = viewModel::onAddBuyIn,
+                    onReturnChips = viewModel::onReturnChips,
+                    onUndoLastReturn = viewModel::onUndoLastReturn,
+                    onCashOut = viewModel::onCashOut,
+                    onUndoCashOut = viewModel::onUndoCashOut,
+                    modifier = Modifier.padding(padding),
                 )
             }
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-    ) { padding ->
-        when {
-            state.isLoading -> Centered(Modifier.padding(padding)) { CircularProgressIndicator() }
-            state.isMissing -> Centered(Modifier.padding(padding)) {
-                Text(stringResource(R.string.live_game_missing))
-            }
+        }
 
-            else -> LiveGameContent(
-                state = state,
-                onAddBuyIn = viewModel::onAddBuyIn,
-                onReturnChips = viewModel::onReturnChips,
-                onUndoLastReturn = viewModel::onUndoLastReturn,
-                onCashOut = viewModel::onCashOut,
-                onUndoCashOut = viewModel::onUndoCashOut,
-                modifier = Modifier.padding(padding),
-            )
+        announcement?.let {
+            AnnouncementOverlay(announcement = it, onDismiss = viewModel::onDismissAnnouncement)
         }
     }
 
@@ -189,6 +230,36 @@ fun LiveGameScreen(
         )
 
         null -> Unit
+    }
+}
+
+/** Stats is the money; Game is the side games. The money comes first. */
+private enum class LiveTab { STATS, GAME }
+
+@Composable
+private fun LiveTabs(selected: LiveTab, onSelect: (LiveTab) -> Unit) {
+    PrimaryTabRow(
+        selectedTabIndex = selected.ordinal,
+        containerColor = MaterialTheme.colorScheme.background,
+    ) {
+        LiveTab.entries.forEach { tab ->
+            Tab(
+                selected = tab == selected,
+                onClick = { onSelect(tab) },
+                text = {
+                    Text(
+                        stringResource(
+                            when (tab) {
+                                LiveTab.STATS -> R.string.live_tab_stats
+                                LiveTab.GAME -> R.string.live_tab_game
+                            },
+                        ),
+                    )
+                },
+                selectedContentColor = MaterialTheme.colorScheme.primary,
+                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

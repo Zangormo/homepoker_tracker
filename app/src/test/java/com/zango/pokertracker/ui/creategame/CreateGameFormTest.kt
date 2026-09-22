@@ -260,4 +260,40 @@ class CreateGameFormTest {
         assertEquals(Money(1_000_000), validation.defaultBuyIn)
         assertFalse(validation.isValid)
     }
+
+    @Test
+    fun `side games are off unless picked`() {
+        val setup = validForm().validate().setup!!
+
+        assertNull(setup.bombPotIntervalMinutes)
+        assertFalse(setup.isFiretruckGame)
+    }
+
+    @Test
+    fun `picked side games are carried into the setup`() {
+        val setup = validForm()
+            .copy(bombPotEnabled = true, bombPotMinutes = "45", isFiretruckGame = true)
+            .validate().setup!!
+
+        assertEquals(45, setup.bombPotIntervalMinutes)
+        assertTrue(setup.isFiretruckGame)
+    }
+
+    @Test
+    fun `bomb pots need a sensible number of minutes`() {
+        listOf("", "0", "99999").forEach { minutes ->
+            val validation = validForm().copy(bombPotEnabled = true, bombPotMinutes = minutes).validate()
+
+            assertNotNull("\"$minutes\" should be refused", validation.bombPotError)
+            assertNull(validation.setup)
+        }
+    }
+
+    @Test
+    fun `a bad interval does not matter while bomb pots are off`() {
+        val validation = validForm().copy(bombPotEnabled = false, bombPotMinutes = "").validate()
+
+        assertNull(validation.bombPotError)
+        assertNotNull(validation.setup)
+    }
 }

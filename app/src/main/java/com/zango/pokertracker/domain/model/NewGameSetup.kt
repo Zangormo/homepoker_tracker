@@ -12,8 +12,17 @@ data class NewGameSetup(
     val defaultBuyIn: Money,
     val payoutRounding: Money = DEFAULT_PAYOUT_ROUNDING,
     val entries: List<NewGameEntry>,
+    /** Minutes between bomb pots, or null for a game without them. */
+    val bombPotIntervalMinutes: Int? = null,
+    val isFiretruckGame: Boolean = false,
 ) {
     companion object {
+        /** What the bomb pot timer offers before the host changes it. */
+        const val DEFAULT_BOMB_POT_MINUTES: Int = 30
+
+        /** A day. Anything longer is a typo rather than a schedule. */
+        const val MAX_BOMB_POT_MINUTES: Int = 24 * 60
+
         /** 0.01: the smallest note-and-coin unit people can realistically hand each other. */
         val DEFAULT_PAYOUT_ROUNDING: Money = Money(10_000)
 

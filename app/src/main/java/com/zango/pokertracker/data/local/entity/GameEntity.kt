@@ -28,4 +28,12 @@ data class GameEntity(
      * hub cannot recompute every settlement it has ever produced just to colour a border.
      */
     @ColumnInfo(defaultValue = "0") val isFullyPaid: Boolean = false,
+    /**
+     * Minutes between bomb pots, counted from [startedAt], or null when the game has none. The
+     * schedule is derived from the start rather than stored as a next-due time, so it survives a
+     * killed process or a reboot without anything having to be written as each one comes round.
+     */
+    val bombPotIntervalMinutes: Int? = null,
+    /** Whether the game tab keeps the firetruck count. */
+    @ColumnInfo(defaultValue = "0") val isFiretruckGame: Boolean = false,
 )

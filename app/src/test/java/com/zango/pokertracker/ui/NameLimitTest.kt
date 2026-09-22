@@ -153,6 +153,7 @@ class NameLimitTest {
         val viewModel = LiveGameViewModel(
             repository = repository,
             clock = com.zango.pokertracker.testing.TestClock(),
+            firetruckStore = com.zango.pokertracker.testing.FakeFiretruckStore(),
             savedStateHandle = SavedStateHandle(mapOf("gameId" to GAME_ID)),
         )
         viewModel.uiState.first { !it.isLoading }
@@ -178,6 +179,7 @@ class NameLimitTest {
         val viewModel = LiveGameViewModel(
             repository = repository,
             clock = com.zango.pokertracker.testing.TestClock(),
+            firetruckStore = com.zango.pokertracker.testing.FakeFiretruckStore(),
             savedStateHandle = SavedStateHandle(mapOf("gameId" to GAME_ID)),
         )
         viewModel.uiState.first { !it.isLoading }

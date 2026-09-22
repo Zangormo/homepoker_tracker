@@ -1,5 +1,7 @@
 package com.zango.pokertracker.di
 
+import com.zango.pokertracker.data.local.FiretruckStore
+import com.zango.pokertracker.data.local.SharedPreferencesFiretruckStore
 import com.zango.pokertracker.data.repository.PokerRepository
 import com.zango.pokertracker.data.repository.PokerRepositoryImpl
 import dagger.Binds
@@ -15,4 +17,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindPokerRepository(impl: PokerRepositoryImpl): PokerRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindFiretruckStore(impl: SharedPreferencesFiretruckStore): FiretruckStore
 }

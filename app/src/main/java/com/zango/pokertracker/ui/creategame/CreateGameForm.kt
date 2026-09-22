@@ -40,6 +40,10 @@ data class CreateGameForm(
      * equal the default: the default still follows if the host edits it afterwards.
      */
     val selection: Map<Long, Money?> = emptyMap(),
+    val bombPotEnabled: Boolean = false,
+    /** Minutes between bomb pots, as typed. Only read while [bombPotEnabled]. */
+    val bombPotMinutes: String = NewGameSetup.DEFAULT_BOMB_POT_MINUTES.toString(),
+    val isFiretruckGame: Boolean = false,
 )
 
 /**
@@ -55,6 +59,7 @@ data class CreateGameValidation(
     val buyInError: UiText? = null,
     val payoutRoundingError: UiText? = null,
     val playersError: UiText? = null,
+    val bombPotError: UiText? = null,
     val overrideErrors: Map<Long, UiText> = emptyMap(),
     val smallBlind: Money? = null,
     val bigBlind: Money? = null,
@@ -91,6 +96,8 @@ fun CreateGameForm.validate(): CreateGameValidation {
     val (roundingValue, payoutRoundingError) =
         parsePositiveMoney(payoutRounding, UiText.of(R.string.label_rounding_unit))
 
+    val (bombPotInterval, bombPotError) = resolveBombPot()
+
     val playersError =
         if (selection.isEmpty()) UiText.of(R.string.error_pick_a_player) else null
     val overrideErrors = buildMap {
@@ -109,7 +116,7 @@ fun CreateGameForm.validate(): CreateGameValidation {
 
     val everythingHolds = nameError == null && smallBlindError == null && bigBlindError == null &&
         chipValueError == null && buyInError == null && payoutRoundingError == null &&
-        playersError == null && overrideErrors.isEmpty()
+        playersError == null && bombPotError == null && overrideErrors.isEmpty()
 
     val setup = if (
         everythingHolds && smallBlindValue != null && bigBlindValue != null && chipRate != null &&
@@ -125,6 +132,8 @@ fun CreateGameForm.validate(): CreateGameValidation {
             entries = selection.map { (playerId, override) ->
                 NewGameEntry(playerId = playerId, buyIn = override ?: defaultBuyIn)
             },
+            bombPotIntervalMinutes = bombPotInterval,
+            isFiretruckGame = isFiretruckGame,
         )
     } else {
         null
@@ -138,6 +147,7 @@ fun CreateGameForm.validate(): CreateGameValidation {
         buyInError = buyInError,
         payoutRoundingError = payoutRoundingError,
         playersError = playersError,
+        bombPotError = bombPotError,
         overrideErrors = overrideErrors,
         smallBlind = smallBlindValue,
         bigBlind = bigBlindValue,
@@ -146,6 +156,19 @@ fun CreateGameForm.validate(): CreateGameValidation {
         payoutRounding = roundingValue,
         setup = setup,
     )
+}
+
+/** The interval in minutes, or null with no error when the game has no bomb pots. */
+private fun CreateGameForm.resolveBombPot(): Pair<Int?, UiText?> {
+    if (!bombPotEnabled) return null to null
+    val minutes = bombPotMinutes.trim().toIntOrNull()
+    return when {
+        bombPotMinutes.isBlank() -> null to UiText.of(R.string.error_bomb_pot_required)
+        minutes == null || minutes !in 1..NewGameSetup.MAX_BOMB_POT_MINUTES ->
+            null to UiText.of(R.string.error_bomb_pot_range, NewGameSetup.MAX_BOMB_POT_MINUTES)
+
+        else -> minutes to null
+    }
 }
 
 private fun CreateGameForm.resolveChipRate(bigBlind: Money?): Pair<ChipRate?, UiText?> {

@@ -10,6 +10,7 @@ import com.zango.pokertracker.domain.model.Fixture
 import com.zango.pokertracker.domain.model.GameSnapshot
 import com.zango.pokertracker.domain.model.GameStatus
 import com.zango.pokertracker.domain.model.Player
+import com.zango.pokertracker.testing.FakeFiretruckStore
 import com.zango.pokertracker.testing.FakePokerRepository
 import com.zango.pokertracker.testing.TestClock
 import kotlinx.coroutines.Dispatchers
@@ -60,9 +61,12 @@ class LiveGameViewModelTest {
         seats = seats.toList(),
     )
 
+    private val firetruckStore = FakeFiretruckStore()
+
     private fun viewModel() = LiveGameViewModel(
         repository = repository,
         clock = clock,
+        firetruckStore = firetruckStore,
         savedStateHandle = SavedStateHandle(mapOf("gameId" to GAME_ID)),
     )
 
@@ -364,5 +368,48 @@ class LiveGameViewModelTest {
         val state = viewModel.state()
         assertTrue(state.isMissing)
         assertFalse(state.canEndGame)
+    }
+
+    private fun firetruckGame() {
+        val current = repository.game.value!!
+        repository.game.value = current.copy(game = current.game.copy(isFiretruckGame = true))
+    }
+
+    private suspend fun LiveGameViewModel.winsFor(seatId: Long, wins: Int) = gameTab.first { tab ->
+        tab.firetruckRows?.firstOrNull { it.seatId == seatId }?.wins == wins
+    }
+
+    @Test
+    fun `a game without side games has no game tab`() = runTest {
+        assertFalse(viewModel().state().hasSideGames)
+    }
+
+    @Test
+    fun `a firetruck game has a game tab`() = runTest {
+        firetruckGame()
+
+        assertTrue(viewModel().state().hasSideGames)
+    }
+
+    @Test
+    fun `firetruck dots survive the app being closed and reopened`() = runTest {
+        firetruckGame()
+        val before = viewModel()
+        before.winsFor(seatId = 1, wins = 0)
+        before.onFiretruckTap(1)
+        before.onFiretruckTap(1)
+
+        // A fresh view model over the same store is what reopening the app amounts to.
+        viewModel().winsFor(seatId = 1, wins = 2)
+    }
+
+    @Test
+    fun `a firetruck already called does not come back as three dots`() = runTest {
+        firetruckGame()
+        val before = viewModel()
+        before.winsFor(seatId = 1, wins = 0)
+        repeat(3) { before.onFiretruckTap(1) }
+
+        viewModel().winsFor(seatId = 1, wins = 0)
     }
 }

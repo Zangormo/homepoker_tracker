@@ -184,6 +184,10 @@ class PokerRepositoryImpl @Inject constructor(
         require(setup.entries.distinctBy { it.playerId }.size == setup.entries.size) {
             "A player cannot be seated twice in the same game"
         }
+        require(
+            setup.bombPotIntervalMinutes == null ||
+                setup.bombPotIntervalMinutes in 1..NewGameSetup.MAX_BOMB_POT_MINUTES,
+        ) { "Bomb pot interval is out of range" }
 
         val now = clock.nowMillis()
         return database.withTransaction {
@@ -196,6 +200,8 @@ class PokerRepositoryImpl @Inject constructor(
                     defaultBuyInMicros = setup.defaultBuyIn.micros,
                     payoutRoundingMicros = setup.payoutRounding.micros,
                     startedAt = now,
+                    bombPotIntervalMinutes = setup.bombPotIntervalMinutes,
+                    isFiretruckGame = setup.isFiretruckGame,
                 ),
             )
             val seatIds = gamePlayerDao.insertAll(

@@ -99,6 +99,8 @@ data class LiveGameUiState(
     /** "2h 47m", recomputed from the stored start time rather than counted. */
     val elapsed: String = "",
     val isFinished: Boolean = false,
+    /** Whether the game plays bomb pots or firetrucks, and so has a Game tab at all. */
+    val hasSideGames: Boolean = false,
     val totalOnTable: AmountPreview = AmountPreview(),
     val buyInCount: Int = 0,
     /** Chips bought back by the bank across the whole table, and what they cost it. */

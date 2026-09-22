@@ -57,6 +57,13 @@ interface GameDao {
     @Query("SELECT * FROM games WHERE id = :id")
     suspend fun loadWithPlayers(id: Long): GameWithPlayers?
 
+    /** Games still being played that run a bomb pot timer, which is every alarm that should exist. */
+    @Query("SELECT * FROM games WHERE status = 'IN_PROGRESS' AND bombPotIntervalMinutes IS NOT NULL")
+    fun observeRunningBombPots(): Flow<List<GameEntity>>
+
+    @Query("SELECT * FROM games WHERE id = :id")
+    suspend fun load(id: Long): GameEntity?
+
     @Query("UPDATE games SET status = :status, endedAt = :endedAt WHERE id = :id")
     suspend fun finish(id: Long, status: GameStatus, endedAt: Long)
 

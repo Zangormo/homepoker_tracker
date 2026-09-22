@@ -8,6 +8,7 @@ import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.Fixture
 import com.zango.pokertracker.domain.model.GameSnapshot
 import com.zango.pokertracker.domain.model.Seat
+import com.zango.pokertracker.testing.FakeFiretruckStore
 import com.zango.pokertracker.testing.FakePokerRepository
 import com.zango.pokertracker.testing.TestClock
 import kotlinx.coroutines.Dispatchers
@@ -59,9 +60,12 @@ class ChipReturnFlowTest {
         )
     }
 
+    private val firetruckStore = FakeFiretruckStore()
+
     private fun viewModel() = LiveGameViewModel(
         repository = repository,
         clock = clock,
+        firetruckStore = firetruckStore,
         savedStateHandle = SavedStateHandle(mapOf("gameId" to GAME_ID)),
     )
 

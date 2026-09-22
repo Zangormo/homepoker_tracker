@@ -35,6 +35,7 @@ object DatabaseModule {
                 PokerDatabase.MIGRATION_1_2,
                 PokerDatabase.MIGRATION_2_3,
                 PokerDatabase.MIGRATION_3_4,
+                PokerDatabase.MIGRATION_4_5,
             )
             // A fresh install never runs a migration, so the standard stake ladder is laid
             // down here instead. Upgrades get the same list from MIGRATION_3_4.

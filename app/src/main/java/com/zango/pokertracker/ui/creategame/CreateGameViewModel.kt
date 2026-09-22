@@ -99,6 +99,15 @@ class CreateGameViewModel @Inject constructor(
 
     fun onPayoutRoundingChange(value: String) = form.update { it.copy(payoutRounding = value) }
 
+    fun onToggleBombPot() = form.update { it.copy(bombPotEnabled = !it.bombPotEnabled) }
+
+    /** Digits only: the field is a whole number of minutes and nothing else can be valid. */
+    fun onBombPotMinutesChange(value: String) = form.update {
+        it.copy(bombPotMinutes = value.filter(Char::isDigit).take(BOMB_POT_MINUTES_MAX_DIGITS))
+    }
+
+    fun onToggleFiretruck() = form.update { it.copy(isFiretruckGame = !it.isFiretruckGame) }
+
     /**
      * Tapping a player toggles them in or out. Deselecting drops any override they had, so a
      * player removed by mistake and re-added comes back on the standard buy-in rather than
@@ -346,5 +355,6 @@ class CreateGameViewModel @Inject constructor(
 
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5_000L
+        const val BOMB_POT_MINUTES_MAX_DIGITS = 4
     }
 }
