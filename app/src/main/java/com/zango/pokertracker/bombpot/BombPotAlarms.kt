@@ -88,11 +88,21 @@ class BombPotAlarms @Inject constructor(
         running.forEach { (gameId, schedule) -> setAlarm(gameId, schedule.nextAfter(now)) }
     }
 
+    /**
+     * Set as an alarm clock: the kind alarm apps use, which the system treats as the most
+     * important alarm there is. It fires on time through Doze, and it is the kind Xiaomi and other
+     * aggressive battery savers are least inclined to hold back; an ordinary exact alarm was
+     * reported not to arrive on a Xiaomi phone once the app had been closed. It shows the alarm
+     * icon in the status bar while bomb pots are due.
+     *
+     * Without permission for exact alarms, which Android 14 no longer grants by default, it falls
+     * back to an ordinary alarm that Android may deliver late; the game tab offers the switch.
+     */
     @Synchronized
     private fun setAlarm(gameId: Long, at: Long) {
         val intent = alarmIntent(gameId)
         if (canBeExact()) {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, intent)
+            alarmManager.setAlarmClock(AlarmManager.AlarmClockInfo(at, openAppIntent()), intent)
         } else {
             alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, at, intent)
         }
@@ -136,24 +146,26 @@ class BombPotAlarms @Inject constructor(
         ) {
             return
         }
-        val open = PendingIntent.getActivity(
-            context,
-            0,
-            Intent(context, MainActivity::class.java)
-                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_bomb_pot)
             .setContentTitle(context.getString(R.string.bomb_pot_announcement))
-            .setContentText(game.name)
+            .setContentText(context.getString(R.string.bomb_pot_notification_text))
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setContentIntent(open)
+            .setContentIntent(openAppIntent())
             .setAutoCancel(true)
             .build()
         NotificationManagerCompat.from(context).notify(game.id.toInt(), notification)
     }
+
+    /** Opens the app: from the notification, and from the alarm icon in the status bar. */
+    private fun openAppIntent(): PendingIntent = PendingIntent.getActivity(
+        context,
+        0,
+        Intent(context, MainActivity::class.java)
+            .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+    )
 
     private fun GameEntity.schedule(): BombPotSchedule? =
         bombPotIntervalMinutes?.takeIf { it > 0 }?.let { BombPotSchedule(startedAt, it) }

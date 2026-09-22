@@ -526,6 +526,7 @@
     <string name="live_firetruck_row_description">%1$s, %2$d von %3$d hintereinander</string>
 
     <string name="bomb_pot_announcement">Bomb Pot!</string>
+    <string name="bomb_pot_notification_text">Bring Würze ins Spiel!</string>
     <string name="firetruck_announcement">Feuerwehrauto!</string>
     <string name="announcement_tap_to_close">Zum Schließen irgendwo tippen</string>
     <string name="bomb_pot_channel_name">Bomb Pots</string>

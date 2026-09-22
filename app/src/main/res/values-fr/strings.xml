@@ -548,6 +548,7 @@
     <string name="live_firetruck_row_description">%1$s, %2$d sur %3$d d’affilée</string>
 
     <string name="bomb_pot_announcement">Bomb pot !</string>
+    <string name="bomb_pot_notification_text">Pimentez la partie !</string>
     <string name="firetruck_announcement">Camion de pompiers !</string>
     <string name="announcement_tap_to_close">Appuyez n’importe où pour fermer</string>
     <string name="bomb_pot_channel_name">Bomb pots</string>

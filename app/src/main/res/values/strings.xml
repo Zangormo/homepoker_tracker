@@ -660,6 +660,8 @@
 
     <!-- The word that fills the screen. Shown in capitals. -->
     <string name="bomb_pot_announcement">Bomb pot!</string>
+    <!-- The line under "Bomb pot!" in the notification. -->
+    <string name="bomb_pot_notification_text">Spice the game up!</string>
     <string name="firetruck_announcement">Firetruck!</string>
     <string name="announcement_tap_to_close">Tap anywhere to close</string>
     <string name="bomb_pot_channel_name">Bomb pots</string>

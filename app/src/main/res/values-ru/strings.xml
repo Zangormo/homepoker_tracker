@@ -570,6 +570,7 @@
     <string name="live_firetruck_row_description">%1$s, %2$d из %3$d подряд</string>
 
     <string name="bomb_pot_announcement">Бомб-пот!</string>
+    <string name="bomb_pot_notification_text">Добавьте игре остроты!</string>
     <string name="firetruck_announcement">Пожарная машина!</string>
     <string name="announcement_tap_to_close">Нажмите, чтобы закрыть</string>
     <string name="bomb_pot_channel_name">Бомб-поты</string>
