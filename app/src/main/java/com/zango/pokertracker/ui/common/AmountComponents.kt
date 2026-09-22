@@ -87,7 +87,10 @@ fun ChipAmountField(
     keyboardType = KeyboardType.Number,
 )
 
-/** A cash amount. Parsing stays with `MoneyParser`; this only collects the text. */
+/**
+ * A cash amount. Parsing stays with `MoneyParser`; this only collects the text. [accepts], when
+ * given, is asked about every keystroke, and one it turns down never reaches the field.
+ */
 @Composable
 fun CashAmountField(
     value: String,
@@ -100,9 +103,10 @@ fun CashAmountField(
     forceShowError: Boolean = false,
     supporting: UiText? = null,
     imeAction: ImeAction = ImeAction.Next,
+    accepts: ((String) -> Boolean)? = null,
 ) = AmountField(
     value = value,
-    onValueChange = onValueChange,
+    onValueChange = if (accepts == null) onValueChange else { text -> if (accepts(text)) onValueChange(text) },
     label = label,
     modifier = modifier,
     error = error,

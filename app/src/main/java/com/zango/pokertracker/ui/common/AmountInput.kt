@@ -38,6 +38,30 @@ fun parsePositiveMoney(text: String, label: UiText): ParsedMoney =
         is MoneyParseResult.Invalid -> ParsedMoney(error = result.error.describe(label))
     }
 
+/**
+ * Whether [text] may stand in a blind field at all, checked on every keystroke so the field
+ * simply refuses anything past the limit, the way name fields stop at their length: digits and one
+ * decimal separator, no more than [maxDecimals] after it, and never more than [max]. Half-typed
+ * values such as "" or "0." pass, since the host is still on the way to a number.
+ */
+fun acceptsAmountInput(text: String, maxDecimals: Int, max: Money): Boolean {
+    if (text.isEmpty()) return true
+    if (text.any { !it.isDigit() && it != '.' && it != ',' }) return false
+    val separators = text.count { it == '.' || it == ',' }
+    if (separators > 1) return false
+    val fraction = text.substringAfter('.', text.substringAfter(',', ""))
+    if (separators == 1 && fraction.length > maxDecimals) return false
+    val complete = text.trimEnd('.', ',').ifEmpty { return true }
+    val value = (MoneyParser.parse(complete) as? MoneyParseResult.Valid)?.money ?: return false
+    return value <= max
+}
+
+/** The keystroke filters for the two blind fields, wherever blinds are typed. */
+val acceptsSmallBlind: (String) -> Boolean =
+    { acceptsAmountInput(it, Stakes.BLIND_DECIMALS, Stakes.MAX_SMALL_BLIND) }
+val acceptsBigBlind: (String) -> Boolean =
+    { acceptsAmountInput(it, Stakes.BLIND_DECIMALS, Stakes.MAX_BIG_BLIND) }
+
 /** A figure outside [min]..[max], named with the field it was typed into; null when it fits. */
 fun rangeError(amount: Money, min: Money, max: Money, label: UiText): UiText? = when {
     amount < min -> UiText.of(R.string.error_amount_below_min, label, UiText.cash(min))
@@ -56,8 +80,10 @@ fun parseBlinds(smallText: String, bigText: String): ParsedBlinds {
     val (parsedSmall, smallParseError) = parsePositiveMoney(smallText, smallLabel)
     val (parsedBig, bigParseError) = parsePositiveMoney(bigText, bigLabel)
     val smallError = smallParseError
+        ?: parsedSmall?.let { blindDecimalsError(it, smallLabel) }
         ?: parsedSmall?.let { rangeError(it, Stakes.MIN_SMALL_BLIND, Stakes.MAX_SMALL_BLIND, smallLabel) }
     val bigError = bigParseError
+        ?: parsedBig?.let { blindDecimalsError(it, bigLabel) }
         ?: parsedBig?.let { rangeError(it, Stakes.MIN_BIG_BLIND, Stakes.MAX_BIG_BLIND, bigLabel) }
         ?: UiText.of(R.string.error_big_blind_too_small).takeIf {
             parsedSmall != null && parsedBig != null && parsedBig <= parsedSmall
@@ -68,6 +94,17 @@ fun parseBlinds(smallText: String, bigText: String): ParsedBlinds {
         smallBlindError = smallError,
         bigBlindError = bigError,
     )
+}
+
+/**
+ * Finer than [Stakes.BLIND_DECIMALS] places. Typing cannot get there, since the fields refuse the
+ * keystroke; this catches a value that arrived some other way, such as last game's blinds.
+ */
+private fun blindDecimalsError(amount: Money, label: UiText): UiText? {
+    var step = 1L
+    repeat(Money.MAX_SCALE - Stakes.BLIND_DECIMALS) { step *= 10 }
+    return UiText.plural(R.plurals.error_amount_decimals, Stakes.BLIND_DECIMALS, label, Stakes.BLIND_DECIMALS)
+        .takeIf { amount.micros % step != 0L }
 }
 
 data class ParsedBlinds(

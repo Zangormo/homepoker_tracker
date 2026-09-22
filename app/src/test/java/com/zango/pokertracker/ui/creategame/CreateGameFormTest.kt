@@ -308,7 +308,7 @@ class CreateGameFormTest {
         val validation = validForm().copy(smallBlind = "0.0005", bigBlind = "0.001").validate()
 
         assertEquals(
-            UiText.of(R.string.error_amount_below_min, UiText.of(R.string.create_small_blind), UiText.Cash("0.001")),
+            UiText.plural(R.plurals.error_amount_decimals, 3, UiText.of(R.string.create_small_blind), 3),
             validation.smallBlindError,
         )
         assertEquals(

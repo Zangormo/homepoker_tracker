@@ -6,7 +6,9 @@ import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.core.text.UiText
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -169,5 +171,38 @@ class AmountInputTest {
     @Test
     fun `a one-to-one chip value can never leave a remainder above a micro`() {
         assertNull(wholeChipsError(Money(1), ChipRate(1)))
+    }
+
+    // --- Blind fields refuse keystrokes past the limit ----------------------------------
+
+    @Test
+    fun `a blind field takes up to three decimal places and refuses the fourth`() {
+        assertTrue(acceptsSmallBlind("0.005"))
+        assertTrue(acceptsSmallBlind("0,005"))
+        assertFalse(acceptsSmallBlind("0.0005"))
+        assertFalse(acceptsSmallBlind("0.10000001"))
+    }
+
+    @Test
+    fun `a blind field refuses a number past the largest blind`() {
+        assertTrue(acceptsSmallBlind("10000"))
+        assertFalse(acceptsSmallBlind("10001"))
+        assertTrue(acceptsBigBlind("20000"))
+        assertFalse(acceptsBigBlind("20000.001"))
+        assertFalse(acceptsBigBlind("99999999999999999999"))
+    }
+
+    @Test
+    fun `a blind field lets a half-typed number through`() {
+        assertTrue(acceptsSmallBlind(""))
+        assertTrue(acceptsSmallBlind("0."))
+        assertTrue(acceptsSmallBlind("0.00"))
+    }
+
+    @Test
+    fun `a blind field refuses anything that is not a plain number`() {
+        assertFalse(acceptsSmallBlind("-1"))
+        assertFalse(acceptsSmallBlind("1.2.3"))
+        assertFalse(acceptsSmallBlind("1e3"))
     }
 }

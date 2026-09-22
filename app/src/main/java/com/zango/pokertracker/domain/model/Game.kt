@@ -90,6 +90,8 @@ data class Stakes(val smallBlind: Money, val bigBlind: Money) {
          * plays for; the ceiling is far past any kitchen table, and keeps a stray extra zero from
          * turning into a game nobody meant to set up.
          */
+        /** Blinds go down to thousandths and no finer, which is also what makes 0.001 the floor. */
+        const val BLIND_DECIMALS: Int = 3
         val MIN_SMALL_BLIND: Money = Money(1_000)
         val MIN_BIG_BLIND: Money = Money(2_000)
         val MAX_SMALL_BLIND: Money = Money(10_000 * Money.MICROS_PER_UNIT)

@@ -60,6 +60,8 @@ import com.zango.pokertracker.core.locale.findActivity
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.Stakes
 import com.zango.pokertracker.ui.common.CashAmountField
+import com.zango.pokertracker.ui.common.acceptsBigBlind
+import com.zango.pokertracker.ui.common.acceptsSmallBlind
 import com.zango.pokertracker.ui.common.MinTouchTarget
 import com.zango.pokertracker.ui.common.SectionLabel
 import com.zango.pokertracker.ui.common.SelectionIndicator
@@ -412,11 +414,13 @@ private fun AddStakesDialog(
                     value = editor.smallBlind,
                     onValueChange = onSmallBlindChange,
                     label = stringResource(R.string.create_small_blind),
+                    accepts = acceptsSmallBlind,
                 )
                 CashAmountField(
                     value = editor.bigBlind,
                     onValueChange = onBigBlindChange,
                     label = stringResource(R.string.create_big_blind),
+                    accepts = acceptsBigBlind,
                     imeAction = ImeAction.Done,
                 )
                 if (editor.error != null) {
