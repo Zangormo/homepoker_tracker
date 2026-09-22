@@ -41,6 +41,7 @@ class BombPotAlarms @Inject constructor(
     @ApplicationContext private val context: Context,
     private val gameDao: GameDao,
     private val clock: Clock,
+    private val vibration: BombPotVibration,
 ) {
     private val alarmManager: AlarmManager = context.getSystemService(AlarmManager::class.java)
 
@@ -62,8 +63,10 @@ class BombPotAlarms @Inject constructor(
     }
 
     /**
-     * An alarm went off. Tells the host unless they are already looking at the game's screen,
-     * which announces it itself, and sets the next one straight away.
+     * An alarm went off. Buzzes the phone every time, open or closed, since a bomb pot is exactly
+     * the moment the host has put the phone down. Tells the host with a notification unless they
+     * are already looking at the game's screen, which announces it itself, and sets the next one
+     * straight away.
      */
     suspend fun onAlarm(gameId: Long) {
         val game = gameDao.load(gameId)
@@ -72,6 +75,7 @@ class BombPotAlarms @Inject constructor(
             cancel(gameId)
             return
         }
+        vibration.buzz()
         if (BombPotPresence.visibleGameId != gameId) notify(game)
         setAlarm(gameId, schedule.nextAfter(clock.nowMillis()))
     }
