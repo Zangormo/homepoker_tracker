@@ -412,4 +412,74 @@ class LiveGameViewModelTest {
 
         viewModel().winsFor(seatId = 1, wins = 0)
     }
+
+    private fun randomlySeated() {
+        repository.game.value = GameSnapshot(
+            game = Fixture.game().copy(id = GAME_ID, startedAt = START, isRandomSeating = true),
+            seats = listOf(
+                Fixture.seat(1, "Anna").copy(tablePosition = 2),
+                Fixture.seat(2, "Boris").copy(tablePosition = 0),
+                Fixture.seat(3, "Chris").copy(tablePosition = 1),
+            ),
+        )
+    }
+
+    private suspend fun LiveGameViewModel.tableNames(expected: List<String>) =
+        stateWhere { it.table?.map { seat -> seat.name } == expected }
+
+    @Test
+    fun `a game not seated at random has no table`() = runTest {
+        assertNull(viewModel().state().table)
+    }
+
+    @Test
+    fun `the table follows the stored seat order`() = runTest {
+        randomlySeated()
+
+        viewModel().tableNames(listOf("Boris", "Chris", "Anna"))
+    }
+
+    @Test
+    fun `tapping one player and then another swaps them`() = runTest {
+        randomlySeated()
+        val viewModel = viewModel()
+        viewModel.tableNames(listOf("Boris", "Chris", "Anna"))
+
+        viewModel.onTableSeatTap(2)
+        assertEquals(2L, viewModel.stateWhere { it.selectedTableSeatId != null }.selectedTableSeatId)
+        viewModel.onTableSeatTap(1)
+
+        val state = viewModel.tableNames(listOf("Anna", "Chris", "Boris"))
+        assertNull(state.selectedTableSeatId)
+    }
+
+    @Test
+    fun `tapping away or on the same player puts the selection down without a swap`() = runTest {
+        randomlySeated()
+        val viewModel = viewModel()
+        viewModel.tableNames(listOf("Boris", "Chris", "Anna"))
+
+        viewModel.onTableSeatTap(2)
+        viewModel.stateWhere { it.selectedTableSeatId == 2L }
+        viewModel.onClearTableSelection()
+        viewModel.stateWhere { it.selectedTableSeatId == null }
+
+        viewModel.onTableSeatTap(3)
+        viewModel.stateWhere { it.selectedTableSeatId == 3L }
+        viewModel.onTableSeatTap(3)
+        viewModel.stateWhere { it.selectedTableSeatId == null }
+
+        assertFalse(repository.writes.any { it.startsWith("swapTablePositions") })
+    }
+
+    @Test
+    fun `cashed-out players leave the table`() = runTest {
+        randomlySeated()
+        val current = repository.game.value!!
+        repository.game.value = current.copy(
+            seats = current.seats.map { if (it.id == 3L) it.copy(cashedOutAt = START) else it },
+        )
+
+        viewModel().tableNames(listOf("Boris", "Anna"))
+    }
 }

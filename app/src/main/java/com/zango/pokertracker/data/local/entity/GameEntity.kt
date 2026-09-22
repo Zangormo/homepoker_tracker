@@ -36,4 +36,6 @@ data class GameEntity(
     val bombPotIntervalMinutes: Int? = null,
     /** Whether the game tab keeps the firetruck count. */
     @ColumnInfo(defaultValue = "0") val isFiretruckGame: Boolean = false,
+    /** Whether players were seated in a random order, shown as a table on the stats tab. */
+    @ColumnInfo(defaultValue = "0") val isRandomSeating: Boolean = false,
 )

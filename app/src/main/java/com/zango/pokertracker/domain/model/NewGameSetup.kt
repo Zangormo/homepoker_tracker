@@ -15,6 +15,11 @@ data class NewGameSetup(
     /** Minutes between bomb pots, or null for a game without them. */
     val bombPotIntervalMinutes: Int? = null,
     val isFiretruckGame: Boolean = false,
+    /**
+     * Seat everyone in a random order. The [entries] are expected already shuffled: their order
+     * is the order round the table.
+     */
+    val isRandomSeating: Boolean = false,
 ) {
     companion object {
         /** What the bomb pot timer offers before the host changes it. */

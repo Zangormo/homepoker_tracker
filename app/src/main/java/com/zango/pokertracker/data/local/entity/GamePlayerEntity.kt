@@ -40,4 +40,9 @@ data class GamePlayerEntity(
     val cashedOutAt: Long? = null,
     /** Chips in front of the player at the end. Null until counted. */
     val finalChipCount: Long? = null,
+    /**
+     * Where the player sits, counting round the table from 0. Only set in games seated at
+     * random; null everywhere else, where nobody asked the app to keep track.
+     */
+    val tablePosition: Int? = null,
 )

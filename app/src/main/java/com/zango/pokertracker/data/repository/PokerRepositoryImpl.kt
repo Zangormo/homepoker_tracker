@@ -202,11 +202,17 @@ class PokerRepositoryImpl @Inject constructor(
                     startedAt = now,
                     bombPotIntervalMinutes = setup.bombPotIntervalMinutes,
                     isFiretruckGame = setup.isFiretruckGame,
+                    isRandomSeating = setup.isRandomSeating,
                 ),
             )
             val seatIds = gamePlayerDao.insertAll(
-                setup.entries.map {
-                    GamePlayerEntity(gameId = gameId, playerId = it.playerId, joinedAt = now)
+                setup.entries.mapIndexed { index, entry ->
+                    GamePlayerEntity(
+                        gameId = gameId,
+                        playerId = entry.playerId,
+                        joinedAt = now,
+                        tablePosition = index.takeIf { setup.isRandomSeating },
+                    )
                 },
             )
             buyInDao.insertAll(
@@ -267,8 +273,20 @@ class PokerRepositoryImpl @Inject constructor(
             check(!gamePlayerDao.isSeated(gameId, playerId)) {
                 "That player is already seated in this game"
             }
+            // A late arrival at a randomly seated table pulls up a chair at the end; the host can
+            // swap them into their real place from the table view.
+            val position = if (gameDao.load(gameId)?.isRandomSeating == true) {
+                (gamePlayerDao.lastTablePosition(gameId) ?: -1) + 1
+            } else {
+                null
+            }
             val seatId = gamePlayerDao.insert(
-                GamePlayerEntity(gameId = gameId, playerId = playerId, joinedAt = now),
+                GamePlayerEntity(
+                    gameId = gameId,
+                    playerId = playerId,
+                    joinedAt = now,
+                    tablePosition = position,
+                ),
             )
             buyInDao.insert(
                 BuyInEntity(
@@ -278,6 +296,16 @@ class PokerRepositoryImpl @Inject constructor(
                 ),
             )
             seatId
+        }
+    }
+
+    override suspend fun swapTablePositions(firstSeatId: Long, secondSeatId: Long) {
+        if (firstSeatId == secondSeatId) return
+        database.withTransaction {
+            val first = gamePlayerDao.tablePosition(firstSeatId)
+            val second = gamePlayerDao.tablePosition(secondSeatId)
+            gamePlayerDao.setTablePosition(firstSeatId, second)
+            gamePlayerDao.setTablePosition(secondSeatId, first)
         }
     }
 

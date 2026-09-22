@@ -296,4 +296,10 @@ class CreateGameFormTest {
         assertNull(validation.bombPotError)
         assertNotNull(validation.setup)
     }
+
+    @Test
+    fun `random seating is carried into the setup`() {
+        assertFalse(validForm().validate().setup!!.isRandomSeating)
+        assertTrue(validForm().copy(isRandomSeating = true).validate().setup!!.isRandomSeating)
+    }
 }

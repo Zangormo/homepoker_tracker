@@ -24,6 +24,16 @@ interface GamePlayerDao {
     @Query("UPDATE game_players SET cashedOutAt = NULL, finalChipCount = NULL WHERE id = :id")
     suspend fun undoCashOut(id: Long)
 
+    /** The last place taken round the table, or null when nobody in the game has one. */
+    @Query("SELECT MAX(tablePosition) FROM game_players WHERE gameId = :gameId")
+    suspend fun lastTablePosition(gameId: Long): Int?
+
+    @Query("SELECT tablePosition FROM game_players WHERE id = :id")
+    suspend fun tablePosition(id: Long): Int?
+
+    @Query("UPDATE game_players SET tablePosition = :position WHERE id = :id")
+    suspend fun setTablePosition(id: Long, position: Int?)
+
     @Query("UPDATE game_players SET finalChipCount = :chips WHERE id = :id")
     suspend fun setFinalChipCount(id: Long, chips: Long?)
 

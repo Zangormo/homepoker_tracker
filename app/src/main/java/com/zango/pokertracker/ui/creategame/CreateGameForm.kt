@@ -44,6 +44,7 @@ data class CreateGameForm(
     /** Minutes between bomb pots, as typed. Only read while [bombPotEnabled]. */
     val bombPotMinutes: String = NewGameSetup.DEFAULT_BOMB_POT_MINUTES.toString(),
     val isFiretruckGame: Boolean = false,
+    val isRandomSeating: Boolean = false,
 )
 
 /**
@@ -134,6 +135,7 @@ fun CreateGameForm.validate(): CreateGameValidation {
             },
             bombPotIntervalMinutes = bombPotInterval,
             isFiretruckGame = isFiretruckGame,
+            isRandomSeating = isRandomSeating,
         )
     } else {
         null

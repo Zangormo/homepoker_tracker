@@ -651,4 +651,16 @@
     <string name="bomb_pot_channel_name">Bomb pots</string>
     <string name="bomb_pot_channel_description">Tells you a bomb pot is due while the app is closed.</string>
 
+    <!-- ==================================================================================== -->
+    <!-- Random seating                                                                       -->
+    <!-- ==================================================================================== -->
+
+    <string name="create_random_seating">Random player order</string>
+    <string name="create_random_seating_hint">Seats everyone in a random order when the game starts. The table appears on the Stats tab.</string>
+    <string name="live_section_table">Table</string>
+    <string name="live_table_hint">Tap two players to swap their seats</string>
+    <!-- %1$s: the player picked up first -->
+    <string name="live_table_hint_selected">Tap someone to swap with %1$s</string>
+    <string name="error_swap_seats">Could not swap seats</string>
+
 </resources>

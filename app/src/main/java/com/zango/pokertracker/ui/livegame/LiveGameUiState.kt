@@ -101,6 +101,13 @@ data class LiveGameUiState(
     val isFinished: Boolean = false,
     /** Whether the game plays bomb pots or firetrucks, and so has a Game tab at all. */
     val hasSideGames: Boolean = false,
+    /**
+     * Everyone still at the table in seat order, when the game was seated at random; null for a
+     * game where the app was never asked where anyone sits.
+     */
+    val table: List<TableSeat>? = null,
+    /** The player picked up on the table, waiting for a second tap to swap with. */
+    val selectedTableSeatId: Long? = null,
     val totalOnTable: AmountPreview = AmountPreview(),
     val buyInCount: Int = 0,
     /** Chips bought back by the bank across the whole table, and what they cost it. */
@@ -117,6 +124,8 @@ data class LiveGameUiState(
     val hasReturns: Boolean get() = !returnedChips.isZero
 
     val canEndGame: Boolean get() = !isFinished && playerCount > 0
+
+    val canRearrangeTable: Boolean get() = table != null && !isFinished
 }
 
 sealed interface LiveGameEvent {

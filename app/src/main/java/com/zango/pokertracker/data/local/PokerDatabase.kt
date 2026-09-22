@@ -27,7 +27,7 @@ import com.zango.pokertracker.domain.model.Stakes
  * [PokerDatabase] must chain unbroken up to it: this database has no destructive fallback, so a
  * bump without a matching migration crashes every device that already has the app.
  */
-const val POKER_DATABASE_VERSION: Int = 5
+const val POKER_DATABASE_VERSION: Int = 6
 
 @Database(
     entities = [
@@ -168,6 +168,19 @@ abstract class PokerDatabase : RoomDatabase() {
                 db.execSQL(
                     "ALTER TABLE `games` ADD COLUMN `isFiretruckGame` INTEGER NOT NULL DEFAULT 0",
                 )
+            }
+        }
+
+        /**
+         * Adds random seating: a flag on the game, and each seat's place round the table. Games
+         * from before this version were never seated by the app, so they get neither.
+         */
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE `games` ADD COLUMN `isRandomSeating` INTEGER NOT NULL DEFAULT 0",
+                )
+                db.execSQL("ALTER TABLE `game_players` ADD COLUMN `tablePosition` INTEGER")
             }
         }
 

@@ -108,6 +108,8 @@ class CreateGameViewModel @Inject constructor(
 
     fun onToggleFiretruck() = form.update { it.copy(isFiretruckGame = !it.isFiretruckGame) }
 
+    fun onToggleRandomSeating() = form.update { it.copy(isRandomSeating = !it.isRandomSeating) }
+
     /**
      * Tapping a player toggles them in or out. Deselecting drops any override they had, so a
      * player removed by mistake and re-added comes back on the standard buy-in rather than
@@ -214,7 +216,14 @@ class CreateGameViewModel @Inject constructor(
     }
 
     fun onStartGame() {
-        val setup = uiState.value.validation.setup ?: return
+        val validated = uiState.value.validation.setup ?: return
+        // Shuffled here, once, at the moment the game starts: the order the host tapped players in
+        // is exactly what random seating is meant to get away from.
+        val setup = if (validated.isRandomSeating) {
+            validated.copy(entries = validated.entries.shuffled())
+        } else {
+            validated
+        }
         if (editing.value.isStarting) return
         editing.update { it.copy(isStarting = true) }
         viewModelScope.launch {

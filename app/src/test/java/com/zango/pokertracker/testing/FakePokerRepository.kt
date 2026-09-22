@@ -209,6 +209,15 @@ class FakePokerRepository(private val clock: TestClock = TestClock()) : PokerRep
         return seatId
     }
 
+    override suspend fun swapTablePositions(firstSeatId: Long, secondSeatId: Long) {
+        writes += "swapTablePositions($firstSeatId, $secondSeatId)"
+        val seats = game.value?.seats.orEmpty()
+        val first = seats.firstOrNull { it.id == firstSeatId }?.tablePosition
+        val second = seats.firstOrNull { it.id == secondSeatId }?.tablePosition
+        updateSeat(firstSeatId) { it.copy(tablePosition = second) }
+        updateSeat(secondSeatId) { it.copy(tablePosition = first) }
+    }
+
     override suspend fun cashOut(gamePlayerId: Long, finalChips: Chips) {
         writes += "cashOut($gamePlayerId, $finalChips)"
         updateSeat(gamePlayerId) { it.copy(finalChips = finalChips, cashedOutAt = clock.now) }

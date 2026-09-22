@@ -562,4 +562,15 @@
     <string name="bomb_pot_channel_name">Бомб-поты</string>
     <string name="bomb_pot_channel_description">Сообщает о бомб-поте, когда приложение закрыто.</string>
 
+    <!-- ==================================================================================== -->
+    <!-- Random seating                                                                       -->
+    <!-- ==================================================================================== -->
+
+    <string name="create_random_seating">Случайная рассадка</string>
+    <string name="create_random_seating_hint">Рассаживает всех в случайном порядке при начале игры. Стол появится на вкладке «Статистика».</string>
+    <string name="live_section_table">Стол</string>
+    <string name="live_table_hint">Нажмите на двух игроков, чтобы поменять их местами</string>
+    <string name="live_table_hint_selected">Нажмите на игрока, чтобы поменять местами с %1$s</string>
+    <string name="error_swap_seats">Не удалось поменять игроков местами</string>
+
 </resources>

@@ -49,6 +49,7 @@ fun GameEntity.toDomain(): Game = Game(
     isFullyPaid = isFullyPaid,
     bombPotIntervalMinutes = bombPotIntervalMinutes,
     isFiretruckGame = isFiretruckGame,
+    isRandomSeating = isRandomSeating,
 )
 
 fun BuyInEntity.toDomain(): BuyIn = BuyIn(
@@ -71,6 +72,7 @@ fun GamePlayerWithDetails.toDomain(): Seat = Seat(
     finalChips = seat.finalChipCount?.let { Chips(it) },
     buyIns = buyIns.sortedBy { it.createdAt }.map { it.toDomain() },
     chipReturns = chipReturns.sortedBy { it.createdAt }.map { it.toDomain() },
+    tablePosition = seat.tablePosition,
 )
 
 fun GameWithPlayers.toDomain(): GameSnapshot = GameSnapshot(

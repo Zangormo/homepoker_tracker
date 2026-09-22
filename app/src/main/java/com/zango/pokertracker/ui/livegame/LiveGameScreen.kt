@@ -189,6 +189,8 @@ fun LiveGameScreen(
                     onCashOut = viewModel::onCashOut,
                     onUndoCashOut = viewModel::onUndoCashOut,
                     modifier = Modifier.padding(padding),
+                    onTableSeatTap = viewModel::onTableSeatTap,
+                    onClearTableSelection = viewModel::onClearTableSelection,
                 )
             }
         }
@@ -283,13 +285,29 @@ private fun LiveGameContent(
     onCashOut: (Long) -> Unit,
     onUndoCashOut: (Long) -> Unit,
     modifier: Modifier = Modifier,
+    onTableSeatTap: (Long) -> Unit = {},
+    onClearTableSelection: () -> Unit = {},
 ) {
     LazyColumn(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .onUnhandledTap(onClearTableSelection),
         contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 96.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         item { HeadlinePanel(state) }
+
+        state.table?.let { seats ->
+            item { SectionLabel(stringResource(R.string.live_section_table)) }
+            item {
+                PokerTableView(
+                    seats = seats,
+                    selectedSeatId = state.selectedTableSeatId,
+                    enabled = state.canRearrangeTable,
+                    onSeatTap = onTableSeatTap,
+                )
+            }
+        }
 
         if (state.activeSeats.isNotEmpty()) {
             item {

@@ -51,6 +51,9 @@ class LiveGameViewModel @Inject constructor(
 
     private val draft = MutableStateFlow<DialogDraft?>(null)
 
+    /** The player picked up on the table view. */
+    private val tableSelection = MutableStateFlow<Long?>(null)
+
     // Stored rather than kept in memory, so the dots survive the app being swiped away mid-game.
     // A run that had already made a firetruck was announced before the app went away, so it
     // comes back cleared rather than as three dots with nothing left to do.
@@ -77,6 +80,7 @@ class LiveGameViewModel @Inject constructor(
         repository.observeGame(gameId),
         repository.observeRoster(),
         draft,
+        tableSelection,
         clock.tick(),
         ::buildState,
     )
@@ -105,6 +109,30 @@ class LiveGameViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
             initialValue = GameTabUiState(),
         )
+
+    /**
+     * A tap on a player at the table. The first picks them up, a second on the same player puts
+     * them down, and a second on anyone else swaps the two.
+     */
+    fun onTableSeatTap(seatId: Long) {
+        if (!uiState.value.canRearrangeTable) return
+        val selected = tableSelection.value
+        when (selected) {
+            null -> tableSelection.value = seatId
+            seatId -> tableSelection.value = null
+            else -> {
+                tableSelection.value = null
+                launchWrite(UiText.of(R.string.error_swap_seats)) {
+                    repository.swapTablePositions(selected, seatId)
+                }
+            }
+        }
+    }
+
+    /** A tap anywhere that is not a player: whoever was picked up is put back down. */
+    fun onClearTableSelection() {
+        tableSelection.value = null
+    }
 
     /**
      * One more win for the player at [seatId]. Anyone else winning wipes the previous run, and
@@ -316,6 +344,7 @@ class LiveGameViewModel @Inject constructor(
         snapshot: GameSnapshot?,
         roster: List<Player>,
         draft: DialogDraft?,
+        tableSelection: Long?,
         now: Long,
     ): LiveGameUiState {
         if (snapshot == null) {
@@ -325,6 +354,15 @@ class LiveGameViewModel @Inject constructor(
         val game = snapshot.game
         val rate = game.chipRate
         val rows = snapshot.seats.map { seat -> seat.toRow(snapshot) }
+        // Only people still playing have a chair. Anyone without a place (seated before the game
+        // was set to random, which cannot happen today) goes last rather than disappearing.
+        val table = if (game.isRandomSeating) {
+            snapshot.activeSeats
+                .sortedWith(compareBy<Seat>({ it.tablePosition ?: Int.MAX_VALUE }, { it.joinedAt }))
+                .map { TableSeat(it.id, it.player.name) }
+        } else {
+            null
+        }
         // A finished game freezes at the moment it ended rather than counting on forever.
         val until = game.endedAt ?: now
 
@@ -338,6 +376,11 @@ class LiveGameViewModel @Inject constructor(
             elapsed = formatElapsed(until - game.startedAt),
             isFinished = !game.isInProgress,
             hasSideGames = game.bombPotIntervalMinutes != null || game.isFiretruckGame,
+            table = table,
+            // A picked-up player who has since cashed out is no longer at the table to swap.
+            selectedTableSeatId = tableSelection?.takeIf { picked ->
+                table?.any { it.seatId == picked } == true
+            },
             totalOnTable = AmountPreview.of(snapshot.totalOnTable, rate),
             buyInCount = snapshot.totalBuyInCount,
             returnedChips = snapshot.returnedChips,

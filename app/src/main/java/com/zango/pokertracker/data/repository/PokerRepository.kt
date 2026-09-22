@@ -111,6 +111,9 @@ interface PokerRepository {
     /** Seats a roster player mid-game with their opening buy-in. Returns the new seat id. */
     suspend fun seatPlayer(gameId: Long, playerId: Long, initialBuyIn: Money): Long
 
+    /** Two players change places round the table, in one step so neither is ever left seatless. */
+    suspend fun swapTablePositions(firstSeatId: Long, secondSeatId: Long)
+
     suspend fun cashOut(gamePlayerId: Long, finalChips: Chips)
 
     suspend fun undoCashOut(gamePlayerId: Long)

@@ -19,6 +19,8 @@ data class Seat(
     val finalChips: Chips?,
     val buyIns: List<BuyIn>,
     val chipReturns: List<ChipReturn> = emptyList(),
+    /** Where the player sits, counting round the table from 0; null unless seated at random. */
+    val tablePosition: Int? = null,
 ) {
     val totalBuyIn: Money get() = buyIns.map { it.amount }.sum()
 

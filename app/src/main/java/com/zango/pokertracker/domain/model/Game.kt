@@ -49,6 +49,7 @@ data class Game(
     /** Minutes between bomb pots, counted from [startedAt]; null when the game plays none. */
     val bombPotIntervalMinutes: Int? = null,
     val isFiretruckGame: Boolean = false,
+    val isRandomSeating: Boolean = false,
 ) {
     val isInProgress: Boolean get() = status == GameStatus.IN_PROGRESS
 }

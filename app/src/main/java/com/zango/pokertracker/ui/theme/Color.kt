@@ -47,6 +47,11 @@ internal object Tokens {
     val CelebrationBlue = Color(0xFF3DB8FF)
     val CelebrationPink = Color(0xFFFF5FB7)
 
+    /** The seating view: a felt table inside a dark rail, muted so the player names stay first. */
+    val TableFelt = Color(0xFF155C3B)
+    val TableFeltLine = Color(0xFF2E7A55)
+    val TableRail = Color(0xFF2C221A)
+
     /** Darkens the whole screen behind an announcement. */
     val Scrim = Color(0xD9000000)
 }
@@ -67,6 +72,9 @@ data class PokerColors(
     /** The confetti, and the announcement lettering in [celebration] first. */
     val celebration: List<Color>,
     val scrim: Color,
+    val tableFelt: Color,
+    val tableFeltLine: Color,
+    val tableRail: Color,
 )
 
 internal val DarkPokerColors = PokerColors(
@@ -86,4 +94,7 @@ internal val DarkPokerColors = PokerColors(
         Tokens.CelebrationPink,
     ),
     scrim = Tokens.Scrim,
+    tableFelt = Tokens.TableFelt,
+    tableFeltLine = Tokens.TableFeltLine,
+    tableRail = Tokens.TableRail,
 )

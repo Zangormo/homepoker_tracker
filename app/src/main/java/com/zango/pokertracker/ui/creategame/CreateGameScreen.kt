@@ -207,6 +207,7 @@ data class CreateGameActions(
     val onToggleBombPot: () -> Unit = {},
     val onBombPotMinutesChange: (String) -> Unit = {},
     val onToggleFiretruck: () -> Unit = {},
+    val onToggleRandomSeating: () -> Unit = {},
     val onTogglePlayer: (Long) -> Unit = {},
     val onEditOverride: (Long) -> Unit = {},
     val onClearOverride: (Long) -> Unit = {},
@@ -238,6 +239,7 @@ private fun rememberCreateGameActions(viewModel: CreateGameViewModel): CreateGam
             onToggleBombPot = viewModel::onToggleBombPot,
             onBombPotMinutesChange = viewModel::onBombPotMinutesChange,
             onToggleFiretruck = viewModel::onToggleFiretruck,
+            onToggleRandomSeating = viewModel::onToggleRandomSeating,
             onTogglePlayer = viewModel::onTogglePlayer,
             onEditOverride = viewModel::onEditOverride,
             onClearOverride = viewModel::onClearOverride,
@@ -800,6 +802,13 @@ private fun PlayersSection(
         title = stringResource(R.string.create_section_players),
         subtitle = stringResource(R.string.create_section_players_subtitle),
     ) {
+        SideGameItem(
+            title = stringResource(R.string.create_random_seating),
+            description = stringResource(R.string.create_random_seating_hint),
+            selected = state.form.isRandomSeating,
+            onToggle = actions.onToggleRandomSeating,
+        )
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Top,
