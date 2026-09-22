@@ -343,9 +343,12 @@
     <string name="settings_section_language">Language</string>
     <string name="settings_language_body">The app restarts to change language. Your games and players are not affected.</string>
     <!-- Language names are written in their own language, so they can be recognised by
-         someone who cannot read the one currently in use. Do not translate these two. -->
+         someone who cannot read the one currently in use. Do not translate these. -->
     <string name="language_english">English</string>
     <string name="language_russian">Русский</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_german">Deutsch</string>
+    <string name="language_french">Français</string>
 
     <!-- Remove ads -->
     <string name="settings_section_remove_ads">Remove ads</string>

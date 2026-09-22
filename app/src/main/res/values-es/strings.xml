@@ -1,0 +1,563 @@
+<resources>
+
+    <!--
+        Spanish.
+
+        Terminology held to throughout:
+        · «fichas» are the physical tokens, «efectivo» the real money. Keeping those apart is the
+          app's central hazard and matters as much here as in English.
+        · «banca» is the bank that issues and buys back chips, deliberately not «bote», which in
+          Spanish poker means the pot.
+        · «ciega pequeña», «ciega grande», «buy-in», «recompra» and «stack» are the terms
+          Spanish-speaking players actually use.
+        · Field names arrive as arguments inside error messages, so those messages are phrased
+          with a colon («Ciega pequeña: campo obligatorio») rather than agreeing with the noun's
+          gender, which the app cannot know.
+    -->
+
+    <string name="app_name">Poker Tracker</string>
+
+    <!-- Shared actions and labels -->
+    <string name="action_back">Atrás</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_add">Añadir</string>
+    <string name="action_delete">Eliminar</string>
+    <string name="action_undo">Deshacer</string>
+    <string name="action_open_menu">Abrir menú</string>
+    <string name="value_none">—</string>
+
+    <!-- Navigation drawer -->
+    <string name="drawer_tagline">La banca de tu partida casera</string>
+    <string name="destination_game_hub">Partidas</string>
+    <string name="destination_players">Jugadores</string>
+    <string name="destination_settings">Ajustes</string>
+
+    <!-- Game hub (history) -->
+    <string name="history_title">Partidas</string>
+    <string name="history_new_game">Nueva partida</string>
+    <string name="history_empty_title">Aún no hay partidas</string>
+    <string name="history_empty_body">Toca Nueva partida para preparar una.</string>
+    <string name="history_section_running">En curso</string>
+    <string name="history_section_finished">Terminadas</string>
+    <string name="history_badge_running">EN CURSO</string>
+    <string name="history_badge_paid_up">SALDADA</string>
+    <string name="history_row_menu">Más opciones para %1$s</string>
+    <string name="history_delete_game">Eliminar partida</string>
+    <string name="history_delete_title">¿Eliminar %1$s?</string>
+    <string name="history_delete_running_body">Esta partida sigue en curso. Eliminarla borra toda la noche.</string>
+    <string name="history_delete_finished_body">Esto elimina la partida y sus resultados para siempre.</string>
+    <string name="history_delete_detail">Se van con ella %1$s y %2$s, junto con %3$s en resultados registrados. Los jugadores siguen en tu lista.</string>
+    <string name="history_delete_irreversible">Esto no se puede deshacer.</string>
+    <string name="history_delete_keep">Conservarla</string>
+    <string name="history_row_counts">%1$s · %2$s</string>
+
+    <!-- Live game -->
+    <string name="live_title_fallback">Partida</string>
+    <string name="live_end_game">Terminar partida</string>
+    <string name="live_add_player">Añadir jugador</string>
+    <string name="live_game_missing">Esta partida ya no está disponible.</string>
+    <string name="live_game_finished">Esta partida ha terminado.</string>
+    <string name="live_nobody_seated">Todavía no hay nadie sentado.</string>
+    <string name="live_section_at_table">En la mesa · %1$d</string>
+    <string name="live_section_cashed_out">Retirados · %1$d</string>
+    <string name="live_section_on_the_table">En la mesa</string>
+    <string name="live_stat_elapsed">Tiempo</string>
+    <string name="live_stat_buy_ins">Buy-ins</string>
+    <string name="live_stat_blinds">Ciegas</string>
+    <string name="live_seat_sold_back">Devuelto</string>
+    <string name="live_seat_in_for">Invertido</string>
+    <string name="live_seat_out_with">Sale con</string>
+    <string name="live_seat_net">Neto</string>
+    <string name="live_action_rebuy">Recompra</string>
+    <string name="live_action_cash_out">Retirarse</string>
+    <string name="live_action_sell_back">Devolver fichas a la banca</string>
+    <string name="live_action_undo_last">Deshacer última</string>
+    <string name="live_action_undo_cash_out">Deshacer retirada</string>
+
+    <!-- Rebuy dialog -->
+    <string name="live_rebuy_title">Recompra de %1$s</string>
+    <string name="live_rebuy_confirm">Añadir</string>
+    <string name="live_rebuy_amount">Importe</string>
+
+    <!-- Sell-chips-back dialog -->
+    <string name="live_return_title">%1$s devuelve fichas</string>
+    <string name="live_return_confirm">Registrar</string>
+    <string name="live_return_explainer">Entrega las fichas a la banca y recibe el efectivo por ellas. Sigue jugando, y ese efectivo cuenta para su resultado.</string>
+    <string name="live_return_field">Fichas devueltas</string>
+
+    <!-- Cash-out dialog -->
+    <string name="live_cash_out_title">Retirar a %1$s</string>
+    <string name="live_cash_out_confirm">Retirarse</string>
+    <string name="live_cash_out_explainer">Cuenta las fichas que tiene delante.</string>
+    <string name="live_cash_out_field">Fichas finales</string>
+
+    <!-- Add-player dialog -->
+    <string name="live_add_player_title">Añadir un jugador</string>
+    <string name="live_add_player_confirm">Sentarlo</string>
+    <string name="live_add_player_from_roster">De la lista</string>
+    <string name="live_add_player_new_name">O añade a alguien nuevo</string>
+    <string name="live_add_player_buy_in">Buy-in</string>
+    <string name="live_add_player_hint">Elige a alguien de la lista o escribe un nombre.</string>
+
+    <!-- New game -->
+    <string name="create_title">Nueva partida</string>
+    <string name="create_section_identity">Identidad</string>
+    <string name="create_game_name">Nombre de la partida</string>
+    <string name="create_section_rounding">Redondeo de pagos</string>
+    <string name="create_section_rounding_subtitle">El billete o moneda más pequeño que se pasarán los jugadores.</string>
+    <string name="create_rounding_field">Redondear pagos a</string>
+
+    <!-- Stakes -->
+    <string name="create_section_stakes">Ciegas</string>
+    <string name="create_small_blind">Ciega pequeña</string>
+    <string name="create_big_blind">Ciega grande</string>
+    <string name="create_common_stakes_bar">CIEGAS HABITUALES</string>
+    <string name="create_stakes_custom">Personalizadas</string>
+    <string name="create_stakes_sheet_title">Ciegas habituales</string>
+    <string name="create_stakes_sheet_body">Elige un nivel y se rellenan las dos ciegas. Lo que juegues se añade a la lista.</string>
+    <string name="create_stakes_sheet_empty">No hay niveles guardados. Escribe las ciegas arriba o añade niveles en Ajustes.</string>
+
+    <!-- Chip value -->
+    <string name="create_derive_chip_value">Calcular el valor de la ficha según lo que marca</string>
+    <string name="create_derive_chip_value_hint">En una mesa de 0.005 / 0.01, con fichas marcadas 1 y 2, cada ficha vale 0.005.</string>
+    <string name="create_big_blind_in_chips">Ciega grande, en fichas</string>
+    <string name="create_chip_value">Valor en efectivo de una ficha</string>
+    <string name="create_one_chip_is_worth">Una ficha vale</string>
+
+    <!-- Buy-in -->
+    <string name="create_section_buy_in">Buy-in</string>
+    <string name="create_buy_in_mode_big_blinds">Ciegas grandes</string>
+    <string name="create_buy_in_mode_cash">Efectivo</string>
+    <string name="create_buy_in_in_big_blinds">Buy-in, en ciegas grandes</string>
+    <string name="create_buy_in_cash">Buy-in</string>
+    <string name="create_everyone_starts_with">Cada jugador empieza con</string>
+    <string name="create_buy_in_needs_stakes">Rellena las ciegas y el valor de la ficha para verlo.</string>
+    <string name="create_buy_in_remainder">%1$s de eso no cabe en fichas enteras. Cambia el buy-in o el valor de la ficha.</string>
+    <string name="create_equals">=</string>
+
+    <!-- Players -->
+    <string name="create_section_players">Jugadores</string>
+    <string name="create_section_players_subtitle">Toca para elegir quién juega. Toca otra vez para quitar a quien no haya venido.</string>
+    <string name="create_add_someone_new">Añadir a alguien nuevo</string>
+    <string name="create_add_to_roster">Añadir jugador a la lista</string>
+    <string name="create_no_roster">Todavía no hay nadie en la lista. Añade el primer jugador arriba.</string>
+    <string name="create_badge_override">DISTINTO</string>
+    <string name="create_finish_stakes_first">Completa las ciegas para ver el buy-in</string>
+    <string name="create_change_buy_in">Cambiar el buy-in de %1$s</string>
+    <string name="create_on_the_table">En la mesa al empezar</string>
+    <string name="create_start_game">Empezar partida</string>
+
+    <!-- Per-player buy-in dialog -->
+    <string name="create_override_title">Buy-in de %1$s</string>
+    <string name="create_override_apply">Aplicar</string>
+    <string name="create_override_use_default">Usar el habitual</string>
+
+    <!-- End game -->
+    <string name="end_title">Terminar partida</string>
+    <string name="end_game_missing">Esta partida ya no está disponible.</string>
+    <string name="end_section_chip_counts">Recuento de fichas</string>
+    <string name="end_chip_counts_body">Cuenta las fichas que aún tiene delante cada jugador. Lo que ya devolvió a la banca se suma aparte. %1$s.</string>
+    <string name="end_section_results">Resultados</string>
+    <string name="end_bought_in">Comprado</string>
+    <string name="end_counted">Contado</string>
+    <string name="end_difference">Diferencia</string>
+    <string name="end_recount_warning">Vuelve a contar los stacks antes de terminar. Liquidar con este recuento deja a alguien perdiendo dinero.</string>
+    <string name="end_seat_cashed_out">Se retiró durante la partida</string>
+    <string name="end_seat_still_playing">Sigue en la mesa</string>
+    <string name="end_final_chips">Fichas finales</string>
+    <string name="end_seat_in_for">Invertido</string>
+    <string name="end_seat_sold_back">Devuelto</string>
+    <string name="end_seat_empty_recorded">Vacío: registrado como 0</string>
+    <string name="end_seat_not_counted">Sin contar</string>
+    <string name="end_view_settlement">Ver liquidación</string>
+    <string name="end_blocked_hint">Cuenta los stacks que faltan, o introduce lo suficiente para que las fichas cuadren.</string>
+    <string name="end_finish">Terminar y liquidar</string>
+
+    <!-- Mismatch confirmation -->
+    <string name="end_mismatch_title">Las fichas no cuadran</string>
+    <string name="end_mismatch_body">Liquidar ahora reparte la mesa según el recuento, así que a alguien le faltará esa cantidad.</string>
+    <string name="end_mismatch_recount">Volver a contar</string>
+    <string name="end_mismatch_finish_anyway">Terminar igualmente</string>
+
+    <!-- Settlement -->
+    <string name="settlement_title">Liquidación</string>
+    <string name="settlement_game_missing">Esta partida ya no está disponible.</string>
+    <string name="settlement_share_subject">%1$s — liquidación</string>
+    <string name="settlement_share_chooser">Compartir liquidación</string>
+    <string name="settlement_share">Compartir</string>
+    <string name="settlement_copy">Copiar</string>
+    <string name="settlement_copied">Copiado</string>
+    <string name="settlement_everyone_even">Todos quedaron a cero. No hace falta ningún pago.</string>
+    <string name="settlement_section_results">Resultados</string>
+    <string name="settlement_back_to_history">Volver a partidas</string>
+    <string name="settlement_not_settled">Sin saldar del todo</string>
+    <string name="settlement_section_the_night">La noche</string>
+    <string name="settlement_stat_buy_ins">Buy-ins</string>
+    <string name="settlement_stat_lasted">Duración</string>
+    <string name="settlement_stat_in_the_bank">En la banca</string>
+    <string name="settlement_pays">%1$s paga a %2$s %3$s</string>
+    <string name="settlement_pays_verb">" paga a "</string>
+    <string name="settlement_payment_paid">%1$s, pagado</string>
+    <string name="settlement_payment_unpaid">%1$s, pendiente de pago</string>
+
+    <!-- Players tab -->
+    <string name="players_title">Jugadores</string>
+    <string name="players_add">Añadir jugador</string>
+    <string name="players_empty_title">Aún no hay jugadores</string>
+    <string name="players_empty_body">Añade aquí a los habituales, o al preparar una partida.</string>
+    <string name="players_section_hidden">Ocultos</string>
+    <string name="players_sort_and_filter">Ordenar y filtrar</string>
+    <string name="players_sort_header">Ordenar por</string>
+    <string name="players_sort_name_a_z">Nombre A–Z</string>
+    <string name="players_sort_name_z_a">Nombre Z–A</string>
+    <string name="players_sort_winnings_most">Más ganancias</string>
+    <string name="players_sort_winnings_least">Menos ganancias</string>
+    <string name="players_sort_games_most">Más partidas</string>
+    <string name="players_sort_games_fewest">Menos partidas</string>
+    <string name="players_filter_header">Mostrar</string>
+    <string name="players_filter_played">Solo jugadores con alguna partida</string>
+    <string name="players_filtered_empty_title">Nadie ha jugado todavía</string>
+    <string name="players_filtered_empty_body">El filtro oculta a todos los de la lista.</string>
+    <string name="players_filter_clear">Mostrar a todos</string>
+    <string name="players_no_results_yet">Aún sin resultados</string>
+    <string name="players_never_played">Nunca ha jugado</string>
+    <string name="players_hidden_note">Oculto en partidas nuevas</string>
+    <string name="players_row_menu">Más opciones para %1$s</string>
+    <string name="players_rename">Cambiar nombre</string>
+    <string name="players_restore">Mostrar en partidas nuevas</string>
+    <string name="players_remove_from_roster">Quitar de la lista</string>
+    <string name="players_delete">Eliminar jugador</string>
+    <string name="players_row_counts">%1$s · %2$s</string>
+
+    <!-- Add player dialog -->
+    <string name="players_add_title">Añadir jugador</string>
+    <string name="players_name_field">Nombre</string>
+
+    <!-- Rename dialog -->
+    <string name="players_rename_title">Cambiar el nombre de %1$s</string>
+    <string name="players_rename_note">Las partidas anteriores también muestran el nuevo nombre: es la misma persona.</string>
+
+    <!-- Remove dialog -->
+    <string name="players_remove_title">¿Quitar a %1$s de la lista?</string>
+    <string name="players_delete_title">¿Eliminar a %1$s?</string>
+    <string name="players_remove_body">%1$s ha jugado %2$s, así que esos resultados se quedan tal cual.</string>
+    <string name="players_remove_detail">Deja de aparecer al preparar una partida nueva. Puedes recuperarlo desde la lista de ocultos cuando quieras.</string>
+    <string name="players_delete_body">Nunca ha jugado una partida, así que no se borra nada más.</string>
+    <string name="players_delete_irreversible">Esto no se puede deshacer.</string>
+    <string name="players_remove_confirm">Ocultar</string>
+    <string name="players_delete_confirm">Eliminar</string>
+    <string name="players_keep">Conservar</string>
+
+    <!-- One player's record -->
+    <string name="player_title_fallback">Jugador</string>
+    <string name="player_missing">Este jugador ya no está en la lista.</string>
+    <string name="player_all_time_profit">Beneficio total</string>
+    <string name="player_not_settled_yet">Sin liquidar todavía</string>
+    <string name="player_no_games_yet">Aún no hay partidas</string>
+    <string name="player_section_every_game">Todas las partidas</string>
+    <string name="player_stat_paid_in">Invertido</string>
+    <string name="player_stat_buy_ins">Buy-ins</string>
+    <string name="player_stat_cashed_out">Retirado</string>
+    <string name="player_game_still_playing">Sigue jugando</string>
+    <string name="player_game_no_result">Sin resultado</string>
+    <string name="player_game_line">%1$s · %2$s</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_section_blind_sizes">Niveles de ciegas</string>
+    <string name="settings_blind_sizes_body">Los niveles que se ofrecen al preparar una partida. Jugar con ciegas nuevas también las añade aquí, así que aquí es donde se ordena una noche puntual.</string>
+    <string name="settings_blind_count">%1$d de %2$d</string>
+    <string name="settings_blind_sizes_empty">No quedan niveles. Añade los que juegues.</string>
+    <string name="settings_add_blinds">Añadir ciegas</string>
+    <string name="settings_add_blinds_title">Añadir ciegas</string>
+    <string name="settings_remove_blinds">Quitar %1$s</string>
+
+    <!-- Language -->
+    <string name="settings_section_language">Idioma</string>
+    <string name="settings_language_body">La app se reinicia para cambiar de idioma. Tus partidas y jugadores no se ven afectados.</string>
+    <string name="language_english">English</string>
+    <string name="language_russian">Русский</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_german">Deutsch</string>
+    <string name="language_french">Français</string>
+
+    <!-- Remove ads -->
+    <string name="settings_section_remove_ads">Quitar anuncios</string>
+    <string name="settings_remove_ads_body">Un pago único. Los banners y los anuncios a pantalla completa desaparecen para siempre, también en un teléfono nuevo con la misma cuenta de Google.</string>
+    <string name="settings_remove_ads_button">Quitar anuncios</string>
+    <string name="settings_remove_ads_button_price">Quitar anuncios · %1$s</string>
+    <string name="settings_remove_ads_pending">Pago pendiente. Los anuncios se desactivan en cuanto Google Play lo confirme.</string>
+    <string name="settings_remove_ads_done">Anuncios eliminados. Gracias por apoyar la app.</string>
+
+    <!-- Results table -->
+    <string name="results_column_player">Jugador</string>
+    <string name="results_column_in">Entra</string>
+    <string name="results_column_chips">Fichas</string>
+    <string name="results_column_out">Sale</string>
+    <string name="results_column_net">Neto</string>
+
+    <!-- Amount fields, as read by a screen reader -->
+    <string name="amount_chips_unit">fichas</string>
+    <string name="amount_cash_unit">importe en efectivo</string>
+    <string name="amount_no_chips">sin recuento de fichas</string>
+    <string name="amount_no_cash">sin importe</string>
+    <string name="amount_spoken">%1$s %2$s</string>
+    <string name="amount_cash_to_chips">%1$s en efectivo equivalen a %2$s fichas</string>
+    <string name="amount_chips_to_cash">%1$s fichas equivalen a %2$s en efectivo</string>
+    <string name="field_required">%1$s *</string>
+
+    <!-- Counted things -->
+    <plurals name="create_big_blinds_short">
+        <item quantity="one">%1$d BB</item>
+        <item quantity="many">%1$d BB</item>
+        <item quantity="other">%1$d BB</item>
+    </plurals>
+
+    <plurals name="settlement_paid_count">
+        <item quantity="one">%1$d de %2$d pagado</item>
+        <item quantity="many">%1$d de %2$d pagados</item>
+        <item quantity="other">%1$d de %2$d pagados</item>
+    </plurals>
+
+    <plurals name="player_games_and_wins">
+        <item quantity="one">%1$s · %2$d en positivo</item>
+        <item quantity="many">%1$s · %2$d en positivo</item>
+        <item quantity="other">%1$s · %2$d en positivo</item>
+    </plurals>
+
+    <plurals name="create_playing_count">
+        <item quantity="one">%1$d juega</item>
+        <item quantity="many">%1$d juegan</item>
+        <item quantity="other">%1$d juegan</item>
+    </plurals>
+
+    <plurals name="player_count">
+        <item quantity="one">%1$d jugador</item>
+        <item quantity="many">%1$d jugadores</item>
+        <item quantity="other">%1$d jugadores</item>
+    </plurals>
+
+    <plurals name="buy_in_count">
+        <item quantity="one">%1$d buy-in</item>
+        <item quantity="many">%1$d buy-ins</item>
+        <item quantity="other">%1$d buy-ins</item>
+    </plurals>
+
+    <plurals name="game_count">
+        <item quantity="one">%1$d partida</item>
+        <item quantity="many">%1$d partidas</item>
+        <item quantity="other">%1$d partidas</item>
+    </plurals>
+
+    <plurals name="payment_count">
+        <item quantity="one">%1$d pago</item>
+        <item quantity="many">%1$d pagos</item>
+        <item quantity="other">%1$d pagos</item>
+    </plurals>
+
+    <plurals name="live_returned_summary">
+        <item quantity="one">%1$d ficha recomprada por la banca · %2$s pagados</item>
+        <item quantity="many">%1$d fichas recompradas por la banca · %2$s pagados</item>
+        <item quantity="other">%1$d fichas recompradas por la banca · %2$s pagados</item>
+    </plurals>
+
+    <plurals name="live_return_on_table">
+        <item quantity="one">Hay %1$d ficha en la mesa</item>
+        <item quantity="many">Hay %1$d fichas en la mesa</item>
+        <item quantity="other">Hay %1$d fichas en la mesa</item>
+    </plurals>
+
+    <plurals name="games_to_settle">
+        <item quantity="one">%1$d partida pendiente de liquidar</item>
+        <item quantity="many">%1$d partidas pendientes de liquidar</item>
+        <item quantity="other">%1$d partidas pendientes de liquidar</item>
+    </plurals>
+
+    <plurals name="games_to_settle_note">
+        <item quantity="one">%1$d partida está pendiente de liquidar y no se cuenta aquí.</item>
+        <item quantity="many">%1$d partidas están pendientes de liquidar y no se cuentan aquí.</item>
+        <item quantity="other">%1$d partidas están pendientes de liquidar y no se cuentan aquí.</item>
+    </plurals>
+
+    <!-- Amounts -->
+    <string name="error_amount_required">%1$s: campo obligatorio</string>
+    <string name="error_amount_positive">%1$s: debe ser mayor que cero</string>
+    <string name="error_amount_malformed">%1$s: introduce un número, por ejemplo 0.005</string>
+    <string name="error_amount_too_large">%1$s: demasiado grande</string>
+    <string name="error_chips_whole_number">%1$s: introduce un número entero</string>
+    <string name="error_chips_not_whole">Las fichas solo van en números enteros</string>
+    <string name="error_not_whole_chips">%1$s no es un número entero de fichas de %2$s (sobran %3$s)</string>
+    <string name="error_not_whole_chips_short">No es un número entero de fichas</string>
+
+    <!-- Names -->
+    <string name="error_name_required">Escribe un nombre</string>
+    <string name="error_name_label_player">Nombre</string>
+    <string name="error_name_label_game">Nombre de la partida</string>
+    <string name="error_name_taken">%1$s ya está en la lista</string>
+
+    <!-- Setting a game up -->
+    <string name="error_game_name_required">Ponle un nombre a la partida</string>
+    <string name="error_big_blind_too_small">La ciega grande debe ser mayor que la pequeña</string>
+    <string name="error_blinds_first">Introduce primero las ciegas</string>
+    <string name="error_chip_split">Una ciega grande de %1$s no se divide exactamente en %2$s fichas</string>
+    <string name="error_chips_per_bb_positive">La ciega grande en fichas debe ser mayor que cero</string>
+    <string name="error_buy_in_required">El buy-in es obligatorio</string>
+    <string name="error_buy_in_whole_big_blinds">Introduce el buy-in como un número entero de ciegas grandes</string>
+    <string name="error_buy_in_positive">El buy-in debe ser mayor que cero</string>
+    <string name="error_pick_a_player">Elige al menos un jugador</string>
+    <string name="error_whole_big_blinds">Introduce un número entero de ciegas grandes</string>
+    <string name="error_must_be_positive">Debe ser mayor que cero</string>
+    <string name="error_enter_amount_like">Introduce un importe como 1.50</string>
+    <string name="error_could_not_start">No se pudo empezar la partida</string>
+
+    <!-- Live game -->
+    <string name="error_record_buy_in">No se pudo registrar el buy-in</string>
+    <string name="error_record_return">No se pudo registrar la devolución de fichas</string>
+    <string name="error_undo_return">No se pudo deshacer la devolución de fichas</string>
+    <string name="error_record_cash_out">No se pudo registrar la retirada</string>
+    <string name="error_undo_cash_out">No se pudo deshacer la retirada</string>
+    <string name="error_add_player">No se pudo añadir al jugador</string>
+
+    <!-- Players tab -->
+    <string name="message_player_renamed">%1$s ahora es %2$s</string>
+    <string name="message_player_added">%1$s añadido</string>
+    <string name="message_player_deleted">%1$s eliminado</string>
+    <string name="message_player_hidden">%1$s oculto de la lista</string>
+    <string name="message_player_now_has_games">%1$s ya tiene partidas, así que se ha ocultado</string>
+    <string name="message_player_gone">Ese jugador ya no está en la lista</string>
+
+    <!-- Settings -->
+    <string name="message_stakes_added">%1$s añadido</string>
+    <string name="message_stakes_removed">%1$s quitado</string>
+    <string name="error_stakes_already_listed">%1$s ya está en la lista</string>
+    <string name="message_stakes_stayed_off">La lista se llenó, así que %1$s se quedó fuera.</string>
+    <string name="error_purchase_unavailable">Google Play no está disponible ahora mismo. Inténtalo más tarde.</string>
+    <string name="message_ads_already_removed">Los anuncios ya están quitados en esta cuenta de Google</string>
+
+    <!-- Ending a game -->
+    <string name="end_headline_balanced">Todas las fichas cuadran</string>
+    <string name="end_headline_missing">Faltan %1$s, que valen %2$s</string>
+    <string name="end_headline_surplus">%1$s más de las compradas, que valen %2$s</string>
+    <string name="end_headline_with_blanks">%1$s — %2$s registrados como 0</string>
+    <string name="error_could_not_end">No se pudo terminar la partida</string>
+    <string name="error_could_not_delete_game">No se pudo eliminar la partida</string>
+
+    <!-- The settlement, as pasted into a group chat -->
+    <string name="note_rounded">Redondeado a %1$s. %2$s asumió %3$s.</string>
+    <string name="note_imbalance">El recuento de fichas quedó %1$s %2$s los buy-ins, así que estos pagos no dejan a todos totalmente en paz.</string>
+    <string name="note_imbalance_short">por debajo de</string>
+    <string name="note_imbalance_over">por encima de</string>
+    <string name="note_still_owed">A %1$s aún le deben %2$s.</string>
+    <string name="note_still_owes">%1$s aún debe %2$s.</string>
+
+    <plurals name="error_amount_decimals">
+        <item quantity="one">%1$s: como máximo %2$d decimal</item>
+        <item quantity="many">%1$s: como máximo %2$d decimales</item>
+        <item quantity="other">%1$s: como máximo %2$d decimales</item>
+    </plurals>
+
+    <plurals name="error_name_too_long">
+        <item quantity="one">%1$s: como máximo %2$d carácter</item>
+        <item quantity="many">%1$s: como máximo %2$d caracteres</item>
+        <item quantity="other">%1$s: como máximo %2$d caracteres</item>
+    </plurals>
+
+    <plurals name="error_stakes_list_full">
+        <item quantity="one">Ya hay %1$d nivel, el máximo. Quita uno para hacer sitio.</item>
+        <item quantity="many">Ya hay %1$d niveles, el máximo. Quita uno para hacer sitio.</item>
+        <item quantity="other">Ya hay %1$d niveles, el máximo. Quita uno para hacer sitio.</item>
+    </plurals>
+
+    <plurals name="error_stakes_list_full_short">
+        <item quantity="one">Ya hay %1$d nivel. Quita uno primero.</item>
+        <item quantity="many">Ya hay %1$d niveles. Quita uno primero.</item>
+        <item quantity="other">Ya hay %1$d niveles. Quita uno primero.</item>
+    </plurals>
+
+    <plurals name="error_more_than_on_table">
+        <item quantity="one">Solo hay %1$d ficha en la mesa</item>
+        <item quantity="many">Solo hay %1$d fichas en la mesa</item>
+        <item quantity="other">Solo hay %1$d fichas en la mesa</item>
+    </plurals>
+
+    <plurals name="chip_count">
+        <item quantity="one">%1$d ficha</item>
+        <item quantity="many">%1$d fichas</item>
+        <item quantity="other">%1$d fichas</item>
+    </plurals>
+
+    <plurals name="empty_stack_count">
+        <item quantity="one">%1$d stack vacío</item>
+        <item quantity="many">%1$d stacks vacíos</item>
+        <item quantity="other">%1$d stacks vacíos</item>
+    </plurals>
+
+    <!-- Field names, used inside validation messages -->
+    <string name="label_chip_value">Valor de la ficha</string>
+    <string name="label_big_blind_in_chips">Ciega grande en fichas</string>
+    <string name="label_buy_in">Buy-in</string>
+    <string name="label_chip_count">Recuento de fichas</string>
+    <string name="label_rounding_unit">Unidad de redondeo</string>
+
+    <string name="chip_value_label">1 ficha = %1$s</string>
+
+    <string name="end_headline_remainder">Los buy-ins incluyen %1$s que no es un número entero de fichas</string>
+    <plurals name="end_headline_needs_counts">
+        <item quantity="one">A %1$d jugador aún le falta el recuento de fichas</item>
+        <item quantity="many">A %1$d jugadores aún les falta el recuento de fichas</item>
+        <item quantity="other">A %1$d jugadores aún les falta el recuento de fichas</item>
+    </plurals>
+    <string name="error_could_not_save_count">No se pudo guardar el recuento de fichas</string>
+
+    <!-- Side games -->
+    <string name="side_game_bomb_pot">Bomb pot</string>
+    <string name="side_game_firetruck">Camión de bomberos</string>
+    <string name="unit_minutes">Minutos</string>
+
+    <string name="create_section_side_games">Juegos extra</string>
+    <string name="create_section_side_games_subtitle">Extras opcionales para la noche. Aparecen en la pestaña Juego.</string>
+    <string name="create_bomb_pot_hint">Un temporizador anuncia un bomb pot cada cierto tiempo, con una notificación si la app está cerrada.</string>
+    <string name="create_bomb_pot_minutes">Cada cuántos minutos</string>
+    <string name="create_firetruck_hint">Toca a quien gane cada bote. Tres seguidos es un camión de bomberos.</string>
+    <string name="error_bomb_pot_required">Indica cada cuántos minutos hay bomb pot</string>
+    <string name="error_bomb_pot_range">Introduce un número entero de minutos entre 1 y %1$d</string>
+
+    <string name="live_tab_stats">Estadísticas</string>
+    <string name="live_tab_game">Juego</string>
+    <string name="live_game_tab_empty">Esta partida no tiene juegos extra. El bomb pot y el camión de bomberos se eligen al preparar la partida.</string>
+    <string name="live_bomb_pot_next">Próximo bomb pot en</string>
+    <plurals name="live_bomb_pot_every">
+        <item quantity="one">Cada minuto</item>
+        <item quantity="many">Cada %1$d minutos</item>
+        <item quantity="other">Cada %1$d minutos</item>
+    </plurals>
+    <string name="live_bomb_pot_stopped">La partida ha terminado, así que el temporizador se ha parado.</string>
+    <string name="live_bomb_pot_inexact">Mientras el teléfono está inactivo, Android puede avisar del bomb pot con unos minutos de retraso.</string>
+    <string name="live_bomb_pot_allow_exact">Permitir alarmas exactas</string>
+    <string name="live_firetruck_hint">Toca a quien gane el bote. Si gana otro, los puntos se borran; tres seguidos es un camión de bomberos.</string>
+    <string name="live_firetruck_row_description">%1$s, %2$d de %3$d seguidos</string>
+
+    <string name="bomb_pot_announcement">¡Bomb pot!</string>
+    <string name="firetruck_announcement">¡Camión de bomberos!</string>
+    <string name="announcement_tap_to_close">Toca en cualquier sitio para cerrar</string>
+    <string name="bomb_pot_channel_name">Bomb pots</string>
+    <string name="bomb_pot_channel_description">Te avisa de que toca bomb pot mientras la app está cerrada.</string>
+
+    <!-- Random seating -->
+    <string name="create_random_seating">Orden aleatorio de jugadores</string>
+    <string name="create_random_seating_hint">Sienta a todos en orden aleatorio al empezar la partida. La mesa aparece en la pestaña Estadísticas.</string>
+    <string name="live_section_table">Mesa</string>
+    <string name="live_table_hint">Toca dos jugadores para cambiarlos de sitio</string>
+    <string name="live_table_hint_selected">Toca a alguien para cambiarlo por %1$s</string>
+    <string name="error_swap_seats">No se pudieron cambiar los sitios</string>
+
+    <!-- Donation prompt -->
+    <string name="donation_title">¿Te gusta Poker Tracker?</string>
+    <string name="donation_body">Poker Tracker lo hace un único desarrollador en su tiempo libre. Una pequeña donación es lo que mantiene las actualizaciones y me motiva a seguir mejorando la app para tu mesa.</string>
+    <string name="donation_ads_note">Como agradecimiento, una donación quita todos los anuncios para siempre.</string>
+    <string name="donation_title_after_ad">¿Cansado de anuncios como ese?</string>
+    <string name="donation_ads_note_after_ad">Una pequeña donación quita todos los anuncios para siempre, incluido ese.</string>
+    <string name="donation_no_thanks">No, gracias</string>
+    <string name="donation_donate">Donar ahora</string>
+
+</resources>

@@ -279,6 +279,9 @@
     <string name="settings_language_body">При смене языка приложение перезапустится. Игры и игроки не пострадают.</string>
     <string name="language_english">English</string>
     <string name="language_russian">Русский</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_german">Deutsch</string>
+    <string name="language_french">Français</string>
 
     <string name="settings_section_remove_ads">Отключить рекламу</string>
     <string name="settings_remove_ads_body">Разовая покупка. Баннеры и полноэкранная реклама исчезнут навсегда, в том числе на новом телефоне с тем же аккаунтом Google.</string>

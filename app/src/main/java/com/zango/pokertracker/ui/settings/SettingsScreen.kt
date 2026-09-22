@@ -17,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -281,7 +282,20 @@ private fun RemoveAdsSection(state: RemoveAdsUiState, onRemoveAds: () -> Unit) {
  */
 @Composable
 private fun LanguageSection(current: AppLanguage, onSelect: (AppLanguage) -> Unit) {
-    SectionLabel(stringResource(R.string.settings_section_language))
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        // The globe is the one sign of "language" that reads in any language, which matters most
+        // to someone who has ended up in one they cannot read.
+        Icon(
+            Icons.Filled.Language,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(16.dp),
+        )
+        SectionLabel(stringResource(R.string.settings_section_language))
+    }
     Text(
         stringResource(R.string.settings_language_body),
         style = MaterialTheme.typography.bodySmall,
