@@ -36,13 +36,13 @@ private val BALANCED = UiText.of(R.string.end_headline_balanced)
 private fun missing(chips: Long, cash: String) = UiText.of(
     R.string.end_headline_missing,
     UiText.plural(R.plurals.chip_count, chips.toInt(), chips),
-    cash,
+    UiText.Cash(cash),
 )
 
 private fun surplus(chips: Long, cash: String) = UiText.of(
     R.string.end_headline_surplus,
     UiText.plural(R.plurals.chip_count, chips.toInt(), chips),
-    cash,
+    UiText.Cash(cash),
 )
 
 private fun needsCounts(players: Int) =
@@ -136,7 +136,7 @@ class ReconciliationHeadlineTest {
         ).reconcile().headline()
 
         assertEquals(
-            UiText.of(R.string.end_headline_remainder, "0.000001"),
+            UiText.of(R.string.end_headline_remainder, UiText.Cash("0.000001")),
             headline,
         )
     }

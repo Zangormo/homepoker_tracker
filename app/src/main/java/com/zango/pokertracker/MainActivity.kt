@@ -11,10 +11,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalConfiguration
 import com.zango.pokertracker.ads.ConsentManager
 import com.zango.pokertracker.ads.InterstitialAdController
 import com.zango.pokertracker.billing.BillingManager
+import com.zango.pokertracker.core.locale.AppCurrencyStore
 import com.zango.pokertracker.core.locale.AppLanguageStore
+import com.zango.pokertracker.ui.common.LocalCashFormat
 import com.zango.pokertracker.ui.navigation.PokerNavHost
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -52,19 +59,26 @@ class MainActivity : ComponentActivity() {
         // First thing after injection: no ad can load until ConsentManager has cleared it.
         consentManager.gatherConsent(this)
         setContent {
-            PokerTrackerTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background,
-                ) {
-                    PokerNavHost(
-                        onGameEnded = { gameId ->
-                            interstitialAds.onGameEnded(this@MainActivity, gameId)
-                        },
-                        onGamePaidUp = { gameId ->
-                            interstitialAds.onGamePaidUp(this@MainActivity, gameId)
-                        },
-                    )
+            // The currency is read once here and handed down, so every amount on every screen
+            // changes together the moment a new one is picked in settings.
+            val currency by AppCurrencyStore.code.collectAsState()
+            val locale = LocalConfiguration.current.locales[0]
+            val cashFormat = remember(currency, locale) { AppCurrencyStore.cashFormat(currency, locale) }
+            CompositionLocalProvider(LocalCashFormat provides cashFormat) {
+                PokerTrackerTheme {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background,
+                    ) {
+                        PokerNavHost(
+                            onGameEnded = { gameId ->
+                                interstitialAds.onGameEnded(this@MainActivity, gameId)
+                            },
+                            onGamePaidUp = { gameId ->
+                                interstitialAds.onGamePaidUp(this@MainActivity, gameId)
+                            },
+                        )
+                    }
                 }
             }
         }

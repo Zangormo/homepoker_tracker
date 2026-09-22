@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -78,9 +77,9 @@ fun ResultsTable(rows: List<ResultRow>, modifier: Modifier = Modifier) {
             verticalAlignment = Alignment.Bottom,
         ) {
             HeaderCell(stringResource(R.string.results_column_player), NAME_WEIGHT, align = TextAlign.Start)
-            HeaderCell(stringResource(R.string.results_column_in), CASH_WEIGHT, icon = Icons.Filled.AttachMoney, iconTint = PokerTheme.colors.cash)
+            HeaderCell(stringResource(R.string.results_column_in), CASH_WEIGHT, symbol = LocalCashFormat.current.symbol, iconTint = PokerTheme.colors.cash)
             HeaderCell(stringResource(R.string.results_column_chips), CHIP_WEIGHT, icon = PokerChip, iconTint = PokerTheme.colors.chip)
-            HeaderCell(stringResource(R.string.results_column_out), CASH_WEIGHT, icon = Icons.Filled.AttachMoney, iconTint = PokerTheme.colors.cash)
+            HeaderCell(stringResource(R.string.results_column_out), CASH_WEIGHT, symbol = LocalCashFormat.current.symbol, iconTint = PokerTheme.colors.cash)
             HeaderCell(stringResource(R.string.results_column_net), NET_WEIGHT)
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
@@ -132,6 +131,8 @@ private fun RowScope.HeaderCell(
     align: TextAlign = TextAlign.End,
     icon: ImageVector? = null,
     iconTint: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    /** The currency symbol, marking a cash column the way [icon] marks the chips one. */
+    symbol: String? = null,
 ) {
     Row(
         modifier = Modifier.weight(weight),
@@ -151,6 +152,9 @@ private fun RowScope.HeaderCell(
                 tint = iconTint,
                 modifier = Modifier.size(13.dp),
             )
+        }
+        if (!symbol.isNullOrEmpty()) {
+            Text(symbol, style = MaterialTheme.typography.labelSmall, color = iconTint, maxLines = 1)
         }
         Text(
             text.uppercase(),

@@ -30,9 +30,9 @@ fun Settlement.shareLines(gameName: String): List<UiText> = buildList {
     }
 }
 
-/** "Anna pays Boris 4.50" — a whole instruction in one line, no interpretation required. */
+/** "Anna pays Boris €4.50" — a whole instruction in one line, no interpretation required. */
 fun Payment.toSentence(): UiText =
-    UiText.of(R.string.settlement_pays, from.name, to.name, amount.format())
+    UiText.of(R.string.settlement_pays, from.name, to.name, UiText.cash(amount))
 
 /**
  * Caveats the host should see alongside the payments: money nudged by rounding, and any
@@ -43,9 +43,9 @@ fun Settlement.notes(): List<UiText> = buildList {
         add(
             UiText.of(
                 R.string.note_rounded,
-                roundingUnit.format(),
+                UiText.cash(roundingUnit),
                 adjustedPlayer.name,
-                roundingAdjustment.abs().format(),
+                UiText.cash(roundingAdjustment.abs()),
             ),
         )
     }
@@ -53,7 +53,7 @@ fun Settlement.notes(): List<UiText> = buildList {
         add(
             UiText.of(
                 R.string.note_imbalance,
-                imbalance.abs().format(),
+                UiText.cash(imbalance.abs()),
                 UiText.of(
                     if (imbalance.isNegative) R.string.note_imbalance_short
                     else R.string.note_imbalance_over,
@@ -66,7 +66,7 @@ fun Settlement.notes(): List<UiText> = buildList {
             UiText.of(
                 if (it.net.isPositive) R.string.note_still_owed else R.string.note_still_owes,
                 it.player.name,
-                it.net.abs().format(),
+                UiText.cash(it.net.abs()),
             ),
         )
     }

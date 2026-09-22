@@ -163,7 +163,7 @@ class SettlementViewModelTest {
             listOf(
                 UiText.of(R.string.settlement_share_subject, "Thursday"),
                 UiText.Raw(""),
-                UiText.of(R.string.settlement_pays, "Boris", "Anna", "0.50"),
+                UiText.of(R.string.settlement_pays, "Boris", "Anna", UiText.Cash("0.50")),
             ),
             state().shareLines,
         )
@@ -192,7 +192,7 @@ class SettlementViewModelTest {
 
         val state = state()
         assertEquals(
-            listOf(UiText.of(R.string.note_rounded, "0.01", "Chris", "0.01")),
+            listOf(UiText.of(R.string.note_rounded, UiText.Cash("0.01"), "Chris", UiText.Cash("0.01"))),
             state.notes,
         )
         assertEquals(listOf("Chris pays Anna 0.01", "Chris pays Boris 0.01"), state.sentences())
@@ -212,10 +212,10 @@ class SettlementViewModelTest {
             listOf(
                 UiText.of(
                     R.string.note_imbalance,
-                    "0.06",
+                    UiText.Cash("0.06"),
                     UiText.of(R.string.note_imbalance_short),
                 ),
-                UiText.of(R.string.note_still_owes, "Boris", "0.06"),
+                UiText.of(R.string.note_still_owes, "Boris", UiText.Cash("0.06")),
             ),
             state.notes,
         )

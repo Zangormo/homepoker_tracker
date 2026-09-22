@@ -81,6 +81,7 @@ import com.zango.pokertracker.ui.common.CashToChipsRow
 import com.zango.pokertracker.ui.common.ChipAmountField
 import com.zango.pokertracker.ui.common.ChipAmountText
 import com.zango.pokertracker.ui.common.FormSection
+import com.zango.pokertracker.ui.common.LocalCashFormat
 import com.zango.pokertracker.ui.common.MinTouchTarget
 import com.zango.pokertracker.ui.common.MinutesField
 import com.zango.pokertracker.ui.common.PokerTextField
@@ -678,7 +679,7 @@ private fun BuyInReadout(bigBlinds: Long?, preview: AmountPreview) {
             }
             preview.leftOver?.let {
                 Text(
-                    stringResource(R.string.create_buy_in_remainder, it.format()),
+                    stringResource(R.string.create_buy_in_remainder, LocalCashFormat.current.format(it)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                 )
@@ -827,8 +828,12 @@ private fun PlayersSection(
             )
             FilledIconButton(
                 onClick = actions.onAddNewPlayer,
+                // The outlined field keeps 8dp above its box for the floating label, and the box
+                // is 56dp tall to the button's 48dp: 8 + (56 - 48) / 2 puts the two on one centre
+                // line. Top-aligned rather than centred so an error under the field does not
+                // drag the button down with it.
                 modifier = Modifier
-                    .padding(top = 4.dp)
+                    .padding(top = 12.dp)
                     .size(MinTouchTarget),
             ) {
                 Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.create_add_to_roster))

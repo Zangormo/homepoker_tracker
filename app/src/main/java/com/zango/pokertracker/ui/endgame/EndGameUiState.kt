@@ -78,7 +78,7 @@ fun Reconciliation.headline(): UiText = when {
     )
 
     !chipRemainder.isZero ->
-        UiText.of(R.string.end_headline_remainder, chipRemainder.format())
+        UiText.of(R.string.end_headline_remainder, UiText.cash(chipRemainder))
 
     differenceChips.isNegative -> UiText.of(
         R.string.end_headline_missing,
@@ -87,7 +87,7 @@ fun Reconciliation.headline(): UiText = when {
             differenceChips.abs().count.toInt(),
             differenceChips.abs().count,
         ),
-        differenceCash.abs().format(),
+        UiText.cash(differenceCash.abs()),
     )
 
     differenceChips.isPositive -> UiText.of(
@@ -97,7 +97,7 @@ fun Reconciliation.headline(): UiText = when {
             differenceChips.count.toInt(),
             differenceChips.count,
         ),
-        differenceCash.format(),
+        UiText.cash(differenceCash),
     )
 
     else -> UiText.of(R.string.end_headline_balanced)

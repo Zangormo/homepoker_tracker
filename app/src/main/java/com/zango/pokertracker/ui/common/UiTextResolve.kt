@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import com.zango.pokertracker.core.locale.AppCurrencyStore
 import com.zango.pokertracker.core.text.UiText
 
 /**
@@ -17,6 +18,7 @@ import com.zango.pokertracker.core.text.UiText
 @ReadOnlyComposable
 fun UiText.resolve(): String = when (this) {
     is UiText.Raw -> text
+    is UiText.Cash -> LocalCashFormat.current.format(amount)
     is UiText.Res -> if (args.isEmpty()) {
         stringResource(id)
     } else {
@@ -52,6 +54,9 @@ private fun List<Any>.resolveArgs(): Array<Any> =
  */
 fun UiText.resolve(context: Context): String = when (this) {
     is UiText.Raw -> text
+    is UiText.Cash -> AppCurrencyStore
+        .cashFormat(locale = context.resources.configuration.locales[0])
+        .format(amount)
     is UiText.Res -> if (args.isEmpty()) {
         context.getString(id)
     } else {

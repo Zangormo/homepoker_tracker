@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowRightAlt
-import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
@@ -112,10 +111,12 @@ fun CashAmountField(
     forceShowError = forceShowError,
     supporting = supporting,
     imeAction = imeAction,
-    icon = Icons.Filled.AttachMoney,
+    icon = null,
     iconDescription = stringResource(R.string.amount_cash_unit),
     iconTint = PokerTheme.colors.cash,
     keyboardType = KeyboardType.Decimal,
+    symbol = LocalCashFormat.current.symbol,
+    symbolFirst = LocalCashFormat.current.symbolFirst,
 )
 
 /** A whole number of minutes, marked with a clock so it is never read as money or chips. */
@@ -202,7 +203,20 @@ private fun AmountField(
     iconTint: Color,
     keyboardType: KeyboardType,
     textStyle: TextStyle? = PokerTheme.type.numericMedium,
+    /** A currency symbol shown in place of [icon], before or after the figure. */
+    symbol: String? = null,
+    symbolFirst: Boolean = true,
 ) {
+    val symbolMark: (@Composable () -> Unit)? = symbol?.takeIf { it.isNotEmpty() }?.let {
+        {
+            Text(
+                it,
+                style = textStyle ?: LocalTextStyle.current,
+                color = iconTint,
+                modifier = Modifier.clearAndSetSemantics { contentDescription = iconDescription.orEmpty() },
+            )
+        }
+    }
     // A fresh form must not open covered in red, so an untouched field stays neutral however
     // empty it is. Once a field has been visited and left, or the host has tried to submit, its
     // problems show and keep showing as they are corrected.
@@ -232,7 +246,8 @@ private fun AmountField(
                     modifier = Modifier.size(20.dp),
                 )
             }
-        },
+        } ?: symbolMark?.takeIf { symbolFirst },
+        trailingIcon = symbolMark?.takeIf { !symbolFirst },
         supportingText = when {
             showError -> {
                 { Text(error!!.resolve()) }
@@ -306,10 +321,12 @@ fun CashAmountText(
     text = money?.let { if (signed) it.formatSigned().typographicMinus() else it.format() }
         ?: NO_VALUE,
     semantic = money?.let {
-        stringResource(R.string.amount_spoken, it.format(), stringResource(R.string.amount_cash_unit))
+        stringResource(R.string.amount_spoken, LocalCashFormat.current.format(it), stringResource(R.string.amount_cash_unit))
     } ?: stringResource(R.string.amount_no_cash),
-    icon = Icons.Filled.AttachMoney.takeIf { showIcon },
+    icon = null,
     iconTint = PokerTheme.colors.cash,
+    symbol = LocalCashFormat.current.symbol.takeIf { showIcon },
+    symbolFirst = LocalCashFormat.current.symbolFirst,
     style = style,
     color = if (money == null) MaterialTheme.colorScheme.onSurfaceVariant else color,
     modifier = modifier,
@@ -348,6 +365,8 @@ private fun AmountText(
     style: TextStyle,
     color: Color,
     modifier: Modifier,
+    symbol: String? = null,
+    symbolFirst: Boolean = true,
 ) {
     // Roughly cap height, floored so it survives small styles and capped so the hero total does
     // not end up with a dollar sign as tall as the number.
@@ -366,7 +385,10 @@ private fun AmountText(
                 modifier = Modifier.size(iconSize),
             )
         }
+        val mark = symbol?.takeIf { it.isNotEmpty() }
+        if (mark != null && symbolFirst) Text(mark, style = style, color = iconTint)
         Text(text = text, style = style, color = color, textAlign = TextAlign.End)
+        if (mark != null && !symbolFirst) Text(mark, style = style, color = iconTint)
     }
 }
 

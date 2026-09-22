@@ -2,6 +2,7 @@ package com.zango.pokertracker.core.text
 
 import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
+import com.zango.pokertracker.core.money.Money
 
 /**
  * A sentence the app has decided to say, before it has been said in any particular language.
@@ -35,6 +36,13 @@ sealed interface UiText {
      */
     data class Raw(val text: String) : UiText
 
+    /**
+     * A cash amount, already formatted as a number. The currency symbol is added only when the
+     * message is shown, because which symbol, and which side of the number it goes, belongs to the
+     * host's settings and language rather than to whoever decided to mention the amount.
+     */
+    data class Cash(val amount: String) : UiText
+
     companion object {
         fun of(@StringRes id: Int, vararg args: Any): Res = Res(id, args.toList())
 
@@ -42,5 +50,7 @@ sealed interface UiText {
             Plural(id, count, args.toList())
 
         fun raw(text: String): Raw = Raw(text)
+
+        fun cash(amount: Money): Cash = Cash(amount.format())
     }
 }

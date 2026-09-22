@@ -62,9 +62,9 @@ fun wholeChipsError(amount: Money, rate: ChipRate): UiText? =
         is ChipConversion.Exact -> null
         is ChipConversion.Inexact -> UiText.of(
             R.string.error_not_whole_chips,
-            amount.format(),
-            rate.chipValue.format(),
-            conversion.remainder.format(),
+            UiText.cash(amount),
+            UiText.cash(rate.chipValue),
+            UiText.cash(conversion.remainder),
         )
     }
 

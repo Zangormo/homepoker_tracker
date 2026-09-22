@@ -2,6 +2,7 @@ package com.zango.pokertracker
 
 import android.app.Application
 import com.zango.pokertracker.billing.BillingManager
+import com.zango.pokertracker.core.locale.AppCurrencyStore
 import com.zango.pokertracker.bombpot.BombPotAlarms
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +27,7 @@ class PokerTrackerApp : Application() {
         // Once per process start. The setup callback reads existing purchases, which is how a
         // purchase is restored after a reinstall: there is no account or backend to ask instead.
         billingManager.startConnection()
+        AppCurrencyStore.init(this)
         bombPotAlarms.start(appScope)
     }
 }

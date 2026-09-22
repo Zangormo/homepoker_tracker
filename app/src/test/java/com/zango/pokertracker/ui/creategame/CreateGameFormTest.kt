@@ -155,7 +155,7 @@ class CreateGameFormTest {
             .validate()
 
         assertEquals(
-            UiText.of(R.string.error_not_whole_chips, "1.0025", "0.005", "0.0025"),
+            UiText.of(R.string.error_not_whole_chips, UiText.Cash("1.0025"), UiText.Cash("0.005"), UiText.Cash("0.0025")),
             validation.buyInError,
         )
         assertFalse(validation.isValid)
@@ -186,7 +186,7 @@ class CreateGameFormTest {
             .validate()
 
         assertEquals(
-            UiText.of(R.string.error_not_whole_chips, "1.0025", "0.005", "0.0025"),
+            UiText.of(R.string.error_not_whole_chips, UiText.Cash("1.0025"), UiText.Cash("0.005"), UiText.Cash("0.0025")),
             validation.overrideErrors[2L],
         )
         assertFalse(validation.isValid)

@@ -67,6 +67,7 @@ import com.zango.pokertracker.ui.common.MinTouchTarget
 import com.zango.pokertracker.ui.common.ResultRow
 import com.zango.pokertracker.ui.common.ResultsTable
 import com.zango.pokertracker.ui.common.SectionLabel
+import com.zango.pokertracker.ui.common.LocalCashFormat
 import com.zango.pokertracker.ui.common.resolve
 import com.zango.pokertracker.ui.common.StatCount
 import com.zango.pokertracker.ui.common.StatRow
@@ -308,6 +309,7 @@ private fun PaymentLineRow(line: PaymentLine, canTick: Boolean, onToggle: () -> 
         MaterialTheme.colorScheme.onSurface
     }
     val paysVerb = stringResource(R.string.settlement_pays_verb)
+    val cashFormat = LocalCashFormat.current
     val sentence = buildAnnotatedString {
         append(line.from)
         withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
@@ -327,12 +329,11 @@ private fun PaymentLineRow(line: PaymentLine, canTick: Boolean, onToggle: () -> 
                 },
             ),
         ) {
-            append('$')
-            append(line.amount.format())
+            append(cashFormat.format(line.amount))
         }
     }
 
-    val plain = stringResource(R.string.settlement_pays, line.from, line.to, line.amount.format())
+    val plain = stringResource(R.string.settlement_pays, line.from, line.to, cashFormat.format(line.amount))
     val spoken = when {
         !canTick -> plain
         paid -> stringResource(R.string.settlement_payment_paid, plain)

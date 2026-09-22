@@ -173,7 +173,7 @@ class EndGameViewModel @Inject constructor(
             gameId = snapshot.game.id,
             gameName = snapshot.game.name,
             alreadyFinished = !snapshot.game.isInProgress,
-            chipValueLabel = UiText.of(R.string.chip_value_label, rate.chipValue.format()),
+            chipValueLabel = UiText.of(R.string.chip_value_label, UiText.cash(rate.chipValue)),
             counts = counts,
             results = results,
             reconciliation = reconciliation,

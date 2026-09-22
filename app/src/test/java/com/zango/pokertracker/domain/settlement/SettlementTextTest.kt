@@ -55,7 +55,7 @@ class SettlementTextTest {
     @Test
     fun `a payment names both people and the amount, as separate arguments`() {
         assertEquals(
-            UiText.of(R.string.settlement_pays, "Anna", "Boris", "4.50"),
+            UiText.of(R.string.settlement_pays, "Anna", "Boris", UiText.Cash("4.50")),
             Payment(from = anna, to = boris, amount = Money(4_500_000)).toSentence(),
         )
     }
@@ -63,7 +63,7 @@ class SettlementTextTest {
     @Test
     fun `sub-cent stakes keep the precision they were played at`() {
         assertEquals(
-            UiText.of(R.string.settlement_pays, "Anna", "Boris", "0.005"),
+            UiText.of(R.string.settlement_pays, "Anna", "Boris", UiText.Cash("0.005")),
             Payment(anna, boris, Money(5_000)).toSentence(),
         )
     }
@@ -81,7 +81,7 @@ class SettlementTextTest {
             listOf(
                 header,
                 blank,
-                UiText.of(R.string.settlement_pays, "Anna", "Boris", "4.50"),
+                UiText.of(R.string.settlement_pays, "Anna", "Boris", UiText.Cash("4.50")),
             ),
             lines,
         )
@@ -100,8 +100,8 @@ class SettlementTextTest {
             listOf(
                 header,
                 blank,
-                UiText.of(R.string.settlement_pays, "Anna", "Boris", "4.50"),
-                UiText.of(R.string.settlement_pays, "Chris", "Boris", "1.20"),
+                UiText.of(R.string.settlement_pays, "Anna", "Boris", UiText.Cash("4.50")),
+                UiText.of(R.string.settlement_pays, "Chris", "Boris", UiText.Cash("1.20")),
             ),
             lines,
         )
@@ -132,7 +132,7 @@ class SettlementTextTest {
             adjustedPlayer = chris,
         ).notes()
 
-        assertEquals(listOf(UiText.of(R.string.note_rounded, "0.01", "Chris", "0.01")), notes)
+        assertEquals(listOf(UiText.of(R.string.note_rounded, UiText.Cash("0.01"), "Chris", UiText.Cash("0.01"))), notes)
     }
 
     /** The absorbed figure reads as a size, not a direction, so it never carries a minus. */
@@ -143,7 +143,7 @@ class SettlementTextTest {
             adjustedPlayer = chris,
         ).notes()
 
-        assertEquals(listOf(UiText.of(R.string.note_rounded, "0.01", "Chris", "0.01")), notes)
+        assertEquals(listOf(UiText.of(R.string.note_rounded, UiText.Cash("0.01"), "Chris", UiText.Cash("0.01"))), notes)
     }
 
     /**
@@ -156,7 +156,7 @@ class SettlementTextTest {
             listOf(
                 UiText.of(
                     R.string.note_imbalance,
-                    "0.06",
+                    UiText.Cash("0.06"),
                     UiText.of(R.string.note_imbalance_short),
                 ),
             ),
@@ -170,7 +170,7 @@ class SettlementTextTest {
             listOf(
                 UiText.of(
                     R.string.note_imbalance,
-                    "0.06",
+                    UiText.Cash("0.06"),
                     UiText.of(R.string.note_imbalance_over),
                 ),
             ),
@@ -190,11 +190,11 @@ class SettlementTextTest {
 
         assertTrue(
             notes.toString(),
-            notes.contains(UiText.of(R.string.note_still_owes, "Boris", "0.06")),
+            notes.contains(UiText.of(R.string.note_still_owes, "Boris", UiText.Cash("0.06"))),
         )
         assertTrue(
             notes.toString(),
-            notes.contains(UiText.of(R.string.note_still_owed, "Anna", "0.02")),
+            notes.contains(UiText.of(R.string.note_still_owed, "Anna", UiText.Cash("0.02"))),
         )
     }
 
@@ -218,14 +218,14 @@ class SettlementTextTest {
             listOf(
                 header,
                 blank,
-                UiText.of(R.string.settlement_pays, "Anna", "Boris", "0.01"),
+                UiText.of(R.string.settlement_pays, "Anna", "Boris", UiText.Cash("0.01")),
                 blank,
                 UiText.of(
                     R.string.note_imbalance,
-                    "0.06",
+                    UiText.Cash("0.06"),
                     UiText.of(R.string.note_imbalance_short),
                 ),
-                UiText.of(R.string.note_still_owes, "Boris", "0.06"),
+                UiText.of(R.string.note_still_owes, "Boris", UiText.Cash("0.06")),
             ),
             lines,
         )

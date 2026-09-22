@@ -123,8 +123,8 @@ class SettlementFromGameTest {
             listOf(
                 UiText.of(R.string.settlement_share_subject, "Thursday"),
                 UiText.Raw(""),
-                UiText.of(R.string.settlement_pays, "Anna", "Boris", "1.20"),
-                UiText.of(R.string.settlement_pays, "Anna", "Chris", "0.30"),
+                UiText.of(R.string.settlement_pays, "Anna", "Boris", UiText.Cash("1.20")),
+                UiText.of(R.string.settlement_pays, "Anna", "Chris", UiText.Cash("0.30")),
             ),
             lines,
         )
@@ -170,7 +170,7 @@ class SettlementFromGameTest {
         val lines = settlement.shareLines("Thursday")
         assertTrue(
             lines.toString(),
-            lines.contains(UiText.of(R.string.note_rounded, "0.01", "Chris", "0.01")),
+            lines.contains(UiText.of(R.string.note_rounded, UiText.Cash("0.01"), "Chris", UiText.Cash("0.01"))),
         )
     }
 }

@@ -372,7 +372,7 @@ class LiveGameViewModel @Inject constructor(
             gameId = game.id,
             gameName = game.name,
             stakes = "${game.smallBlind.format()} / ${game.bigBlind.format()}",
-            chipValueLabel = UiText.of(R.string.chip_value_label, rate.chipValue.format()),
+            chipValueLabel = UiText.of(R.string.chip_value_label, UiText.cash(rate.chipValue)),
             elapsed = formatElapsed(until - game.startedAt),
             isFinished = !game.isInProgress,
             hasSideGames = game.bombPotIntervalMinutes != null || game.isFiretruckGame,

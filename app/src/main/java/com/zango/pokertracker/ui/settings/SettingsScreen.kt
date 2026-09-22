@@ -1,5 +1,7 @@
 package com.zango.pokertracker.ui.settings
 
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.runtime.collectAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -51,6 +53,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zango.pokertracker.R
 import com.zango.pokertracker.core.text.UiText
+import com.zango.pokertracker.core.locale.AppCurrencyStore
 import com.zango.pokertracker.core.locale.AppLanguage
 import com.zango.pokertracker.core.locale.AppLanguageStore
 import com.zango.pokertracker.core.locale.findActivity
@@ -65,7 +68,8 @@ import com.zango.pokertracker.ui.theme.PokerTheme
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
 
 /**
- * Settings: the language, removing ads, and the stake levels the new-game picker offers.
+ * Settings: the language, removing ads, the currency, and the stake levels the new-game picker
+ * offers.
  *
  * It carries a back arrow rather than the menu button the other drawer destinations use: this is
  * somewhere the host steps into and comes straight back out of, not a place to sit during a game.
@@ -172,6 +176,15 @@ private fun SettingsContent(
         // Second, right under the language, so a host sent here by the donation prompt finds it
         // without scrolling.
         RemoveAdsSection(state = state.removeAds, onRemoveAds = onRemoveAds)
+
+        val context = LocalContext.current
+        val currencyCode by AppCurrencyStore.code.collectAsState()
+        val locale = LocalConfiguration.current.locales[0]
+        CurrencySection(
+            current = remember(currencyCode, locale) { AppCurrencyStore.option(currencyCode, locale) },
+            options = AppCurrencyStore::options,
+            onSelect = { AppCurrencyStore.set(context, it) },
+        )
 
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 20.dp),

@@ -292,6 +292,12 @@
     <string name="settings_remove_ads_pending">Оплата обрабатывается. Реклама отключится, как только Google Play её подтвердит.</string>
     <string name="settings_remove_ads_done">Реклама отключена. Спасибо за поддержку приложения.</string>
 
+    <!-- Currency -->
+    <string name="settings_section_currency">Валюта</string>
+    <string name="settings_currency_body">Показывается рядом с каждой суммой. Смена валюты не меняет сами суммы.</string>
+    <string name="settings_currency_pick">Выберите валюту</string>
+    <string name="settings_currency_search">Поиск валюты</string>
+
     <!-- The results table -->
     <string name="results_column_player">Игрок</string>
     <string name="results_column_in">Внёс</string>

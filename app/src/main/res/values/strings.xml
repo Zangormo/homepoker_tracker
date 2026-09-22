@@ -361,6 +361,12 @@
     <string name="settings_remove_ads_pending">Payment pending. Ads switch off as soon as Google Play confirms it.</string>
     <string name="settings_remove_ads_done">Ads are removed. Thank you for supporting the app.</string>
 
+    <!-- Currency -->
+    <string name="settings_section_currency">Currency</string>
+    <string name="settings_currency_body">Shown next to every cash amount. Changing it does not change any figures.</string>
+    <string name="settings_currency_pick">Choose currency</string>
+    <string name="settings_currency_search">Search currencies</string>
+
     <!-- ==================================================================================== -->
     <!-- The results table, shared by the end-game and settlement screens                     -->
     <!-- ==================================================================================== -->

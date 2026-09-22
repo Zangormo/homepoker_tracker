@@ -161,7 +161,7 @@ class AmountInputTest {
     @Test
     fun `an amount that leaves a remainder carries all three figures`() {
         assertEquals(
-            UiText.of(R.string.error_not_whole_chips, "1.002", "0.005", "0.002"),
+            UiText.of(R.string.error_not_whole_chips, UiText.Cash("1.002"), UiText.Cash("0.005"), UiText.Cash("0.002")),
             wholeChipsError(Money(1_002_000), rate),
         )
     }

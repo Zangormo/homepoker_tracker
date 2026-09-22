@@ -383,14 +383,14 @@ class SettlementMismatchTest {
             lines.contains(
                 UiText.of(
                     R.string.note_imbalance,
-                    "0.06",
+                    UiText.Cash("0.06"),
                     UiText.of(R.string.note_imbalance_short),
                 ),
             ),
         )
         assertTrue(
             lines.toString(),
-            lines.contains(UiText.of(R.string.note_still_owes, "Anna", "0.06")),
+            lines.contains(UiText.of(R.string.note_still_owes, "Anna", UiText.Cash("0.06"))),
         )
     }
 }

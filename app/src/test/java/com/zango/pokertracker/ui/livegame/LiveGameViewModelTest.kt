@@ -102,7 +102,7 @@ class LiveGameViewModelTest {
             assertEquals("Thursday", state.gameName)
             assertEquals("0.005 / 0.01", state.stakes)
             assertEquals(
-                UiText.of(R.string.chip_value_label, "0.005"),
+                UiText.of(R.string.chip_value_label, UiText.Cash("0.005")),
                 state.chipValueLabel,
             )
             assertEquals(Money(2_000_000), state.totalOnTable.cash)
@@ -157,7 +157,7 @@ class LiveGameViewModelTest {
         val dialog = viewModel.buyInDialog("1.0025")
 
         assertEquals(
-            UiText.of(R.string.error_not_whole_chips, "1.0025", "0.005", "0.0025"),
+            UiText.of(R.string.error_not_whole_chips, UiText.Cash("1.0025"), UiText.Cash("0.005"), UiText.Cash("0.0025")),
             dialog.error,
         )
         assertFalse(dialog.canConfirm)

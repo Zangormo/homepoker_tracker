@@ -75,6 +75,7 @@ import com.zango.pokertracker.ui.common.CashToChipsRow
 import com.zango.pokertracker.ui.common.ChipAmountField
 import com.zango.pokertracker.ui.common.ChipAmountText
 import com.zango.pokertracker.ui.common.ChipsToCashRow
+import com.zango.pokertracker.ui.common.LocalCashFormat
 import com.zango.pokertracker.ui.common.MinTouchTarget
 import com.zango.pokertracker.ui.common.NetCashText
 import com.zango.pokertracker.ui.common.PokerTextField
@@ -410,7 +411,7 @@ private fun HeadlinePanel(state: LiveGameUiState) {
                         R.plurals.live_returned_summary,
                         state.returnedChips.count.toInt(),
                         state.returnedChips.count,
-                        state.returnedCash.format(),
+                        LocalCashFormat.current.format(state.returnedCash),
                     ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

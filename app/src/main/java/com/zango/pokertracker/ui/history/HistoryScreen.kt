@@ -60,6 +60,7 @@ import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.ui.ads.BannerAd
 import com.zango.pokertracker.ui.common.CashAmountText
 import com.zango.pokertracker.ui.common.ChipAmountText
+import com.zango.pokertracker.ui.common.LocalCashFormat
 import com.zango.pokertracker.ui.common.MinTouchTarget
 import com.zango.pokertracker.ui.common.SectionLabel
 import com.zango.pokertracker.ui.common.resolve
@@ -426,7 +427,7 @@ private fun DeleteGameDialog(row: HistoryRow, onConfirm: () -> Unit, onDismiss: 
                         R.string.history_delete_detail,
                         pluralStringResource(R.plurals.player_count, row.playerCount, row.playerCount),
                         pluralStringResource(R.plurals.buy_in_count, row.buyInCount, row.buyInCount),
-                        row.totalOnTable.format(),
+                        LocalCashFormat.current.format(row.totalOnTable),
                     ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -291,6 +291,12 @@
     <string name="settings_remove_ads_pending">Paiement en attente. Les pubs disparaissent dès que Google Play le confirme.</string>
     <string name="settings_remove_ads_done">Pubs supprimées. Merci de soutenir l’application.</string>
 
+    <!-- Currency -->
+    <string name="settings_section_currency">Devise</string>
+    <string name="settings_currency_body">Affichée à côté de chaque montant en espèces. En changer ne modifie aucun montant.</string>
+    <string name="settings_currency_pick">Choisir la devise</string>
+    <string name="settings_currency_search">Rechercher une devise</string>
+
     <!-- Results table -->
     <string name="results_column_player">Joueur</string>
     <string name="results_column_in">Entré</string>

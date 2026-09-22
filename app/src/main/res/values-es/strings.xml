@@ -291,6 +291,12 @@
     <string name="settings_remove_ads_pending">Pago pendiente. Los anuncios se desactivan en cuanto Google Play lo confirme.</string>
     <string name="settings_remove_ads_done">Anuncios eliminados. Gracias por apoyar la app.</string>
 
+    <!-- Currency -->
+    <string name="settings_section_currency">Moneda</string>
+    <string name="settings_currency_body">Se muestra junto a cada importe en efectivo. Cambiarla no cambia ninguna cifra.</string>
+    <string name="settings_currency_pick">Elige la moneda</string>
+    <string name="settings_currency_search">Buscar moneda</string>
+
     <!-- Results table -->
     <string name="results_column_player">Jugador</string>
     <string name="results_column_in">Entra</string>
