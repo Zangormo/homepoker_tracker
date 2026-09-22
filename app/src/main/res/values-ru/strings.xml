@@ -573,4 +573,16 @@
     <string name="live_table_hint_selected">Нажмите на игрока, чтобы поменять местами с %1$s</string>
     <string name="error_swap_seats">Не удалось поменять игроков местами</string>
 
+    <!-- ==================================================================================== -->
+    <!-- Donation prompt, shown after a game ends while ads are still on                      -->
+    <!-- ==================================================================================== -->
+
+    <string name="donation_title">Нравится Poker Tracker?</string>
+    <string name="donation_body">Poker Tracker делает один разработчик в свободное время. Небольшое пожертвование помогает выпускать обновления и мотивирует делать приложение лучше для вашего стола.</string>
+    <string name="donation_ads_note">В благодарность пожертвование навсегда отключает всю рекламу.</string>
+    <string name="donation_title_after_ad">Надоела такая реклама?</string>
+    <string name="donation_ads_note_after_ad">Небольшое пожертвование навсегда отключает всю рекламу, в том числе эту.</string>
+    <string name="donation_no_thanks">Нет, спасибо</string>
+    <string name="donation_donate">Поддержать</string>
+
 </resources>

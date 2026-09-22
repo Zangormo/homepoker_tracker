@@ -64,7 +64,7 @@ import com.zango.pokertracker.ui.theme.PokerTheme
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
 
 /**
- * Settings: the language, the stake levels the new-game picker offers, and removing ads.
+ * Settings: the language, removing ads, and the stake levels the new-game picker offers.
  *
  * It carries a back arrow rather than the menu button the other drawer destinations use: this is
  * somewhere the host steps into and comes straight back out of, not a place to sit during a game.
@@ -168,6 +168,10 @@ private fun SettingsContent(
     ) {
         LanguageSection(current = language, onSelect = onSelectLanguage)
 
+        // Second, right under the language, so a host sent here by the donation prompt finds it
+        // without scrolling.
+        RemoveAdsSection(state = state.removeAds, onRemoveAds = onRemoveAds)
+
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -216,7 +220,6 @@ private fun SettingsContent(
             Text(stringResource(R.string.settings_add_blinds))
         }
 
-        RemoveAdsSection(state = state.removeAds, onRemoveAds = onRemoveAds)
     }
 }
 

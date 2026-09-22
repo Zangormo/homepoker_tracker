@@ -663,4 +663,17 @@
     <string name="live_table_hint_selected">Tap someone to swap with %1$s</string>
     <string name="error_swap_seats">Could not swap seats</string>
 
+    <!-- ==================================================================================== -->
+    <!-- Donation prompt, shown after a game ends while ads are still on                      -->
+    <!-- ==================================================================================== -->
+
+    <string name="donation_title">Enjoying Poker Tracker?</string>
+    <string name="donation_body">Poker Tracker is made by one developer in their spare time. A small donation is what keeps the updates coming, and it motivates me to keep making the app better for your table.</string>
+    <string name="donation_ads_note">As a thank you, a donation turns off all ads for good.</string>
+    <!-- The same prompt when a full-screen ad has just been closed. -->
+    <string name="donation_title_after_ad">Tired of ads like that one?</string>
+    <string name="donation_ads_note_after_ad">A small donation turns off all ads for good, that one included.</string>
+    <string name="donation_no_thanks">No, thanks</string>
+    <string name="donation_donate">Donate now</string>
+
 </resources>

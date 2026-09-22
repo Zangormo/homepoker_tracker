@@ -18,6 +18,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -57,6 +60,11 @@ class InterstitialAdController @Inject constructor(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val loaded = mutableMapOf<Slot, InterstitialAd>()
     private val loading = mutableSetOf<Slot>()
+
+    private val _isShowingAd = MutableStateFlow(false)
+
+    /** True from the moment a full-screen ad is shown until it is closed. */
+    val isShowingAd: StateFlow<Boolean> = _isShowingAd.asStateFlow()
 
     init {
         // Nothing is requested before consent: the first load waits for the SDK to be initialized. It
@@ -136,13 +144,19 @@ class InterstitialAdController @Inject constructor(
                 preferences.edit { putInt(KEY_GAMES_SINCE_AD, 0) }
             }
 
-            override fun onAdDismissedFullScreenContent() = preload()
+            override fun onAdDismissedFullScreenContent() {
+                _isShowingAd.value = false
+                preload()
+            }
 
             override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                _isShowingAd.value = false
                 Log.w(TAG, "$slot failed to show: ${adError.message}")
                 preload()
             }
         }
+        // Set before showing, so whatever composes under the ad already knows it is covered.
+        _isShowingAd.value = true
         ready.show(activity)
     }
 

@@ -25,6 +25,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.zango.pokertracker.ui.creategame.CreateGameScreen
+import com.zango.pokertracker.ui.donation.DonationPrompt
 import com.zango.pokertracker.ui.endgame.EndGameScreen
 import com.zango.pokertracker.ui.history.HistoryScreen
 import com.zango.pokertracker.ui.livegame.LiveGameScreen
@@ -43,21 +44,32 @@ object Routes {
     const val SETTINGS = "settings"
     const val GAME_ID = "gameId"
     const val PLAYER_ID = "playerId"
+    const val OFFER_DONATION = "offerDonation"
     const val LIVE_GAME = "live-game/{$GAME_ID}"
     const val END_GAME = "end-game/{$GAME_ID}"
-    const val SETTLEMENT = "settlement/{$GAME_ID}"
+    const val SETTLEMENT = "settlement/{$GAME_ID}?$OFFER_DONATION={$OFFER_DONATION}"
     const val PLAYER_DETAIL = "player/{$PLAYER_ID}"
 
     fun liveGame(gameId: Long): String = "live-game/$gameId"
 
     fun endGame(gameId: Long): String = "end-game/$gameId"
 
-    fun settlement(gameId: Long): String = "settlement/$gameId"
+    /**
+     * [offerDonation] is set only on the way in from ending a game, so the donation prompt shows once
+     * per finished game and never when an old settlement is reopened from history.
+     */
+    fun settlement(gameId: Long, offerDonation: Boolean = false): String =
+        if (offerDonation) "settlement/$gameId?$OFFER_DONATION=true" else "settlement/$gameId"
 
     fun player(playerId: Long): String = "player/$playerId"
 }
 
 private fun gameIdArgument() = listOf(navArgument(Routes.GAME_ID) { type = NavType.LongType })
+
+private fun settlementArguments() = gameIdArgument() + navArgument(Routes.OFFER_DONATION) {
+    type = NavType.BoolType
+    defaultValue = false
+}
 
 private fun playerIdArgument() = listOf(navArgument(Routes.PLAYER_ID) { type = NavType.LongType })
 
@@ -283,7 +295,7 @@ private fun PokerRoutes(
                         // and is what the host sees once the ad is closed. The game is already
                         // saved as ended by the time this runs.
                         onGameEnded(gameId)
-                        navController.navigate(Routes.settlement(gameId)) {
+                        navController.navigate(Routes.settlement(gameId, offerDonation = true)) {
                             // The game is over: back from the settlement belongs at history, not in
                             // a live screen for a game that no longer exists.
                             popUpTo(Routes.HISTORY)
@@ -298,7 +310,7 @@ private fun PokerRoutes(
             )
         }
 
-        composable(Routes.SETTLEMENT, arguments = gameIdArgument()) { entry ->
+        composable(Routes.SETTLEMENT, arguments = settlementArguments()) { entry ->
             GuardedBack(navController, entry)
             SettlementScreen(
                 onBack = { navController.popFrom(entry) },
@@ -313,6 +325,13 @@ private fun PokerRoutes(
                             onGamePaidUp(requireNotNull(entry.arguments).getLong(Routes.GAME_ID))
                         }
                     }
+                },
+            )
+            DonationPrompt(
+                offered = entry.arguments?.getBoolean(Routes.OFFER_DONATION) == true,
+                onDonate = {
+                    // On top of the settlement, so back from settings lands where the host left off.
+                    navController.whileOn(entry) { navController.navigate(Routes.SETTINGS) }
                 },
             )
         }
