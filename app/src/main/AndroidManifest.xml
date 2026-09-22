@@ -19,12 +19,18 @@
       localeConfig is read by Android 13 and later to list the app in the system language picker.
       Older versions ignore it and take their language from the in-app setting instead, which is
       why lint is told not to flag it as unused below the minimum.
+
+      Nothing the app stores is backed up or carried to a new phone. allowBackup="false" stops
+      cloud backup; from Android 12 it no longer stops device-to-device transfer, which only
+      dataExtractionRules can, so those rules exclude everything. A purchase comes back from
+      Google Play on its own, and games move between phones through the hand-over screen.
+      fullBackupContent="false" says the same for Android 8 to 11, which never read those rules.
     -->
     <application
         android:name=".PokerTrackerApp"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
+        android:fullBackupContent="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"

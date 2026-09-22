@@ -291,6 +291,13 @@
     <string name="settings_remove_ads_pending">Pago pendiente. Los anuncios se desactivan en cuanto Google Play lo confirme.</string>
     <string name="settings_remove_ads_done">Anuncios eliminados. Gracias por apoyar la app.</string>
 
+    <!-- Privacy -->
+    <string name="settings_section_privacy">Privacidad</string>
+    <string name="settings_privacy_policy_button">Política de privacidad</string>
+    <string name="error_no_browser">No hay ninguna app en este teléfono que pueda abrir páginas web</string>
+    <string name="settings_ad_privacy_body">Vuelve a elegir si los anuncios pueden usar tus datos para personalizarse.</string>
+    <string name="settings_ad_privacy_button">Opciones de privacidad</string>
+
     <!-- Currency -->
     <string name="settings_section_currency">Moneda</string>
     <string name="settings_currency_body">Se muestra junto a cada importe en efectivo. Cambiarla no cambia ninguna cifra.</string>

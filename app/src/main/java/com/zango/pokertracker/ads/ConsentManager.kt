@@ -38,7 +38,7 @@ import javax.inject.Singleton
 class ConsentManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val consentInformation: ConsentInformation,
-) {
+) : AdPrivacy {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val initializeCalled = AtomicBoolean(false)
 
@@ -50,13 +50,15 @@ class ConsentManager @Inject constructor(
     /** Whether ads may be requested right now, as UMP last reported it. */
     val canRequestAds: Boolean get() = consentInformation.canRequestAds()
 
+    private val _privacyOptionsRequired = MutableStateFlow(readPrivacyOptionsRequired())
+
     /**
      * Whether the user must be offered a way to change their choice later. When true, a "Privacy
-     * options" entry calling [showPrivacyOptionsForm] has to be reachable in the app.
+     * options" entry calling [showPrivacyOptionsForm] has to be reachable in the app, and settings
+     * shows one. A flow rather than a snapshot, because UMP only knows for certain once the
+     * refresh started by [gatherConsent] has answered, which can be after settings has opened.
      */
-    val isPrivacyOptionsRequired: Boolean
-        get() = consentInformation.privacyOptionsRequirementStatus ==
-            ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED
+    override val isPrivacyOptionsRequired: StateFlow<Boolean> = _privacyOptionsRequired.asStateFlow()
 
     /**
      * Refreshes consent and shows the form if one is required. Called from every activity
@@ -72,26 +74,45 @@ class ConsentManager @Inject constructor(
             activity,
             requestParameters(activity),
             {
+                refreshPrivacyOptionsRequired()
                 UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { formError ->
                     formError?.let(::logError)
+                    refreshPrivacyOptionsRequired()
                     initializeIfAllowed()
                 }
             },
             { requestError ->
                 // Offline, most likely. Whatever was stored before still decides.
                 logError(requestError)
+                refreshPrivacyOptionsRequired()
                 initializeIfAllowed()
             },
         )
     }
 
-    /** Lets the user revisit their choice. Only meaningful while [isPrivacyOptionsRequired]. */
-    fun showPrivacyOptionsForm(activity: Activity, onDismissed: (FormError?) -> Unit = {}) {
+    /**
+     * Lets the user revisit their choice. Only meaningful while [isPrivacyOptionsRequired].
+     *
+     * UMP saves the new choice itself, as the IAB TCF strings the Mobile Ads SDK reads on every
+     * ad request, so the next banner or interstitial already follows it; nothing is cached here
+     * that could go stale. What can change is whether ads may be requested at all, so the SDK is
+     * initialized now if the old choice had kept it from starting.
+     */
+    override fun showPrivacyOptionsForm(activity: Activity) {
         UserMessagingPlatform.showPrivacyOptionsForm(activity) { formError ->
             formError?.let(::logError)
-            onDismissed(formError)
+            refreshPrivacyOptionsRequired()
+            initializeIfAllowed()
         }
     }
+
+    private fun refreshPrivacyOptionsRequired() {
+        _privacyOptionsRequired.value = readPrivacyOptionsRequired()
+    }
+
+    private fun readPrivacyOptionsRequired(): Boolean =
+        consentInformation.privacyOptionsRequirementStatus ==
+            ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED
 
     private fun initializeIfAllowed() {
         if (!consentInformation.canRequestAds()) return

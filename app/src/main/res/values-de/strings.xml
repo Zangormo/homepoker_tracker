@@ -290,6 +290,13 @@
     <string name="settings_remove_ads_pending">Zahlung ausstehend. Die Werbung verschwindet, sobald Google Play sie bestätigt.</string>
     <string name="settings_remove_ads_done">Werbung entfernt. Danke, dass du die App unterstützt.</string>
 
+    <!-- Privacy -->
+    <string name="settings_section_privacy">Datenschutz</string>
+    <string name="settings_privacy_policy_button">Datenschutzerklärung</string>
+    <string name="error_no_browser">Auf diesem Handy gibt es keine App, die Webseiten öffnen kann</string>
+    <string name="settings_ad_privacy_body">Entscheide neu, ob Werbung deine Daten zur Personalisierung nutzen darf.</string>
+    <string name="settings_ad_privacy_button">Datenschutzoptionen</string>
+
     <!-- Currency -->
     <string name="settings_section_currency">Währung</string>
     <string name="settings_currency_body">Wird neben jedem Bargeldbetrag angezeigt. Ein Wechsel ändert keine Beträge.</string>

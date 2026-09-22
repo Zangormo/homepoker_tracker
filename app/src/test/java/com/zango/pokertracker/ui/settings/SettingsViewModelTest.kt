@@ -6,6 +6,7 @@ import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.Stakes
 import com.zango.pokertracker.billing.RemoveAdsBilling
+import com.zango.pokertracker.testing.FakeAdPrivacy
 import com.zango.pokertracker.testing.FakePokerRepository
 import com.zango.pokertracker.testing.FakeRemoveAdsBilling
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +34,7 @@ class SettingsViewModelTest {
 
     private val repository = FakePokerRepository()
     private val billing = FakeRemoveAdsBilling()
+    private val adPrivacy = FakeAdPrivacy()
 
     @Before
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
@@ -42,7 +44,7 @@ class SettingsViewModelTest {
 
     private fun stakes(small: Long, big: Long) = Stakes(Money(small), Money(big))
 
-    private fun viewModel() = SettingsViewModel(repository, billing)
+    private fun viewModel() = SettingsViewModel(repository, billing, adPrivacy)
 
     private suspend fun SettingsViewModel.stateWhere(predicate: (SettingsUiState) -> Boolean) =
         uiState.first { !it.isLoading && predicate(it) }
@@ -225,5 +227,31 @@ class SettingsViewModelTest {
             SettingsEvent.Message(UiText.of(R.string.error_purchase_unavailable)),
             viewModel.events.first(),
         )
+    }
+
+    @Test
+    fun `ad privacy options are hidden where no law asks for them`() = runTest {
+        assertFalse(state().showAdPrivacyOptions)
+    }
+
+    @Test
+    fun `ad privacy options appear once the consent check says they are required`() = runTest {
+        val viewModel = viewModel()
+        viewModel.uiState.first { !it.isLoading && !it.showAdPrivacyOptions }
+
+        // The consent refresh answers after the screen has opened, as it does on a real launch.
+        adPrivacy.isPrivacyOptionsRequired.value = true
+
+        assertTrue(viewModel.uiState.first { it.showAdPrivacyOptions }.showAdPrivacyOptions)
+    }
+
+    @Test
+    fun `tapping ad privacy options opens the consent form`() = runTest {
+        adPrivacy.isPrivacyOptionsRequired.value = true
+        val viewModel = viewModel()
+
+        viewModel.onAdPrivacyOptions(Activity())
+
+        assertEquals(1, adPrivacy.formsShown)
     }
 }

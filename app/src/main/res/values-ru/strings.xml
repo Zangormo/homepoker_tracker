@@ -292,6 +292,13 @@
     <string name="settings_remove_ads_pending">Оплата обрабатывается. Реклама отключится, как только Google Play её подтвердит.</string>
     <string name="settings_remove_ads_done">Реклама отключена. Спасибо за поддержку приложения.</string>
 
+    <!-- Privacy -->
+    <string name="settings_section_privacy">Конфиденциальность</string>
+    <string name="settings_privacy_policy_button">Политика конфиденциальности</string>
+    <string name="error_no_browser">На телефоне нет приложения, которое может открыть веб-страницу</string>
+    <string name="settings_ad_privacy_body">Можно заново решить, может ли реклама использовать ваши данные для персонализации.</string>
+    <string name="settings_ad_privacy_button">Настройки конфиденциальности</string>
+
     <!-- Currency -->
     <string name="settings_section_currency">Валюта</string>
     <string name="settings_currency_body">Показывается рядом с каждой суммой. Смена валюты не меняет сами суммы.</string>

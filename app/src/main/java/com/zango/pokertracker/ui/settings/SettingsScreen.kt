@@ -1,7 +1,9 @@
 package com.zango.pokertracker.ui.settings
 
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.runtime.collectAsState
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,15 +14,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -39,35 +41,40 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.zango.pokertracker.R
-import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.locale.AppCurrencyStore
 import com.zango.pokertracker.core.locale.AppLanguage
 import com.zango.pokertracker.core.locale.AppLanguageStore
 import com.zango.pokertracker.core.locale.findActivity
 import com.zango.pokertracker.core.money.Money
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.domain.model.Stakes
 import com.zango.pokertracker.ui.common.CashAmountField
-import com.zango.pokertracker.ui.common.acceptsBigBlind
-import com.zango.pokertracker.ui.common.acceptsSmallBlind
 import com.zango.pokertracker.ui.common.MinTouchTarget
 import com.zango.pokertracker.ui.common.SectionLabel
 import com.zango.pokertracker.ui.common.SelectionIndicator
+import com.zango.pokertracker.ui.common.acceptsBigBlind
+import com.zango.pokertracker.ui.common.acceptsSmallBlind
 import com.zango.pokertracker.ui.common.resolve
 import com.zango.pokertracker.ui.theme.PokerTheme
 import com.zango.pokertracker.ui.theme.PokerTrackerTheme
+import kotlinx.coroutines.launch
 
 /**
  * Settings: the language, removing ads, the currency, and the stake levels the new-game picker
@@ -84,6 +91,8 @@ fun SettingsScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val noBrowserMessage = stringResource(R.string.error_no_browser)
     val undoLabel = stringResource(R.string.action_undo)
 
     val context = LocalContext.current
@@ -140,6 +149,12 @@ fun SettingsScreen(
                 onAdd = viewModel::onAddRequested,
                 onRemove = viewModel::onRemove,
                 onRemoveAds = { context.findActivity()?.let(viewModel::onRemoveAds) },
+                onAdPrivacyOptions = { context.findActivity()?.let(viewModel::onAdPrivacyOptions) },
+                onOpenPrivacyPolicy = {
+                    openPrivacyPolicy(context) {
+                        scope.launch { snackbarHostState.showSnackbar(noBrowserMessage) }
+                    }
+                },
                 modifier = Modifier.padding(padding),
             )
         }
@@ -164,6 +179,8 @@ private fun SettingsContent(
     onAdd: () -> Unit,
     onRemove: (Stakes) -> Unit,
     onRemoveAds: () -> Unit,
+    onAdPrivacyOptions: () -> Unit,
+    onOpenPrivacyPolicy: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -178,6 +195,11 @@ private fun SettingsContent(
         // Second, right under the language, so a host sent here by the donation prompt finds it
         // without scrolling.
         RemoveAdsSection(state = state.removeAds, onRemoveAds = onRemoveAds)
+        PrivacySection(
+            showAdPrivacyOptions = state.showAdPrivacyOptions,
+            onOpenPolicy = onOpenPrivacyPolicy,
+            onAdPrivacyOptions = onAdPrivacyOptions,
+        )
 
         val context = LocalContext.current
         val currencyCode by AppCurrencyStore.code.collectAsState()
@@ -285,6 +307,74 @@ private fun RemoveAdsSection(state: RemoveAdsUiState, onRemoveAds: () -> Unit) {
                 )
             }
         }
+    }
+}
+
+/**
+ * The published privacy policy, opened in the phone's browser.
+ *
+ * TODO: this is the only place the policy's address lives; if the policy moves, change it here.
+ */
+private const val PRIVACY_POLICY_URL = "https://zangormo.github.io/poker_cashier_privacy_page/"
+
+/**
+ * Everything about privacy, together: the policy, for everyone, and below it the way back into
+ * the ad consent choice. That second button is only composed where the law requires it (EEA, UK,
+ * Switzerland); everywhere else Google reports that no such choice exists, and a button leading
+ * nowhere would only confuse. Beside "Remove ads", the other thing about ads.
+ */
+@Composable
+private fun PrivacySection(
+    showAdPrivacyOptions: Boolean,
+    onOpenPolicy: () -> Unit,
+    onAdPrivacyOptions: () -> Unit,
+) {
+    SectionLabel(
+        stringResource(R.string.settings_section_privacy),
+        modifier = Modifier.padding(top = 20.dp),
+    )
+    OutlinedButton(
+        onClick = onOpenPolicy,
+        modifier = Modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = MinTouchTarget),
+    ) {
+        Text(stringResource(R.string.settings_privacy_policy_button))
+        Spacer(Modifier.width(8.dp))
+        // Says before the tap that this leaves the app for the browser.
+        Icon(
+            Icons.AutoMirrored.Filled.OpenInNew,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp),
+        )
+    }
+    if (showAdPrivacyOptions) {
+        Text(
+            stringResource(R.string.settings_ad_privacy_body),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+        )
+        OutlinedButton(
+            onClick = onAdPrivacyOptions,
+            modifier = Modifier
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = MinTouchTarget),
+        ) {
+            Text(stringResource(R.string.settings_ad_privacy_button))
+        }
+    }
+}
+
+/**
+ * Opens the privacy policy in whatever browser the phone has. A phone with none at all is rare
+ * but possible, and gets a message rather than a crash.
+ */
+private fun openPrivacyPolicy(context: Context, onNoBrowser: () -> Unit) {
+    try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, PRIVACY_POLICY_URL.toUri()))
+    } catch (_: ActivityNotFoundException) {
+        onNoBrowser()
     }
 }
 
@@ -463,6 +553,28 @@ private fun SettingsPreview() {
                 onAdd = {},
                 onRemove = {},
                 onRemoveAds = {},
+                onAdPrivacyOptions = {},
+                onOpenPrivacyPolicy = {},
+            )
+        }
+    }
+}
+
+@Preview(name = "Settings — ad privacy options (EEA)", showBackground = true, heightDp = 700)
+@Composable
+private fun SettingsAdPrivacyPreview() {
+    PokerTrackerTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            SettingsContent(
+                state = settingsState(listOf(Stakes(Money(20_000), Money(40_000))))
+                    .copy(showAdPrivacyOptions = true),
+                language = AppLanguage.ENGLISH,
+                onSelectLanguage = {},
+                onAdd = {},
+                onRemove = {},
+                onRemoveAds = {},
+                onAdPrivacyOptions = {},
+                onOpenPrivacyPolicy = {},
             )
         }
     }
@@ -473,7 +585,7 @@ private fun SettingsPreview() {
 private fun SettingsEmptyPreview() {
     PokerTrackerTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            SettingsContent(SettingsUiState(isLoading = false), AppLanguage.ENGLISH, {}, {}, {}, {})
+            SettingsContent(SettingsUiState(isLoading = false), AppLanguage.ENGLISH, {}, {}, {}, {}, {}, {})
         }
     }
 }
@@ -500,7 +612,7 @@ private fun SettingsLargeFontPreview() {
             SettingsContent(
                 settingsState().copy(removeAds = RemoveAdsUiState(isPending = true)),
                 AppLanguage.RUSSIAN,
-                {}, {}, {}, {},
+                {}, {}, {}, {}, {}, {},
             )
         }
     }

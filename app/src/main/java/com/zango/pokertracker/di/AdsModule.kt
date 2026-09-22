@@ -2,6 +2,8 @@ package com.zango.pokertracker.di
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.zango.pokertracker.ads.AdPrivacy
+import com.zango.pokertracker.ads.ConsentManager
 import com.google.android.ump.ConsentInformation
 import com.google.android.ump.UserMessagingPlatform
 import dagger.Module
@@ -25,6 +27,10 @@ object AdsModule {
     @Singleton
     fun provideConsentInformation(@ApplicationContext context: Context): ConsentInformation =
         UserMessagingPlatform.getConsentInformation(context)
+
+    /** Settings reaches the consent choice through this, never through the SDK directly. */
+    @Provides
+    fun provideAdPrivacy(manager: ConsentManager): AdPrivacy = manager
 
     @Provides
     @Singleton

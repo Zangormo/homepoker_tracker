@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zango.pokertracker.R
+import com.zango.pokertracker.ads.AdPrivacy
 import com.zango.pokertracker.billing.RemoveAdsBilling
 import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.data.repository.AddStakesResult
@@ -25,7 +26,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * Settings: the stake levels the game picker offers, and the "Remove ads" purchase.
+ * Settings: the stake levels the game picker offers, the "Remove ads" purchase, and the way back
+ * into the ad consent choice where the law requires one.
  *
  * The list fills itself as games are played, which is convenient right up until a one-off night
  * at odd blinds is stuck in the picker for good. This is where the host prunes it, and where a
@@ -35,6 +37,7 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val repository: PokerRepository,
     private val billing: RemoveAdsBilling,
+    private val adPrivacy: AdPrivacy,
 ) : ViewModel() {
 
     private val editing = MutableStateFlow<StakesEditor?>(null)
@@ -43,12 +46,18 @@ class SettingsViewModel @Inject constructor(
     val events: Flow<SettingsEvent> = eventChannel.receiveAsFlow()
 
     val uiState: StateFlow<SettingsUiState> =
-        combine(repository.observeStakeOptions(), editing, removeAdsState()) { stakes, editor, removeAds ->
+        combine(
+            repository.observeStakeOptions(),
+            editing,
+            removeAdsState(),
+            adPrivacy.isPrivacyOptionsRequired,
+        ) { stakes, editor, removeAds, privacyOptionsRequired ->
             SettingsUiState(
                 isLoading = false,
                 stakes = stakes.map { StakeRow(it, it.label()) },
                 editor = editor,
                 removeAds = removeAds,
+                showAdPrivacyOptions = privacyOptionsRequired,
             )
         }
             .distinctUntilChanged()
@@ -161,6 +170,12 @@ class SettingsViewModel @Inject constructor(
             eventChannel.send(SettingsEvent.Message(UiText.of(message)))
         }
     }
+
+    /**
+     * Opens Google's form for changing the ad consent choice. Google saves the new choice itself
+     * and the ads SDK reads it on the next request, so nothing comes back here to handle.
+     */
+    fun onAdPrivacyOptions(activity: Activity) = adPrivacy.showPrivacyOptionsForm(activity)
 
     /** Puts back a level taken off by mistake, straight from the snackbar. */
     fun onUndoRemove(stakes: Stakes) {

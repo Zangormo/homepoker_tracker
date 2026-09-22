@@ -1,19 +1,29 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12 and later: nothing the app stores leaves the phone through the system.
+
+  android:allowBackup="false" in the manifest already stops cloud backup on every version, but
+  from Android 12 device-to-device transfer ignores that attribute and reads only these rules.
+  So both are listed, and both exclude every domain the app writes to: the games database, the
+  preferences (language, currency, the "Remove ads" flag, the ad counters) and plain files.
+
+  Nothing is lost by this. The "Remove ads" purchase is restored from Google Play when the app
+  asks it for existing purchases, and a game in progress moves to another phone through the
+  hand-over screen, by QR code or file.
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
     </device-transfer>
-    -->
 </data-extraction-rules>

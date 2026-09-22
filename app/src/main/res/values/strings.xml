@@ -360,6 +360,12 @@
     <string name="settings_remove_ads_button_price">Remove ads · %1$s</string>
     <string name="settings_remove_ads_pending">Payment pending. Ads switch off as soon as Google Play confirms it.</string>
     <string name="settings_remove_ads_done">Ads are removed. Thank you for supporting the app.</string>
+    <!-- Privacy: the policy for everyone; the ad consent options only where the law requires them. -->
+    <string name="settings_section_privacy">Privacy</string>
+    <string name="settings_privacy_policy_button">Privacy policy</string>
+    <string name="error_no_browser">No app on this phone can open web pages</string>
+    <string name="settings_ad_privacy_body">Choose again whether ads may use your data to personalize what you see.</string>
+    <string name="settings_ad_privacy_button">Privacy options</string>
 
     <!-- Currency -->
     <string name="settings_section_currency">Currency</string>

@@ -291,6 +291,13 @@
     <string name="settings_remove_ads_pending">Paiement en attente. Les pubs disparaissent dès que Google Play le confirme.</string>
     <string name="settings_remove_ads_done">Pubs supprimées. Merci de soutenir l’application.</string>
 
+    <!-- Privacy -->
+    <string name="settings_section_privacy">Confidentialité</string>
+    <string name="settings_privacy_policy_button">Politique de confidentialité</string>
+    <string name="error_no_browser">Aucune application de ce téléphone ne peut ouvrir de pages web</string>
+    <string name="settings_ad_privacy_body">Choisissez à nouveau si les pubs peuvent utiliser vos données pour être personnalisées.</string>
+    <string name="settings_ad_privacy_button">Options de confidentialité</string>
+
     <!-- Currency -->
     <string name="settings_section_currency">Devise</string>
     <string name="settings_currency_body">Affichée à côté de chaque montant en espèces. En changer ne modifie aucun montant.</string>

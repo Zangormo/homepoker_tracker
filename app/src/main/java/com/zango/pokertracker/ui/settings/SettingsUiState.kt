@@ -30,6 +30,8 @@ data class SettingsUiState(
     val stakes: List<StakeRow> = emptyList(),
     val editor: StakesEditor? = null,
     val removeAds: RemoveAdsUiState = RemoveAdsUiState(),
+    /** Whether the ad privacy options entry is shown: only where the law requires one. */
+    val showAdPrivacyOptions: Boolean = false,
 ) {
     val count: Int get() = stakes.size
 
