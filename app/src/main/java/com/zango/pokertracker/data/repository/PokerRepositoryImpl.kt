@@ -29,6 +29,7 @@ import com.zango.pokertracker.domain.model.PlayerStats
 import com.zango.pokertracker.domain.model.SettledPayment
 import com.zango.pokertracker.domain.model.Stakes
 import com.zango.pokertracker.domain.settlement.settle
+import com.zango.pokertracker.domain.transfer.GameTransfer
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -357,6 +358,76 @@ class PokerRepositoryImpl @Inject constructor(
 
     override suspend fun deleteGame(gameId: Long) {
         gameDao.delete(gameId)
+    }
+
+    override suspend fun findCopyOf(transfer: GameTransfer): Long? =
+        gameDao.findCopy(transfer.name.trim(), transfer.startedAt)
+
+    override suspend fun importGame(transfer: GameTransfer, replacing: Long?): Long {
+        // Checked again here even though the codec already did: this is data from another phone,
+        // and the database is the last place a bad value can be kept out of.
+        require(transfer.name.isNotBlank() && !NameRules.isGameNameTooLong(transfer.name)) {
+            "The game name is missing or too long"
+        }
+        require(transfer.smallBlindMicros > 0 && transfer.smallBlindMicros < transfer.bigBlindMicros) {
+            "The blinds do not make sense"
+        }
+        require(transfer.chipValueMicros > 0 && transfer.defaultBuyInMicros > 0) {
+            "The chip value and buy-in must be positive"
+        }
+        require(transfer.seats.isNotEmpty()) { "A game needs at least one player" }
+        require(transfer.seats.all { !NameRules.isPlayerNameTooLong(it.player) }) {
+            "A player name is too long"
+        }
+
+        val start = transfer.startedAt
+        return database.withTransaction {
+            replacing?.let { gameDao.delete(it) }
+            val gameId = gameDao.insert(
+                GameEntity(
+                    name = transfer.name.trim(),
+                    smallBlindMicros = transfer.smallBlindMicros,
+                    bigBlindMicros = transfer.bigBlindMicros,
+                    chipValueMicros = transfer.chipValueMicros,
+                    defaultBuyInMicros = transfer.defaultBuyInMicros,
+                    payoutRoundingMicros = transfer.payoutRoundingMicros,
+                    startedAt = start,
+                    endedAt = transfer.endedAfter?.let { start + it },
+                    status = if (transfer.isRunning) GameStatus.IN_PROGRESS else GameStatus.FINISHED,
+                    bombPotIntervalMinutes = transfer.bombPotIntervalMinutes,
+                    isFiretruckGame = transfer.isFiretruckGame,
+                    isRandomSeating = transfer.isRandomSeating,
+                ),
+            )
+            transfer.seats.forEach { seat ->
+                val name = seat.player.trim()
+                // Someone the receiving host already knows keeps their history in one place;
+                // anyone new joins the roster, exactly as if they had been added by hand.
+                val playerId = playerDao.findByName(name)?.id
+                    ?: playerDao.insert(PlayerEntity(name = name, createdAt = clock.nowMillis()))
+                val seatId = gamePlayerDao.insert(
+                    GamePlayerEntity(
+                        gameId = gameId,
+                        playerId = playerId,
+                        joinedAt = start + seat.joinedAfter,
+                        cashedOutAt = seat.cashedOutAfter?.let { start + it },
+                        finalChipCount = seat.finalChips,
+                        tablePosition = seat.tablePosition,
+                    ),
+                )
+                buyInDao.insertAll(
+                    seat.buyIns.map {
+                        BuyInEntity(gamePlayerId = seatId, amountMicros = it.amount, createdAt = start + it.after)
+                    },
+                )
+                seat.returns.forEach {
+                    chipReturnDao.insert(
+                        ChipReturnEntity(gamePlayerId = seatId, chips = it.amount, createdAt = start + it.after),
+                    )
+                }
+            }
+            gameId
+        }
     }
 
     override suspend fun endGame(gameId: Long, seatsCountedAsZero: List<Long>) {

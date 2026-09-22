@@ -1,11 +1,16 @@
 package com.zango.pokertracker.ui.history
 
+import com.zango.pokertracker.R
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.money.Money
+import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.time.formatGameDate
 import com.zango.pokertracker.domain.model.Fixture
 import com.zango.pokertracker.domain.model.GameStatus
 import com.zango.pokertracker.domain.model.GameSummary
+import com.zango.pokertracker.domain.model.GameSnapshot
+import com.zango.pokertracker.domain.transfer.GameTransferCodec
+import com.zango.pokertracker.domain.transfer.toTransfer
 import com.zango.pokertracker.testing.FakePokerRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -267,5 +272,76 @@ class HistoryViewModelTest {
         viewModel.onConfirmDelete()
 
         assertTrue(repository.writes.isEmpty())
+    }
+
+    private fun handedOver(name: String = "Thursday") = GameTransferCodec.encode(
+        GameSnapshot(
+            game = Fixture.game().copy(name = name, startedAt = EVENING),
+            seats = listOf(Fixture.seat(1, "Anna"), Fixture.seat(2, "Boris")),
+        ).toTransfer(),
+    )
+
+    @Test
+    fun `a scanned game waits for the host to confirm before anything is saved`() = runTest {
+        val viewModel = HistoryViewModel(repository)
+
+        viewModel.onTransferReceived(handedOver())
+
+        val incoming = viewModel.stateWhere { it.incoming != null }.incoming!!
+        assertEquals("Thursday", incoming.name)
+        assertEquals(2, incoming.playerCount)
+        assertFalse(incoming.replacesCopy)
+        assertTrue(repository.imported.isEmpty())
+    }
+
+    @Test
+    fun `taking over saves the game and opens it`() = runTest {
+        val viewModel = HistoryViewModel(repository)
+        viewModel.onTransferReceived(handedOver())
+        viewModel.stateWhere { it.incoming != null }
+
+        viewModel.onConfirmIncoming()
+
+        val event = viewModel.events.first()
+        assertTrue(event is HistoryEvent.OpenGame)
+        assertEquals(1, repository.imported.size)
+        assertNull(repository.imported.single().second)
+        assertNull(viewModel.stateWhere { it.incoming == null }.incoming)
+    }
+
+    @Test
+    fun `a game this phone already has is replaced, not duplicated`() = runTest {
+        repository.copies["Thursday" to EVENING] = 77L
+        val viewModel = HistoryViewModel(repository)
+        viewModel.onTransferReceived(handedOver())
+
+        assertTrue(viewModel.stateWhere { it.incoming != null }.incoming!!.replacesCopy)
+        viewModel.onConfirmIncoming()
+        viewModel.events.first()
+
+        assertEquals(77L, repository.imported.single().second)
+    }
+
+    @Test
+    fun `something that is not a game is named as such and nothing is offered`() = runTest {
+        val viewModel = HistoryViewModel(repository)
+
+        viewModel.onTransferReceived("https://example.com")
+
+        val event = viewModel.events.first() as HistoryEvent.Message
+        assertEquals(UiText.of(R.string.error_receive_not_a_game), event.text)
+        assertNull(viewModel.stateWhere { true }.incoming)
+    }
+
+    @Test
+    fun `backing out of the confirmation saves nothing`() = runTest {
+        val viewModel = HistoryViewModel(repository)
+        viewModel.onTransferReceived(handedOver())
+        viewModel.stateWhere { it.incoming != null }
+
+        viewModel.onDismissIncoming()
+
+        assertNull(viewModel.stateWhere { it.incoming == null }.incoming)
+        assertTrue(repository.imported.isEmpty())
     }
 }

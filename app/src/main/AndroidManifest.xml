@@ -47,6 +47,23 @@
             </intent-filter>
         </activity>
 
+        <!-- Downloads the QR scanner with the app, so the first handover at the table is not held
+             up fetching it. -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="barcode_ui" />
+
+        <!-- Hands a game file to the messenger the host sends it with, and to nothing else. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.handoff"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/handoff_paths" />
+        </provider>
+
         <receiver
             android:name=".bombpot.BombPotReceiver"
             android:exported="false" />

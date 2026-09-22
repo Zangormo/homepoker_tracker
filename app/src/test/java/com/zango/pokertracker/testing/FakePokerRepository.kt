@@ -22,6 +22,7 @@ import com.zango.pokertracker.domain.model.Seat
 import com.zango.pokertracker.domain.model.SettledPayment
 import com.zango.pokertracker.domain.model.Stakes
 import kotlinx.coroutines.flow.Flow
+import com.zango.pokertracker.domain.transfer.GameTransfer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -259,6 +260,24 @@ class FakePokerRepository(private val clock: TestClock = TestClock()) : PokerRep
         writes += "deleteGame($gameId)"
         summaries.update { list -> list.filterNot { it.game.id == gameId } }
         if (game.value?.game?.id == gameId) game.value = null
+    }
+
+    /** Games already on the phone, as findCopyOf sees them: (name, startedAt) to id. */
+    val copies = mutableMapOf<Pair<String, Long>, Long>()
+
+    /** Every game taken over, with the copy it replaced. */
+    val imported = mutableListOf<Pair<GameTransfer, Long?>>()
+
+    var importFailure: Throwable? = null
+
+    override suspend fun findCopyOf(transfer: GameTransfer): Long? =
+        copies[transfer.name to transfer.startedAt]
+
+    override suspend fun importGame(transfer: GameTransfer, replacing: Long?): Long {
+        importFailure?.let { throw it }
+        writes += "importGame(${transfer.name}, replacing=$replacing)"
+        imported += transfer to replacing
+        return nextId++
     }
 
     /** Mirrors the real repository: only seats with a counted stack are closed out. */

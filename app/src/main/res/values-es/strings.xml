@@ -35,6 +35,8 @@
     <!-- Game hub (history) -->
     <string name="history_title">Partidas</string>
     <string name="history_new_game">Nueva partida</string>
+    <string name="history_create_game">Crear partida</string>
+    <string name="history_load_game">Cargar partida</string>
     <string name="history_empty_title">Aún no hay partidas</string>
     <string name="history_empty_body">Toca Nueva partida para preparar una.</string>
     <string name="history_section_running">En curso</string>
@@ -559,5 +561,33 @@
     <string name="donation_ads_note_after_ad">Una pequeña donación quita todos los anuncios para siempre, incluido ese.</string>
     <string name="donation_no_thanks">No, gracias</string>
     <string name="donation_donate">Donar ahora</string>
+
+    <!-- Handing a running game to another host's phone -->
+    <string name="handoff_title">Pasar la partida</string>
+    <string name="handoff_button">Pasar</string>
+    <string name="handoff_qr_description">Código QR con toda la partida</string>
+    <string name="handoff_instructions">En el otro teléfono, abre Poker Tracker, toca Nueva partida, luego Cargar partida, y escanea este código.</string>
+    <string name="handoff_too_big">Esta partida es demasiado grande para un solo código QR. Envíala como archivo y ábrela en el otro teléfono con Nueva partida y luego Cargar partida.</string>
+    <string name="handoff_send_file_instead">Enviar como archivo</string>
+    <string name="handoff_send_file">Enviar como archivo</string>
+    <string name="handoff_share_chooser">Enviar la partida</string>
+    <string name="handoff_done">Hecho, ya está pasada</string>
+    <string name="handoff_remove_title">¿Quitar la partida de este teléfono?</string>
+    <string name="handoff_remove_body">A partir de ahora la lleva el otro teléfono. Si guardas una copia aquí, dos teléfonos pueden registrar la misma noche por separado.</string>
+    <string name="handoff_remove_confirm">Quitarla</string>
+    <string name="handoff_keep">Guardar una copia</string>
+
+    <string name="receive_title">Recibir partida</string>
+    <string name="receive_body">Hazte cargo de una partida que llevaba otro anfitrión.</string>
+    <string name="receive_scan">Escanear código QR</string>
+    <string name="receive_file">Abrir un archivo</string>
+    <string name="receive_confirm_title">¿Hacerte cargo de %1$s?</string>
+    <string name="receive_started">Empezó: %1$s</string>
+    <string name="receive_replaces_copy">Ya tienes esta partida. Al hacerte cargo, tu copia se sustituye por esta.</string>
+    <string name="receive_confirm">Hacerme cargo</string>
+    <string name="error_receive_not_a_game">Eso no es una partida de Poker Tracker</string>
+    <string name="error_receive_too_new">Esta partida viene de una versión más nueva de Poker Tracker. Actualiza la app e inténtalo de nuevo.</string>
+    <string name="error_receive_scanner">No se puede escanear en este teléfono. Pide que te envíen la partida como archivo.</string>
+    <string name="error_receive_failed">No se pudo recibir la partida</string>
 
 </resources>

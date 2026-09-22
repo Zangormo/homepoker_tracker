@@ -59,7 +59,8 @@ fun GameTabContent(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 24.dp),
+        // Room at the end for the hand-over button, which floats over this tab too.
+        contentPadding = PaddingValues(16.dp, 8.dp, 16.dp, 96.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         if (state.isEmpty) {

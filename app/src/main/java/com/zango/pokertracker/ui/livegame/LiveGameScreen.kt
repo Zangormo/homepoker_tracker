@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,9 +19,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -91,6 +94,7 @@ import com.zango.pokertracker.ui.theme.PokerTrackerTheme
 fun LiveGameScreen(
     onBack: () -> Unit,
     onEndGame: (Long) -> Unit,
+    onHandOff: (Long) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: LiveGameViewModel = hiltViewModel(),
 ) {
@@ -158,13 +162,34 @@ fun LiveGameScreen(
                     modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer),
                 )
             },
+            // Centred and full width, so one slot can hold a button in each bottom corner: handing
+            // over on the left, adding a player on the right where the thumb expects the main action.
+            floatingActionButtonPosition = FabPosition.Center,
             floatingActionButton = {
-                if (tab == LiveTab.STATS && !state.isFinished && !state.isMissing) {
-                    ExtendedFloatingActionButton(
-                        onClick = viewModel::onAddPlayer,
-                        icon = { Icon(Icons.Filled.PersonAdd, contentDescription = null) },
-                        text = { Text(stringResource(R.string.live_add_player)) },
-                    )
+                if (!state.isLoading && !state.isFinished && !state.isMissing) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        // Grey, so it reads as a way out of the game rather than as part of it.
+                        ExtendedFloatingActionButton(
+                            onClick = { onHandOff(state.gameId) },
+                            icon = { Icon(Icons.Filled.QrCode2, contentDescription = null) },
+                            text = { Text(stringResource(R.string.handoff_button)) },
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Spacer(Modifier.weight(1f))
+                        if (tab == LiveTab.STATS) {
+                            ExtendedFloatingActionButton(
+                                onClick = viewModel::onAddPlayer,
+                                icon = { Icon(Icons.Filled.PersonAdd, contentDescription = null) },
+                                text = { Text(stringResource(R.string.live_add_player)) },
+                            )
+                        }
+                    }
                 }
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },

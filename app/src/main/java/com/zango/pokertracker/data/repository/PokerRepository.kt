@@ -9,6 +9,7 @@ import com.zango.pokertracker.domain.model.Player
 import com.zango.pokertracker.domain.model.PlayerStats
 import com.zango.pokertracker.domain.model.SettledPayment
 import com.zango.pokertracker.domain.model.Stakes
+import com.zango.pokertracker.domain.transfer.GameTransfer
 import kotlinx.coroutines.flow.Flow
 
 sealed interface CreatePlayerResult {
@@ -145,4 +146,18 @@ interface PokerRepository {
 
     /** Erases a game and everything recorded against it. Not reversible. */
     suspend fun deleteGame(gameId: Long)
+
+    /**
+     * The id of a game on this phone that [transfer] is a copy of, if any: the same game handed
+     * back, or handed over twice. Matched on name and start time, which no two games share.
+     */
+    suspend fun findCopyOf(transfer: GameTransfer): Long?
+
+    /**
+     * Takes over a game handed on from another phone, all or nothing. Players are matched to the
+     * roster by name and added to it when missing. [replacing] is an older copy of the same game
+     * that goes in the same transaction, so the phone is never left with both or neither.
+     * Returns the new game's id.
+     */
+    suspend fun importGame(transfer: GameTransfer, replacing: Long? = null): Long
 }

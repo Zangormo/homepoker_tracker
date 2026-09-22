@@ -7,7 +7,11 @@ import com.zango.pokertracker.core.text.UiText
 import com.zango.pokertracker.core.time.formatElapsed
 import com.zango.pokertracker.core.time.formatGameDate
 import com.zango.pokertracker.data.repository.PokerRepository
+import com.zango.pokertracker.core.money.Money
 import com.zango.pokertracker.domain.model.GameSummary
+import com.zango.pokertracker.domain.transfer.DecodedTransfer
+import com.zango.pokertracker.domain.transfer.GameTransfer
+import com.zango.pokertracker.domain.transfer.GameTransferCodec
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -34,11 +38,14 @@ class HistoryViewModel @Inject constructor(
 
     private val pendingDeleteId = MutableStateFlow<Long?>(null)
 
+    /** A decoded handover waiting for the host to confirm, with the copy it would replace. */
+    private val pendingTransfer = MutableStateFlow<PendingTransfer?>(null)
+
     private val eventChannel = Channel<HistoryEvent>(Channel.BUFFERED)
     val events: Flow<HistoryEvent> = eventChannel.receiveAsFlow()
 
     val uiState: StateFlow<HistoryUiState> =
-        combine(repository.observeGameSummaries(), pendingDeleteId, ::buildState)
+        combine(repository.observeGameSummaries(), pendingDeleteId, pendingTransfer, ::buildState)
             .distinctUntilChanged()
             .stateIn(
                 scope = viewModelScope,
@@ -71,13 +78,62 @@ class HistoryViewModel @Inject constructor(
         }
     }
 
-    private fun buildState(summaries: List<GameSummary>, pendingId: Long?): HistoryUiState {
+    /**
+     * Text from a scanned QR code or an opened file. Anything that is not a game, or comes from a
+     * newer app, is turned away with a reason; a game is held for the host to confirm.
+     */
+    fun onTransferReceived(text: String) {
+        viewModelScope.launch {
+            when (val decoded = GameTransferCodec.decode(text)) {
+                is DecodedTransfer.Game -> {
+                    val copy = runCatching { repository.findCopyOf(decoded.transfer) }.getOrNull()
+                    pendingTransfer.value = PendingTransfer(decoded.transfer, copy)
+                }
+
+                DecodedTransfer.NotAGame ->
+                    eventChannel.send(HistoryEvent.Message(UiText.of(R.string.error_receive_not_a_game)))
+
+                DecodedTransfer.TooNew ->
+                    eventChannel.send(HistoryEvent.Message(UiText.of(R.string.error_receive_too_new)))
+            }
+        }
+    }
+
+    /** The phone could not scan at all, typically because Google Play services is missing. */
+    fun onScannerUnavailable() {
+        viewModelScope.launch {
+            eventChannel.send(HistoryEvent.Message(UiText.of(R.string.error_receive_scanner)))
+        }
+    }
+
+    fun onDismissIncoming() {
+        pendingTransfer.value = null
+    }
+
+    fun onConfirmIncoming() {
+        val pending = pendingTransfer.value ?: return
+        pendingTransfer.value = null
+        viewModelScope.launch {
+            runCatching { repository.importGame(pending.transfer, replacing = pending.copyId) }
+                .onSuccess { eventChannel.send(HistoryEvent.OpenGame(it)) }
+                .onFailure {
+                    eventChannel.send(HistoryEvent.Message(UiText.of(R.string.error_receive_failed)))
+                }
+        }
+    }
+
+    private fun buildState(
+        summaries: List<GameSummary>,
+        pendingId: Long?,
+        transfer: PendingTransfer?,
+    ): HistoryUiState {
         val rows = summaries.map { it.toRow() }
         return HistoryUiState(
             isLoading = false,
             inProgress = rows.filter { it.isInProgress },
             finished = rows.filter { !it.isInProgress },
             pendingDeletion = rows.firstOrNull { it.gameId == pendingId },
+            incoming = transfer?.toIncoming(),
         )
     }
 
@@ -85,6 +141,20 @@ class HistoryViewModel @Inject constructor(
         const val STOP_TIMEOUT_MILLIS = 5_000L
     }
 }
+
+internal data class PendingTransfer(val transfer: GameTransfer, val copyId: Long?)
+
+internal fun PendingTransfer.toIncoming(
+    zone: ZoneId = ZoneId.systemDefault(),
+    locale: Locale = Locale.getDefault(),
+) = IncomingGame(
+    name = transfer.name,
+    dateLabel = formatGameDate(transfer.startedAt, zone, locale),
+    playerCount = transfer.seats.size,
+    buyInCount = transfer.buyInCount,
+    totalOnTable = Money(transfer.totalOnTableMicros),
+    replacesCopy = copyId != null,
+)
 
 internal fun GameSummary.toRow(
     zone: ZoneId = ZoneId.systemDefault(),

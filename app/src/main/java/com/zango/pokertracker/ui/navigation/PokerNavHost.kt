@@ -27,6 +27,7 @@ import androidx.navigation.navArgument
 import com.zango.pokertracker.ui.creategame.CreateGameScreen
 import com.zango.pokertracker.ui.donation.DonationPrompt
 import com.zango.pokertracker.ui.endgame.EndGameScreen
+import com.zango.pokertracker.ui.handoff.HandOffScreen
 import com.zango.pokertracker.ui.history.HistoryScreen
 import com.zango.pokertracker.ui.livegame.LiveGameScreen
 import com.zango.pokertracker.ui.players.PlayerDetailScreen
@@ -49,6 +50,7 @@ object Routes {
     const val END_GAME = "end-game/{$GAME_ID}"
     const val SETTLEMENT = "settlement/{$GAME_ID}?$OFFER_DONATION={$OFFER_DONATION}"
     const val PLAYER_DETAIL = "player/{$PLAYER_ID}"
+    const val HAND_OFF = "hand-off/{$GAME_ID}"
 
     fun liveGame(gameId: Long): String = "live-game/$gameId"
 
@@ -62,6 +64,8 @@ object Routes {
         if (offerDonation) "settlement/$gameId?$OFFER_DONATION=true" else "settlement/$gameId"
 
     fun player(playerId: Long): String = "player/$playerId"
+
+    fun handOff(gameId: Long): String = "hand-off/$gameId"
 }
 
 private fun gameIdArgument() = listOf(navArgument(Routes.GAME_ID) { type = NavType.LongType })
@@ -281,6 +285,24 @@ private fun PokerRoutes(
                 onBack = { navController.popFrom(entry) },
                 onEndGame = { gameId ->
                     navController.whileOn(entry) { navController.navigate(Routes.endGame(gameId)) }
+                },
+                onHandOff = { gameId ->
+                    navController.whileOn(entry) { navController.navigate(Routes.handOff(gameId)) }
+                },
+            )
+        }
+
+        composable(Routes.HAND_OFF, arguments = gameIdArgument()) { entry ->
+            GuardedBack(navController, entry)
+            HandOffScreen(
+                onBack = { navController.popFrom(entry) },
+                onRemoved = {
+                    navController.whileOn(entry) {
+                        // The game is gone from this phone, so its live screen is too.
+                        navController.navigate(Routes.HISTORY) {
+                            popUpTo(Routes.HISTORY) { inclusive = true }
+                        }
+                    }
                 },
             )
         }

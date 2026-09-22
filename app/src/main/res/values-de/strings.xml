@@ -34,6 +34,8 @@
     <!-- Game hub (history) -->
     <string name="history_title">Spiele</string>
     <string name="history_new_game">Neues Spiel</string>
+    <string name="history_create_game">Neues Spiel erstellen</string>
+    <string name="history_load_game">Spiel laden</string>
     <string name="history_empty_title">Noch keine Spiele</string>
     <string name="history_empty_body">Tippe auf Neues Spiel, um eins anzulegen.</string>
     <string name="history_section_running">Läuft noch</string>
@@ -537,5 +539,33 @@
     <string name="donation_ads_note_after_ad">Eine kleine Spende schaltet die Werbung für immer ab – auch diese.</string>
     <string name="donation_no_thanks">Nein, danke</string>
     <string name="donation_donate">Jetzt spenden</string>
+
+    <!-- Handing a running game to another host's phone -->
+    <string name="handoff_title">Spiel übergeben</string>
+    <string name="handoff_button">Übergeben</string>
+    <string name="handoff_qr_description">QR-Code mit dem ganzen Spiel</string>
+    <string name="handoff_instructions">Öffne auf dem anderen Handy Poker Tracker, tippe auf Neues Spiel, dann auf Spiel laden, und scanne diesen Code.</string>
+    <string name="handoff_too_big">Dieses Spiel ist zu groß für einen QR-Code. Sende es als Datei und öffne es auf dem anderen Handy über Neues Spiel und dann Spiel laden.</string>
+    <string name="handoff_send_file_instead">Stattdessen als Datei senden</string>
+    <string name="handoff_send_file">Als Datei senden</string>
+    <string name="handoff_share_chooser">Spiel senden</string>
+    <string name="handoff_done">Fertig, übergeben</string>
+    <string name="handoff_remove_title">Spiel von diesem Handy entfernen?</string>
+    <string name="handoff_remove_body">Ab jetzt führt das andere Handy das Spiel. Behältst du hier eine Kopie, können zwei Handys denselben Abend getrennt erfassen.</string>
+    <string name="handoff_remove_confirm">Entfernen</string>
+    <string name="handoff_keep">Kopie behalten</string>
+
+    <string name="receive_title">Spiel empfangen</string>
+    <string name="receive_body">Übernimm ein Spiel, das bisher jemand anderes geführt hat.</string>
+    <string name="receive_scan">QR-Code scannen</string>
+    <string name="receive_file">Datei öffnen</string>
+    <string name="receive_confirm_title">%1$s übernehmen?</string>
+    <string name="receive_started">Begonnen: %1$s</string>
+    <string name="receive_replaces_copy">Du hast dieses Spiel schon. Beim Übernehmen wird deine Kopie durch dieses ersetzt.</string>
+    <string name="receive_confirm">Übernehmen</string>
+    <string name="error_receive_not_a_game">Das ist kein Poker-Tracker-Spiel</string>
+    <string name="error_receive_too_new">Dieses Spiel stammt aus einer neueren Version von Poker Tracker. Aktualisiere die App und versuche es noch einmal.</string>
+    <string name="error_receive_scanner">Scannen ist auf diesem Handy nicht möglich. Lass dir das Spiel als Datei schicken.</string>
+    <string name="error_receive_failed">Das Spiel konnte nicht übernommen werden</string>
 
 </resources>

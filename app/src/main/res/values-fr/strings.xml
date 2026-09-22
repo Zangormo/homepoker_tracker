@@ -35,6 +35,8 @@
     <!-- Game hub (history) -->
     <string name="history_title">Parties</string>
     <string name="history_new_game">Nouvelle partie</string>
+    <string name="history_create_game">Créer une partie</string>
+    <string name="history_load_game">Charger une partie</string>
     <string name="history_empty_title">Aucune partie pour l’instant</string>
     <string name="history_empty_body">Appuyez sur Nouvelle partie pour en préparer une.</string>
     <string name="history_section_running">En cours</string>
@@ -559,5 +561,33 @@
     <string name="donation_ads_note_after_ad">Un petit don supprime toutes les pubs pour de bon, y compris celle-là.</string>
     <string name="donation_no_thanks">Non merci</string>
     <string name="donation_donate">Faire un don</string>
+
+    <!-- Handing a running game to another host's phone -->
+    <string name="handoff_title">Transmettre la partie</string>
+    <string name="handoff_button">Transmettre</string>
+    <string name="handoff_qr_description">Code QR contenant toute la partie</string>
+    <string name="handoff_instructions">Sur l’autre téléphone, ouvrez Poker Tracker, appuyez sur Nouvelle partie, puis sur Charger une partie, et scannez ce code.</string>
+    <string name="handoff_too_big">Cette partie est trop grande pour un seul code QR. Envoyez-la sous forme de fichier et ouvrez-la sur l’autre téléphone avec Nouvelle partie, puis Charger une partie.</string>
+    <string name="handoff_send_file_instead">Envoyer plutôt un fichier</string>
+    <string name="handoff_send_file">Envoyer un fichier</string>
+    <string name="handoff_share_chooser">Envoyer la partie</string>
+    <string name="handoff_done">C’est fait, partie transmise</string>
+    <string name="handoff_remove_title">Supprimer la partie de ce téléphone ?</string>
+    <string name="handoff_remove_body">C’est l’autre téléphone qui la gère désormais. Garder une copie ici, c’est risquer que deux téléphones enregistrent la même soirée chacun de leur côté.</string>
+    <string name="handoff_remove_confirm">La supprimer</string>
+    <string name="handoff_keep">Garder une copie</string>
+
+    <string name="receive_title">Recevoir une partie</string>
+    <string name="receive_body">Reprenez une partie qu’un autre hôte gérait.</string>
+    <string name="receive_scan">Scanner un code QR</string>
+    <string name="receive_file">Ouvrir un fichier</string>
+    <string name="receive_confirm_title">Reprendre %1$s ?</string>
+    <string name="receive_started">Commencée le %1$s</string>
+    <string name="receive_replaces_copy">Vous avez déjà cette partie. La reprendre remplace votre copie par celle-ci.</string>
+    <string name="receive_confirm">Reprendre</string>
+    <string name="error_receive_not_a_game">Ce n’est pas une partie Poker Tracker</string>
+    <string name="error_receive_too_new">Cette partie vient d’une version plus récente de Poker Tracker. Mettez l’application à jour et réessayez.</string>
+    <string name="error_receive_scanner">Le scan n’est pas disponible sur ce téléphone. Demandez la partie sous forme de fichier.</string>
+    <string name="error_receive_failed">Impossible de reprendre la partie</string>
 
 </resources>

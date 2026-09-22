@@ -64,6 +64,10 @@ interface GameDao {
     @Query("SELECT * FROM games WHERE id = :id")
     suspend fun load(id: Long): GameEntity?
 
+    /** A game already on this phone that an incoming handover is a copy of. */
+    @Query("SELECT id FROM games WHERE startedAt = :startedAt AND name = :name LIMIT 1")
+    suspend fun findCopy(name: String, startedAt: Long): Long?
+
     @Query("UPDATE games SET status = :status, endedAt = :endedAt WHERE id = :id")
     suspend fun finish(id: Long, status: GameStatus, endedAt: Long)
 

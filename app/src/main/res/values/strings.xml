@@ -41,6 +41,8 @@
 
     <string name="history_title">Game hub</string>
     <string name="history_new_game">New game</string>
+    <string name="history_create_game">Create new game</string>
+    <string name="history_load_game">Load a game</string>
     <string name="history_empty_title">No games yet</string>
     <string name="history_empty_body">Tap New game to set one up.</string>
     <string name="history_section_running">Still running</string>
@@ -678,5 +680,38 @@
     <string name="donation_ads_note_after_ad">A small donation turns off all ads for good, that one included.</string>
     <string name="donation_no_thanks">No, thanks</string>
     <string name="donation_donate">Donate now</string>
+
+    <!-- ==================================================================================== -->
+    <!-- Handing a running game to another host's phone                                       -->
+    <!-- ==================================================================================== -->
+
+    <string name="handoff_title">Hand over game</string>
+    <string name="handoff_button">Hand over</string>
+    <string name="handoff_qr_description">QR code with the whole game</string>
+    <string name="handoff_instructions">On the other phone, open Poker Tracker, tap New game, then Load a game, and scan this code.</string>
+    <string name="handoff_too_big">This game is too big for one QR code. Send it as a file, and open it on the other phone with New game, then Load a game.</string>
+    <string name="handoff_send_file_instead">Send as a file instead</string>
+    <string name="handoff_send_file">Send as a file</string>
+    <string name="handoff_share_chooser">Send the game</string>
+    <string name="handoff_done">Done, it is handed over</string>
+    <string name="handoff_remove_title">Remove the game from this phone?</string>
+    <string name="handoff_remove_body">The other phone runs it from now on. Keeping a copy here means two phones can record the same night separately.</string>
+    <string name="handoff_remove_confirm">Remove it</string>
+    <string name="handoff_keep">Keep a copy</string>
+
+    <string name="receive_title">Receive game</string>
+    <string name="receive_body">Take over a game another host has been running.</string>
+    <string name="receive_scan">Scan QR code</string>
+    <string name="receive_file">Open a file</string>
+    <!-- %1$s: game name -->
+    <string name="receive_confirm_title">Take over %1$s?</string>
+    <!-- %1$s: when the game started -->
+    <string name="receive_started">Started %1$s</string>
+    <string name="receive_replaces_copy">You already have this game. Taking it over replaces your copy with this one.</string>
+    <string name="receive_confirm">Take over</string>
+    <string name="error_receive_not_a_game">That is not a Poker Tracker game</string>
+    <string name="error_receive_too_new">This game comes from a newer version of Poker Tracker. Update the app and try again.</string>
+    <string name="error_receive_scanner">Scanning is not available on this phone. Ask for the game as a file instead.</string>
+    <string name="error_receive_failed">Could not take over the game</string>
 
 </resources>

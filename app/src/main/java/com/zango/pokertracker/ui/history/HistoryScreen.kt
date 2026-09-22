@@ -1,6 +1,7 @@
 package com.zango.pokertracker.ui.history
 
 import androidx.compose.foundation.BorderStroke
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +17,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
@@ -24,7 +24,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +40,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -79,11 +79,19 @@ fun HistoryScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     val context = LocalContext.current
+    var choosingHowToReceive by rememberSaveable { mutableStateOf(false) }
+    var menuOpen by rememberSaveable { mutableStateOf(false) }
+    BackHandler(enabled = menuOpen) { menuOpen = false }
+    val receiver = rememberGameReceiver(
+        onText = viewModel::onTransferReceived,
+        onScannerUnavailable = viewModel::onScannerUnavailable,
+    )
 
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
                 is HistoryEvent.Message -> snackbarHostState.showSnackbar(event.text.resolve(context))
+                is HistoryEvent.OpenGame -> onResumeGame(event.gameId)
             }
         }
     }
@@ -112,25 +120,57 @@ fun HistoryScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onNewGame,
-                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-                text = { Text(stringResource(R.string.history_new_game)) },
+            NewGameMenu(
+                expanded = menuOpen,
+                onToggle = { menuOpen = !menuOpen },
+                onCreate = {
+                    menuOpen = false
+                    onNewGame()
+                },
+                onLoad = {
+                    menuOpen = false
+                    choosingHowToReceive = true
+                },
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        when {
-            state.isLoading -> Centered(Modifier.padding(padding)) { CircularProgressIndicator() }
-            state.isEmpty -> Centered(Modifier.padding(padding)) { EmptyHistory() }
-            else -> HistoryList(
-                state = state,
-                onResumeGame = onResumeGame,
-                onOpenSettlement = onOpenSettlement,
-                onDeleteRequested = viewModel::onDeleteRequested,
-                modifier = Modifier.padding(padding),
-            )
+        Box {
+            when {
+                state.isLoading -> Centered(Modifier.padding(padding)) { CircularProgressIndicator() }
+                state.isEmpty -> Centered(Modifier.padding(padding)) { EmptyHistory() }
+                else -> HistoryList(
+                    state = state,
+                    onResumeGame = onResumeGame,
+                    onOpenSettlement = onOpenSettlement,
+                    onDeleteRequested = viewModel::onDeleteRequested,
+                    modifier = Modifier.padding(padding),
+                )
+            }
+            NewGameMenuScrim(visible = menuOpen, onDismiss = { menuOpen = false })
         }
+    }
+
+    if (choosingHowToReceive) {
+        ReceiveGameDialog(
+            onScan = {
+                choosingHowToReceive = false
+                receiver.scan()
+            },
+            onOpenFile = {
+                choosingHowToReceive = false
+                receiver.openFile()
+            },
+            onDismiss = { choosingHowToReceive = false },
+        )
+    }
+
+    state.incoming?.let { game ->
+        IncomingGameDialog(
+            game = game,
+            onConfirm = viewModel::onConfirmIncoming,
+            onDismiss = viewModel::onDismissIncoming,
+        )
     }
 
     state.pendingDeletion?.let { row ->

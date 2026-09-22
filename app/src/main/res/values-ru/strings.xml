@@ -34,6 +34,8 @@
     <!-- Game hub -->
     <string name="history_title">Игры</string>
     <string name="history_new_game">Новая игра</string>
+    <string name="history_create_game">Создать игру</string>
+    <string name="history_load_game">Загрузить игру</string>
     <string name="history_empty_title">Игр пока нет</string>
     <string name="history_empty_body">Нажмите «Новая игра», чтобы начать.</string>
     <string name="history_section_running">Идут сейчас</string>
@@ -587,5 +589,36 @@
     <string name="donation_ads_note_after_ad">Небольшое пожертвование навсегда отключает всю рекламу, в том числе эту.</string>
     <string name="donation_no_thanks">Нет, спасибо</string>
     <string name="donation_donate">Поддержать</string>
+
+    <!-- ==================================================================================== -->
+    <!-- Handing a running game to another host's phone                                       -->
+    <!-- ==================================================================================== -->
+
+    <string name="handoff_title">Передать игру</string>
+    <string name="handoff_button">Передать</string>
+    <string name="handoff_qr_description">QR-код со всей игрой</string>
+    <string name="handoff_instructions">На другом телефоне откройте Poker Tracker, нажмите «Новая игра», затем «Загрузить игру» и отсканируйте этот код.</string>
+    <string name="handoff_too_big">Игра слишком большая для одного QR-кода. Отправьте её файлом и откройте на другом телефоне через «Новая игра» → «Загрузить игру».</string>
+    <string name="handoff_send_file_instead">Отправить файлом</string>
+    <string name="handoff_send_file">Отправить файлом</string>
+    <string name="handoff_share_chooser">Отправить игру</string>
+    <string name="handoff_done">Готово, игра передана</string>
+    <string name="handoff_remove_title">Удалить игру с этого телефона?</string>
+    <string name="handoff_remove_body">Теперь её ведёт другой телефон. Если оставить копию здесь, один и тот же вечер могут записывать на двух телефонах по отдельности.</string>
+    <string name="handoff_remove_confirm">Удалить</string>
+    <string name="handoff_keep">Оставить копию</string>
+
+    <string name="receive_title">Получить игру</string>
+    <string name="receive_body">Взять на себя игру, которую вёл другой хозяин стола.</string>
+    <string name="receive_scan">Сканировать QR-код</string>
+    <string name="receive_file">Открыть файл</string>
+    <string name="receive_confirm_title">Принять игру «%1$s»?</string>
+    <string name="receive_started">Начало: %1$s</string>
+    <string name="receive_replaces_copy">Эта игра уже есть на телефоне. Принятая игра заменит вашу копию.</string>
+    <string name="receive_confirm">Принять</string>
+    <string name="error_receive_not_a_game">Это не игра Poker Tracker</string>
+    <string name="error_receive_too_new">Эта игра из более новой версии Poker Tracker. Обновите приложение и попробуйте ещё раз.</string>
+    <string name="error_receive_scanner">Сканирование на этом телефоне недоступно. Попросите прислать игру файлом.</string>
+    <string name="error_receive_failed">Не удалось принять игру</string>
 
 </resources>
