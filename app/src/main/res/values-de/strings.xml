@@ -27,7 +27,9 @@
 
     <!-- Navigation drawer -->
     <string name="drawer_tagline">Die Bank für deine Heimrunde</string>
-    <string name="destination_game_hub">Spiele</string>
+    <string name="destination_cash_games">Cash Games</string>
+    <string name="destination_tournaments">Turniere</string>
+    <string name="destination_coming_soon">Demnächst verfügbar</string>
     <string name="destination_players">Spieler</string>
     <string name="destination_settings">Einstellungen</string>
 

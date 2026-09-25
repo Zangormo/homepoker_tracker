@@ -27,7 +27,9 @@
 
     <!-- Navigation drawer -->
     <string name="drawer_tagline">Касса вашей домашней игры</string>
-    <string name="destination_game_hub">Игры</string>
+    <string name="destination_cash_games">Кэш-игры</string>
+    <string name="destination_tournaments">Турниры</string>
+    <string name="destination_coming_soon">Скоро</string>
     <string name="destination_players">Игроки</string>
     <string name="destination_settings">Настройки</string>
 

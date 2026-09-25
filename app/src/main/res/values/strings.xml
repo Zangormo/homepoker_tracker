@@ -31,7 +31,9 @@
     <!-- ==================================================================================== -->
 
     <string name="drawer_tagline">The bank for your home game</string>
-    <string name="destination_game_hub">Game hub</string>
+    <string name="destination_cash_games">Cash games</string>
+    <string name="destination_tournaments">Tournaments</string>
+    <string name="destination_coming_soon">Coming soon</string>
     <string name="destination_players">Players</string>
     <string name="destination_settings">Settings</string>
 

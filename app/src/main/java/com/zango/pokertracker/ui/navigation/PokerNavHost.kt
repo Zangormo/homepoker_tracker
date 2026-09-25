@@ -134,7 +134,7 @@ fun PokerNavHost(
     val scope = rememberCoroutineScope()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
-    val isTopLevel = AppDestination.entries.any { it.route == currentRoute }
+    val isTopLevel = AppDestination.entries.any { it.route != null && it.route == currentRoute }
 
     ModalNavigationDrawer(
         modifier = modifier,
@@ -147,8 +147,9 @@ fun PokerNavHost(
                 currentRoute = currentRoute,
                 onSelect = { destination ->
                     scope.launch { drawerState.close() }
-                    if (destination.route != currentRoute) {
-                        navController.navigate(destination.route) {
+                    val route = destination.route
+                    if (route != null && route != currentRoute) {
+                        navController.navigate(route) {
                             // Switching tabs is not a step deeper into the app: the back stack
                             // stays one level tall, and each tab keeps where it was scrolled to.
                             popUpTo(navController.graph.findStartDestination().id) {

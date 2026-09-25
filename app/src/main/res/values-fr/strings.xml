@@ -28,7 +28,9 @@
 
     <!-- Navigation drawer -->
     <string name="drawer_tagline">La banque de votre partie entre amis</string>
-    <string name="destination_game_hub">Parties</string>
+    <string name="destination_cash_games">Parties cash</string>
+    <string name="destination_tournaments">Tournois</string>
+    <string name="destination_coming_soon">Bientôt disponible</string>
     <string name="destination_players">Joueurs</string>
     <string name="destination_settings">Paramètres</string>
 

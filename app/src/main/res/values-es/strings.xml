@@ -28,7 +28,9 @@
 
     <!-- Navigation drawer -->
     <string name="drawer_tagline">La banca de tu partida casera</string>
-    <string name="destination_game_hub">Partidas</string>
+    <string name="destination_cash_games">Partidas cash</string>
+    <string name="destination_tournaments">Torneos</string>
+    <string name="destination_coming_soon">Próximamente</string>
     <string name="destination_players">Jugadores</string>
     <string name="destination_settings">Ajustes</string>
 

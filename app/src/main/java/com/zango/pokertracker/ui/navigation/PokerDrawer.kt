@@ -1,5 +1,6 @@
 package com.zango.pokertracker.ui.navigation
 
+import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Casino
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
@@ -20,7 +22,9 @@ import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -30,13 +34,17 @@ import com.zango.pokertracker.ui.theme.PokerTrackerTheme
 /**
  * The tabs behind the menu button. The games and the people who play them are where the app
  * lives; settings sit below them because they are visited and left, not worked in.
+ *
+ * A destination with no [route] is not built yet: it is drawn greyed out, and a tap on it only
+ * says so, leaving the current tab where it is.
  */
 enum class AppDestination(
-    val route: String,
+    val route: String?,
     @StringRes val label: Int,
     val icon: ImageVector,
 ) {
-    GAME_HUB(Routes.HISTORY, R.string.destination_game_hub, Icons.Filled.Casino),
+    GAME_HUB(Routes.HISTORY, R.string.destination_cash_games, Icons.Filled.Casino),
+    TOURNAMENTS(null, R.string.destination_tournaments, Icons.Filled.EmojiEvents),
     PLAYERS(Routes.PLAYERS, R.string.destination_players, Icons.Filled.Group),
     SETTINGS(Routes.SETTINGS, R.string.destination_settings, Icons.Filled.Settings),
 }
@@ -71,13 +79,24 @@ fun PokerDrawerContent(
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outline)
         Spacer(Modifier.height(12.dp))
+        val context = LocalContext.current
+        val comingSoon = stringResource(R.string.destination_coming_soon)
         AppDestination.entries.forEach { destination ->
+            val available = destination.route != null
             NavigationDrawerItem(
                 label = { Text(stringResource(destination.label)) },
                 icon = { Icon(destination.icon, contentDescription = null) },
-                selected = destination.route == currentRoute,
-                onClick = { onSelect(destination) },
-                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
+                selected = available && destination.route == currentRoute,
+                onClick = {
+                    if (available) {
+                        onSelect(destination)
+                    } else {
+                        Toast.makeText(context, comingSoon, Toast.LENGTH_SHORT).show()
+                    }
+                },
+                modifier = Modifier
+                    .padding(NavigationDrawerItemDefaults.ItemPadding)
+                    .alpha(if (available) 1f else 0.38f),
                 colors = NavigationDrawerItemDefaults.colors(
                     selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                     selectedIconColor = MaterialTheme.colorScheme.primary,
