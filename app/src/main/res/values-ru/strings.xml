@@ -275,6 +275,7 @@
     <string name="settings_blind_count">%1$d из %2$d</string>
     <string name="settings_blind_sizes_empty">Уровней не осталось. Добавьте те, на которых играете.</string>
     <string name="settings_add_blinds">Добавить блайнды</string>
+    <string name="settings_version">Версия %1$s</string>
     <string name="settings_add_blinds_title">Добавить блайнды</string>
     <string name="settings_remove_blinds">Удалить %1$s</string>
 

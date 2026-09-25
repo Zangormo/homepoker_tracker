@@ -339,6 +339,7 @@
     <string name="settings_blind_count">%1$d of %2$d</string>
     <string name="settings_blind_sizes_empty">No levels left. Add the ones you play.</string>
     <string name="settings_add_blinds">Add blinds</string>
+    <string name="settings_version">Version %1$s</string>
     <string name="settings_add_blinds_title">Add blinds</string>
     <!-- %1$s: the level, e.g. "0.05 / 0.10" -->
     <string name="settings_remove_blinds">Remove %1$s</string>

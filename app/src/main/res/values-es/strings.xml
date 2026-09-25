@@ -273,6 +273,7 @@
     <string name="settings_blind_count">%1$d de %2$d</string>
     <string name="settings_blind_sizes_empty">No quedan niveles. Añade los que juegues.</string>
     <string name="settings_add_blinds">Añadir ciegas</string>
+    <string name="settings_version">Versión %1$s</string>
     <string name="settings_add_blinds_title">Añadir ciegas</string>
     <string name="settings_remove_blinds">Quitar %1$s</string>
 

@@ -52,11 +52,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.zango.pokertracker.BuildConfig
 import com.zango.pokertracker.R
 import com.zango.pokertracker.core.locale.AppCurrencyStore
 import com.zango.pokertracker.core.locale.AppLanguage
@@ -258,6 +260,16 @@ private fun SettingsContent(
             Text(stringResource(R.string.settings_add_blinds))
         }
 
+        // Last and quiet: looked up when reporting a problem, never worked with.
+        Text(
+            stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 24.dp),
+        )
     }
 }
 
