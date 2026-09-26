@@ -38,3 +38,7 @@ Thumbs.db
 /keys/
 *.jks
 *.keystore
+# Play Console key exports (PEPK) and certificates / keys in other containers.
+*.pepk
+*.p12
+*.pem

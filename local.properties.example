@@ -10,15 +10,15 @@ RELEASE_STORE_PASSWORD=changeme
 RELEASE_KEY_ALIAS=upload
 RELEASE_KEY_PASSWORD=changeme
 
-# AdMob. All optional: when a key is missing the build uses Google's public test IDs (below), which
-# only ever serve test ads. Replace with the real IDs from the AdMob console before release.
-ADMOB_APP_ID=ca-app-pub-3940256099942544~3347511713
-ADMOB_BANNER_CREATE_GAME_UNIT_ID=ca-app-pub-3940256099942544/9214589741
-ADMOB_BANNER_HISTORY_UNIT_ID=ca-app-pub-3940256099942544/9214589741
-ADMOB_BANNER_LIVE_GAME_UNIT_ID=ca-app-pub-3940256099942544/9214589741
+# AdMob: the real IDs from the AdMob console, read by the release build only. Debug builds ignore
+# these and always use Google's public test IDs. A release build fails if any of them is missing.
+ADMOB_APP_ID=ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX
+ADMOB_BANNER_CREATE_GAME_UNIT_ID=ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX
+ADMOB_BANNER_HISTORY_UNIT_ID=ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX
+ADMOB_BANNER_LIVE_GAME_UNIT_ID=ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX
 # Create this one as an interstitial with video enabled in the AdMob console.
-ADMOB_INTERSTITIAL_BEFORE_SETTLEMENT_UNIT_ID=ca-app-pub-3940256099942544/1033173712
-ADMOB_INTERSTITIAL_PAID_UP_UNIT_ID=ca-app-pub-3940256099942544/1033173712
+ADMOB_INTERSTITIAL_BEFORE_SETTLEMENT_UNIT_ID=ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX
+ADMOB_INTERSTITIAL_PAID_UP_UNIT_ID=ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX
 
 # Debug builds only. The hashed device id UMP prints to logcat on first run; when set, the consent
 # form is requested as if this phone were in the EEA.

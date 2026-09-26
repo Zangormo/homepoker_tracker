@@ -40,7 +40,7 @@
         android:localeConfig="@xml/locales_config"
         android:theme="@style/Theme.PokerTracker"
         tools:ignore="UnusedAttribute">
-        <!-- Filled in by app/build.gradle.kts: ADMOB_APP_ID, or Google's sample app ID. -->
+        <!-- Filled in by app/build.gradle.kts: ADMOB_APP_ID for release, Google's sample app ID for debug. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="${admobAppId}" />

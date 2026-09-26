@@ -121,7 +121,7 @@ Then edit it:
 - `sdk.dir`: path to your Android SDK. Android Studio fills this in on its own.
 - `RELEASE_STORE_FILE`: **required, even for debug builds.** The release build type looks up its signing config during Gradle configuration. If this key is missing, every task fails with `SigningConfig with name 'release' not found`. For a debug build, any path works and the file does not have to exist.
 - `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS`, `RELEASE_KEY_PASSWORD`: only needed to sign a release build with your own keystore.
-- `ADMOB_*`: optional. If a key is missing, the build uses Google's public test ad IDs, so a local build only ever shows test ads.
+- `ADMOB_*`: the real AdMob IDs, used only by the release build. A debug build ignores them and always uses Google's public test ad IDs, so it never shows real ads. A release build fails if any of them is missing.
 
 Each of these keys can also be passed as an environment variable with the same name. Never commit `local.properties` or a keystore. Both are git-ignored.
 

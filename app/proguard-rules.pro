@@ -31,8 +31,13 @@
 #     -keep class com.android.billingclient.api.** is added; it would only keep dead code.
 #
 #   Compose 1.9.2 (runtime / ui proguard.txt), Navigation 2.9.8, Lifecycle 2.10.0
-#     Ship their own rules. No kotlinx.serialization is used (routes are plain strings), so no
-#     serializer rules are needed.
+#     Ship their own rules. Navigation routes are plain strings, not @Serializable classes.
+#
+#   kotlinx.serialization 1.7.3 (core jar, META-INF/com.android.tools/r8/kotlinx-serialization-*.pro)
+#     Used only for the game handoff (domain/transfer/GameTransfer.kt). The library's rules keep
+#     the generated serializers of @Serializable classes. GameTransfer also calls
+#     GameTransfer.serializer() directly rather than looking it up by reflection, and JSON keys come
+#     from the serial names compiled into the serializer, so R8 renaming the fields is safe.
 #
 # GameStatus is stored in Room by Enum.name and read back with valueOf. The name string is a
 # constructor argument, not the field's identifier, so renaming does not change it, and
