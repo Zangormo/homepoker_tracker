@@ -18,4 +18,9 @@ class FakeRemoveAdsBilling : RemoveAdsBilling {
         launches++
         return nextLaunch
     }
+
+    override suspend fun debugResetPurchase(): RemoveAdsBilling.ResetResult {
+        isAdsRemoved.value = false
+        return RemoveAdsBilling.ResetResult.RESET
+    }
 }

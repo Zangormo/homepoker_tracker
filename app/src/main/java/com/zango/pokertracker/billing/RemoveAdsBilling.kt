@@ -30,6 +30,24 @@ interface RemoveAdsBilling {
     /** The price as Play formats it for this user, e.g. "€2.99". Null until Play has said. */
     val removeAdsPrice: StateFlow<String?>
 
+    /** How [debugResetPurchase] went. */
+    enum class ResetResult {
+        /** The purchase was consumed; ads are back and the product can be bought again. */
+        RESET,
+
+        /** Play holds no "Remove ads" purchase for this account. */
+        NOTHING_TO_RESET,
+
+        /** Play could not be reached, or refused the consume. */
+        FAILED,
+    }
+
     /** Opens Play's purchase sheet over [activity]. */
     suspend fun launchPurchaseFlow(activity: Activity): LaunchResult
+
+    /**
+     * Tester tools only (`BuildConfig.DEBUG_TOOLS`): consumes the "Remove ads" purchase so it can
+     * be bought again, and turns ads back on. Does nothing in any other build.
+     */
+    suspend fun debugResetPurchase(): ResetResult
 }

@@ -3,6 +3,7 @@ package com.zango.pokertracker.billing
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.ConsumeParams
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryProductDetailsResult
@@ -11,7 +12,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
 /*
- * Suspend versions of the three BillingClient calls the app makes.
+ * Suspend versions of the BillingClient calls the app makes.
  *
  * billing-ktx provides these, but every release that satisfies Play's v8+ requirement from 8.1.0
  * on is compiled with Kotlin 2.2-2.3 and pulls in kotlin-stdlib 2.2.10, which the Kotlin 2.0
@@ -47,6 +48,14 @@ internal suspend fun BillingClient.queryProductDetails(params: QueryProductDetai
 internal suspend fun BillingClient.acknowledge(params: AcknowledgePurchaseParams): BillingResult =
     suspendCancellableCoroutine { continuation ->
         acknowledgePurchase(params) { billingResult ->
+            if (continuation.isActive) continuation.resume(billingResult)
+        }
+    }
+
+/** Tester tools only: the app never consumes "Remove ads" otherwise. */
+internal suspend fun BillingClient.consume(params: ConsumeParams): BillingResult =
+    suspendCancellableCoroutine { continuation ->
+        consumeAsync(params) { billingResult, _ ->
             if (continuation.isActive) continuation.resume(billingResult)
         }
     }

@@ -340,6 +340,11 @@
     <string name="settings_blind_sizes_empty">No levels left. Add the ones you play.</string>
     <string name="settings_add_blinds">Add blinds</string>
     <string name="settings_version">Version %1$s</string>
+    <!-- Internal build only (BuildConfig.DEBUG_TOOLS): testers read English, so not translated. -->
+    <string name="debug_reset_purchase" translatable="false">Reset purchase (internal build)</string>
+    <string name="debug_reset_purchase_done" translatable="false">Purchase consumed. Ads are back.</string>
+    <string name="debug_reset_purchase_nothing" translatable="false">No Remove ads purchase on this account.</string>
+    <string name="debug_reset_purchase_failed" translatable="false">Reset failed. See logcat, tag BillingDebug.</string>
     <string name="settings_add_blinds_title">Add blinds</string>
     <!-- %1$s: the level, e.g. "0.05 / 0.10" -->
     <string name="settings_remove_blinds">Remove %1$s</string>

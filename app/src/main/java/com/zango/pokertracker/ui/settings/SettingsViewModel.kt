@@ -3,6 +3,7 @@ package com.zango.pokertracker.ui.settings
 import android.app.Activity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zango.pokertracker.BuildConfig
 import com.zango.pokertracker.R
 import com.zango.pokertracker.ads.AdPrivacy
 import com.zango.pokertracker.billing.RemoveAdsBilling
@@ -166,6 +167,19 @@ class SettingsViewModel @Inject constructor(
                 RemoveAdsBilling.LaunchResult.LAUNCHED -> return@launch
                 RemoveAdsBilling.LaunchResult.ALREADY_OWNED -> R.string.message_ads_already_removed
                 RemoveAdsBilling.LaunchResult.UNAVAILABLE -> R.string.error_purchase_unavailable
+            }
+            eventChannel.send(SettingsEvent.Message(UiText.of(message)))
+        }
+    }
+
+    /** Internal build only: consumes the "Remove ads" purchase so the purchase can be tested again. */
+    fun onDebugResetPurchase() {
+        if (!BuildConfig.DEBUG_TOOLS) return
+        viewModelScope.launch {
+            val message = when (billing.debugResetPurchase()) {
+                RemoveAdsBilling.ResetResult.RESET -> R.string.debug_reset_purchase_done
+                RemoveAdsBilling.ResetResult.NOTHING_TO_RESET -> R.string.debug_reset_purchase_nothing
+                RemoveAdsBilling.ResetResult.FAILED -> R.string.debug_reset_purchase_failed
             }
             eventChannel.send(SettingsEvent.Message(UiText.of(message)))
         }

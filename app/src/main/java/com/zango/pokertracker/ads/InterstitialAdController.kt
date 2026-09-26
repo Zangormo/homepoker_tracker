@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -78,9 +77,10 @@ class InterstitialAdController @Inject constructor(
                 .first { it }
             preload()
         }
-        // A purchase made mid-session: what is already in memory is never shown.
+        // A purchase made mid-session: what is already in memory is never shown. A refund or a
+        // reset mid-session: ads are loaded again at once, so the next break has one ready.
         scope.launch {
-            billingManager.isAdsRemoved.filter { it }.collect { loaded.clear() }
+            billingManager.isAdsRemoved.collect { removed -> if (removed) loaded.clear() else preload() }
         }
     }
 

@@ -158,6 +158,7 @@ fun SettingsScreen(
                     }
                 },
                 modifier = Modifier.padding(padding),
+                onDebugResetPurchase = viewModel::onDebugResetPurchase,
             )
         }
     }
@@ -184,6 +185,7 @@ private fun SettingsContent(
     onAdPrivacyOptions: () -> Unit,
     onOpenPrivacyPolicy: () -> Unit,
     modifier: Modifier = Modifier,
+    onDebugResetPurchase: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -270,6 +272,17 @@ private fun SettingsContent(
                 .fillMaxWidth()
                 .padding(top = 24.dp),
         )
+
+        // Internal build only. DEBUG_TOOLS is a compile-time constant, so R8 drops this branch,
+        // and the reset code only it reaches, from every other build.
+        if (BuildConfig.DEBUG_TOOLS) {
+            TextButton(
+                onClick = onDebugResetPurchase,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.debug_reset_purchase))
+            }
+        }
     }
 }
 

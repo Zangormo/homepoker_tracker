@@ -85,6 +85,11 @@ android {
             "UMP_TEST_DEVICE_HASHED_ID",
             (adsSetting("UMP_TEST_DEVICE_HASHED_ID") ?: "").quoted(),
         )
+
+        // Tester-only tools, such as resetting the "Remove ads" purchase in settings. True in the
+        // internal build alone. A compile-time constant, so in every other build R8 strips the
+        // code behind it along with the branch.
+        buildConfigField("boolean", "DEBUG_TOOLS", "false")
     }
 
     signingConfigs {
@@ -127,6 +132,19 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        // The release build, minified and signed with the release key under the release package,
+        // so it installs over the copy from Play and Google Play Billing sees the real product and
+        // the tester's purchases. A debug build cannot do that: Play knows nothing of ".debug".
+        // Adds the tester tools, and shows Google's test ads instead of live ones, since clicking
+        // your own live ads counts as invalid traffic. Never uploaded to Play.
+        create("internal") {
+            initWith(getByName("release"))
+            matchingFallbacks += "release"
+            versionNameSuffix = "-internal"
+            buildConfigField("boolean", "DEBUG_TOOLS", "true")
+            manifestPlaceholders["admobAppId"] = testAdMobAppId
+            adUnitTestIds.forEach { (key, testId) -> buildConfigField("String", key, testId.quoted()) }
         }
     }
     compileOptions {

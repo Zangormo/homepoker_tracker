@@ -11,13 +11,16 @@ import com.android.billingclient.api.BillingClient.BillingResponseCode
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.ConsumeParams
 import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
+import com.zango.pokertracker.BuildConfig
 import com.zango.pokertracker.billing.RemoveAdsBilling.LaunchResult
+import com.zango.pokertracker.billing.RemoveAdsBilling.ResetResult
 import com.zango.pokertracker.di.BillingPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -158,10 +161,15 @@ class BillingManager @Inject constructor(
                 .setProductType(BillingClient.ProductType.INAPP)
                 .build()
             val response = client.queryPurchases(params)
+            logPurchases("queryPurchasesAsync", response.billingResult, response.purchases)
             if (response.billingResult.responseCode != BillingResponseCode.OK) {
                 // Keep what is known; a failed read is not evidence of a refund.
                 log("Purchase query failed", response.billingResult)
                 _isEntitlementChecked.value = true
+                // The connection dropped between isReady and the call: reconnecting reads again.
+                if (response.billingResult.responseCode == BillingResponseCode.SERVICE_DISCONNECTED) {
+                    scheduleReconnect()
+                }
                 return@launch
             }
             processPurchases(response.purchases, isCompleteList = true)
@@ -204,6 +212,7 @@ class BillingManager @Inject constructor(
     }
 
     override fun onPurchasesUpdated(billingResult: BillingResult, purchases: List<Purchase>?) {
+        logPurchases("onPurchasesUpdated", billingResult, purchases.orEmpty())
         when (billingResult.responseCode) {
             BillingResponseCode.OK -> if (purchases != null) {
                 scope.launch { processPurchases(purchases, isCompleteList = false) }
@@ -255,8 +264,45 @@ class BillingManager @Inject constructor(
                     _isPurchasePending.value = false
                 }
             }
+            Log.d(DEBUG_TAG, "ownership=$ownership complete=$isCompleteList -> adsRemoved=${_isAdsRemoved.value}")
             _isEntitlementChecked.value = true
         }
+
+    override suspend fun debugResetPurchase(): ResetResult {
+        if (!BuildConfig.DEBUG_TOOLS) return ResetResult.FAILED
+        if (!client.isReady) {
+            startConnection()
+            return ResetResult.FAILED
+        }
+        val result = purchaseProcessing.withLock {
+            val params = QueryPurchasesParams.newBuilder()
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build()
+            val response = client.queryPurchases(params)
+            logPurchases("debugResetPurchase query", response.billingResult, response.purchases)
+            if (response.billingResult.responseCode != BillingResponseCode.OK) return@withLock ResetResult.FAILED
+
+            val ours = response.purchases.filter { PRODUCT_REMOVE_ADS in it.products }
+            if (ours.isEmpty()) return@withLock ResetResult.NOTHING_TO_RESET
+            val consumed = ours.map { purchase ->
+                val consumeResult = client.consume(
+                    ConsumeParams.newBuilder().setPurchaseToken(purchase.purchaseToken).build(),
+                )
+                Log.d(DEBUG_TAG, "consumeAsync ${purchase.orderId}: ${consumeResult.responseCode} ${consumeResult.debugMessage}")
+                consumeResult.responseCode == BillingResponseCode.OK
+            }
+            if (consumed.all { it }) {
+                setAdsRemoved(false)
+                _isPurchasePending.value = false
+                ResetResult.RESET
+            } else {
+                ResetResult.FAILED
+            }
+        }
+        // Whatever happened, Play's own record decides what shows next.
+        queryExistingPurchases()
+        return result
+    }
 
     private fun setAdsRemoved(removed: Boolean) {
         _isAdsRemoved.value = removed
@@ -319,11 +365,28 @@ class BillingManager @Inject constructor(
         Log.w(TAG, "$message: ${result.responseCode} ${result.debugMessage}")
     }
 
+    /**
+     * What Play answered, for `adb logcat -s BillingDebug`. Kept in release, where refunds and
+     * restores are tested; the purchase token is cut short, as it is all that proves a purchase.
+     */
+    private fun logPurchases(source: String, result: BillingResult, purchases: List<Purchase>) {
+        Log.d(DEBUG_TAG, "$source: code=${result.responseCode} msg=${result.debugMessage} count=${purchases.size}")
+        purchases.forEach { purchase ->
+            Log.d(
+                DEBUG_TAG,
+                "  products=${purchase.products} state=${purchase.purchaseState} " +
+                    "ack=${purchase.isAcknowledged} order=${purchase.orderId} " +
+                    "token=${purchase.purchaseToken.take(12)}…",
+            )
+        }
+    }
+
     companion object {
         /** The product ID set up in Play Console. */
         const val PRODUCT_REMOVE_ADS = "remove_ads"
 
         private const val TAG = "Billing"
+        private const val DEBUG_TAG = "BillingDebug"
         private const val KEY_ADS_REMOVED = "ads_removed"
         private const val ENTITLEMENT_WAIT_MILLIS = 5_000L
         private const val INITIAL_RECONNECT_DELAY_MILLIS = 1_000L
