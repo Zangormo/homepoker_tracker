@@ -23,17 +23,32 @@ fun releaseSigning(key: String): String? =
 
 val releaseStoreFile = releaseSigning("RELEASE_STORE_FILE")
 
-// AdMob IDs come from the same places as the signing keys. Each falls back to Google's public test
-// ID, so a checkout without local.properties builds and can only ever request test ads. Real IDs
-// are added later, in local.properties or CI - never in this file.
-fun adsSetting(key: String, fallback: String): String =
+// AdMob IDs come from the same places as the signing keys, and only for the release build. Debug
+// always uses Google's public test IDs, whatever local.properties holds, so a developer build can
+// never request a real ad - clicks on your own live ads count as invalid traffic. Real IDs live in
+// local.properties or CI - never in this file.
+fun adsSetting(key: String): String? =
     localProperties.getProperty(key)?.takeIf { it.isNotBlank() }
         ?: System.getenv(key)?.takeIf { it.isNotBlank() }
-        ?: fallback
 
 val testAdMobAppId = "ca-app-pub-3940256099942544~3347511713"
 val testAdaptiveBannerUnitId = "ca-app-pub-3940256099942544/9214589741"
 val testInterstitialUnitId = "ca-app-pub-3940256099942544/1033173712"
+
+// One unit per placement, so AdMob reports each placement separately, mapped to the test unit debug
+// uses in its place. Google's current test IDs have no separate video interstitial: the one
+// interstitial test unit serves both. A real unit's formats, video included, are set in the AdMob
+// console.
+val adUnitTestIds = mapOf(
+    "ADMOB_BANNER_CREATE_GAME_UNIT_ID" to testAdaptiveBannerUnitId,
+    "ADMOB_BANNER_HISTORY_UNIT_ID" to testAdaptiveBannerUnitId,
+    "ADMOB_BANNER_LIVE_GAME_UNIT_ID" to testAdaptiveBannerUnitId,
+    "ADMOB_INTERSTITIAL_BEFORE_SETTLEMENT_UNIT_ID" to testInterstitialUnitId,
+    "ADMOB_INTERSTITIAL_PAID_UP_UNIT_ID" to testInterstitialUnitId,
+)
+
+// Checked by checkReleaseAdIds below, so a release cannot quietly ship with test ads.
+val missingReleaseAdIds = (listOf("ADMOB_APP_ID") + adUnitTestIds.keys).filter { adsSetting(it) == null }
 
 fun String.quoted(): String = "\"$this\""
 
@@ -47,8 +62,8 @@ fun String.quoted(): String = "\"$this\""
 //   MAJOR - a breaking change to stored data or to how money, reconciliation or settlement are
 //           calculated, so the same game could now come out differently.
 // Codes 1 and earlier were the unpublished betas ("1.0 Beta" to "Beta 1.2").
-val appVersionCode = 6
-val appVersionName = "1.2.2"
+val appVersionCode = 7
+val appVersionName = "1.2.3"
 
 android {
     namespace = "com.zango.pokertracker"
@@ -63,41 +78,12 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        manifestPlaceholders["admobAppId"] = adsSetting("ADMOB_APP_ID", testAdMobAppId)
-        // One unit per placement, so AdMob reports each placement separately.
-        buildConfigField(
-            "String",
-            "ADMOB_BANNER_CREATE_GAME_UNIT_ID",
-            adsSetting("ADMOB_BANNER_CREATE_GAME_UNIT_ID", testAdaptiveBannerUnitId).quoted(),
-        )
-        buildConfigField(
-            "String",
-            "ADMOB_BANNER_HISTORY_UNIT_ID",
-            adsSetting("ADMOB_BANNER_HISTORY_UNIT_ID", testAdaptiveBannerUnitId).quoted(),
-        )
-        buildConfigField(
-            "String",
-            "ADMOB_BANNER_LIVE_GAME_UNIT_ID",
-            adsSetting("ADMOB_BANNER_LIVE_GAME_UNIT_ID", testAdaptiveBannerUnitId).quoted(),
-        )
-        // Google's current test IDs have no separate video interstitial: the one interstitial test
-        // unit serves both. A real unit's formats, video included, are set in the AdMob console.
-        buildConfigField(
-            "String",
-            "ADMOB_INTERSTITIAL_BEFORE_SETTLEMENT_UNIT_ID",
-            adsSetting("ADMOB_INTERSTITIAL_BEFORE_SETTLEMENT_UNIT_ID", testInterstitialUnitId).quoted(),
-        )
-        buildConfigField(
-            "String",
-            "ADMOB_INTERSTITIAL_PAID_UP_UNIT_ID",
-            adsSetting("ADMOB_INTERSTITIAL_PAID_UP_UNIT_ID", testInterstitialUnitId).quoted(),
-        )
         // Debug builds only: the hashed id UMP logs for this phone. When set, the consent form is
         // requested as if the phone were in the EEA, so the flow can be tested from anywhere.
         buildConfigField(
             "String",
             "UMP_TEST_DEVICE_HASHED_ID",
-            adsSetting("UMP_TEST_DEVICE_HASHED_ID", "").quoted(),
+            (adsSetting("UMP_TEST_DEVICE_HASHED_ID") ?: "").quoted(),
         )
     }
 
@@ -122,9 +108,19 @@ android {
             // refuse the install until the release was removed. It also keeps its own database.
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+
+            // Always Google's test IDs; local.properties is deliberately not consulted here.
+            manifestPlaceholders["admobAppId"] = testAdMobAppId
+            adUnitTestIds.forEach { (key, testId) -> buildConfigField("String", key, testId.quoted()) }
         }
         release {
             signingConfig = signingConfigs.getByName("release")
+
+            // Real IDs only. A missing one is left blank here and fails the build in checkReleaseAdIds.
+            manifestPlaceholders["admobAppId"] = adsSetting("ADMOB_APP_ID") ?: ""
+            adUnitTestIds.keys.forEach { key ->
+                buildConfigField("String", key, (adsSetting(key) ?: "").quoted())
+            }
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -196,6 +192,23 @@ tasks.register("verifyRelease") {
     description = "Runs release unit tests and lint, then builds the minified release bundle."
     dependsOn("testReleaseUnitTest", "lintRelease", "bundleRelease")
 }
+
+// Fails any release build when a real AdMob ID is missing, rather than configuration failing for
+// debug builds too. Debug never needs them.
+val checkReleaseAdIds = tasks.register("checkReleaseAdIds") {
+    group = "verification"
+    description = "Fails when a real AdMob ID for the release build is missing."
+    val missing = missingReleaseAdIds
+    doLast {
+        if (missing.isNotEmpty()) {
+            throw GradleException(
+                "Release build needs real AdMob IDs in local.properties or the environment. Missing: " +
+                    missing.joinToString(),
+            )
+        }
+    }
+}
+tasks.matching { it.name == "preReleaseBuild" }.configureEach { dependsOn(checkReleaseAdIds) }
 
 // Room schema export: keeps a JSON schema per version under app/schemas for migration testing.
 ksp {
