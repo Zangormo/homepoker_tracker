@@ -62,8 +62,8 @@ fun String.quoted(): String = "\"$this\""
 //   MAJOR - a breaking change to stored data or to how money, reconciliation or settlement are
 //           calculated, so the same game could now come out differently.
 // Codes 1 and earlier were the unpublished betas ("1.0 Beta" to "Beta 1.2").
-val appVersionCode = 7
-val appVersionName = "1.2.3"
+val appVersionCode = 8
+val appVersionName = "1.2.4"
 
 android {
     namespace = "com.zango.pokertracker"
