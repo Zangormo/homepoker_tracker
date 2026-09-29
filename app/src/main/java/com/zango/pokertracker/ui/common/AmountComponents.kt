@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowRightAlt
 import androidx.compose.material.icons.filled.Timer
@@ -33,6 +34,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.zango.pokertracker.R
 import com.zango.pokertracker.core.money.Chips
 import com.zango.pokertracker.core.text.UiText
@@ -301,6 +303,7 @@ fun ChipAmountText(
     style: TextStyle = PokerTheme.type.numericSmall,
     color: Color = MaterialTheme.colorScheme.onSurface,
     showIcon: Boolean = true,
+    fitWidth: Boolean = false,
 ) = AmountText(
     text = chips?.count?.toString()?.typographicMinus() ?: NO_VALUE,
     semantic = chips?.let {
@@ -311,6 +314,7 @@ fun ChipAmountText(
     style = style,
     color = if (chips == null) MaterialTheme.colorScheme.onSurfaceVariant else color,
     modifier = modifier,
+    fitWidth = fitWidth,
 )
 
 @Composable
@@ -321,6 +325,7 @@ fun CashAmountText(
     color: Color = MaterialTheme.colorScheme.onSurface,
     showIcon: Boolean = true,
     signed: Boolean = false,
+    fitWidth: Boolean = false,
 ) = AmountText(
     text = money?.let { if (signed) it.formatSigned().typographicMinus() else it.format() }
         ?: NO_VALUE,
@@ -334,6 +339,7 @@ fun CashAmountText(
     style = style,
     color = if (money == null) MaterialTheme.colorScheme.onSurfaceVariant else color,
     modifier = modifier,
+    fitWidth = fitWidth,
 )
 
 /**
@@ -346,12 +352,14 @@ fun NetCashText(
     modifier: Modifier = Modifier,
     style: TextStyle = PokerTheme.type.numericSmall,
     showIcon: Boolean = false,
+    fitWidth: Boolean = false,
 ) = CashAmountText(
     money = net,
     modifier = modifier,
     style = style,
     showIcon = showIcon,
     signed = true,
+    fitWidth = fitWidth,
     color = when {
         net == null -> MaterialTheme.colorScheme.onSurfaceVariant
         net.isPositive -> PokerTheme.colors.positive
@@ -371,6 +379,8 @@ private fun AmountText(
     modifier: Modifier,
     symbol: String? = null,
     symbolFirst: Boolean = true,
+    /** Shrinks the figure to stay on one line in a narrow cell, rather than breaking it. */
+    fitWidth: Boolean = false,
 ) {
     // Roughly cap height, floored so it survives small styles and capped so the hero total does
     // not end up with a dollar sign as tall as the number.
@@ -391,7 +401,14 @@ private fun AmountText(
         }
         val mark = symbol?.takeIf { it.isNotEmpty() }
         if (mark != null && symbolFirst) Text(mark, style = style, color = iconTint)
-        Text(text = text, style = style, color = color, textAlign = TextAlign.End)
+        Text(
+            text = text,
+            style = style,
+            color = color,
+            textAlign = TextAlign.End,
+            maxLines = if (fitWidth) 1 else Int.MAX_VALUE,
+            autoSize = if (fitWidth) TextAutoSize.StepBased(minFontSize = 9.sp, maxFontSize = style.fontSize) else null,
+        )
         if (mark != null && !symbolFirst) Text(mark, style = style, color = iconTint)
     }
 }
