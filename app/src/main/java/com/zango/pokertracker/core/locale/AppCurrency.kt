@@ -20,17 +20,16 @@ data class CurrencyOption(val code: String, val name: String, val symbol: String
  * The currency the host keeps their games in, as a symbol shown beside every cash amount.
  *
  * Kept next to the language, in the same preferences and the same way: a plain object, because the
- * symbol is needed while resolving a message outside any screen, where nothing is injected. It
- * starts on the currency of the phone's region, which is right for almost everyone, so most hosts
- * never open the setting at all.
+ * symbol is needed while resolving a message outside any screen, where nothing is injected. Until
+ * the host picks one it is the US dollar, whatever region the phone is set to.
  */
 object AppCurrencyStore {
 
     private const val PREFERENCES = "settings"
     private const val KEY_CURRENCY = "currency"
-    private const val FALLBACK_CODE = "USD"
+    private const val DEFAULT_CODE = "USD"
 
-    private val _code = MutableStateFlow(FALLBACK_CODE)
+    private val _code = MutableStateFlow(DEFAULT_CODE)
 
     /** The ISO 4217 code in use, e.g. "EUR". */
     val code: StateFlow<String> = _code.asStateFlow()
@@ -40,7 +39,7 @@ object AppCurrencyStore {
         _code.value = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
             .getString(KEY_CURRENCY, null)
             ?.takeIf { isKnown(it) }
-            ?: regionCode()
+            ?: DEFAULT_CODE
     }
 
     fun set(context: Context, code: String) {
@@ -55,14 +54,37 @@ object AppCurrencyStore {
         CashFormat(symbol = symbolOf(code, locale), symbolFirst = symbolComesFirst(locale))
 
     /**
-     * Every real currency the phone knows, by name in [locale]. The ones with codes starting in X
-     * are left out: gold, testing codes and bank units, not anything a table is paid in.
+     * The currencies on offer, by name in [locale]: one per symbol, since the symbol is all an
+     * amount shows. The ones with codes starting in X are left out: gold, testing codes and bank
+     * units, not anything a table is paid in.
      */
     fun options(locale: Locale): List<CurrencyOption> =
-        Currency.getAvailableCurrencies()
-            .filterNot { it.currencyCode.startsWith("X") }
-            .map { CurrencyOption(it.currencyCode, it.getDisplayName(locale), symbolOf(it.currencyCode, locale)) }
-            .sortedBy { it.name.lowercase(locale) }
+        uniqueSymbols(
+            Currency.getAvailableCurrencies()
+                .filterNot { it.currencyCode.startsWith("X") }
+                .map { CurrencyOption(it.currencyCode, it.getDisplayName(locale), symbolOf(it.currencyCode, locale)) },
+        ).sortedBy { it.name.lowercase(locale) }
+
+    /**
+     * Keeps only currencies with a sign of their own. One whose symbol is just its code ("CHF")
+     * has none; where several share a sign, as the Canadian and Australian dollars share "$",
+     * only the one people mean by it stays: the first in [SYMBOL_OWNERS], else the lowest code.
+     */
+    internal fun uniqueSymbols(options: List<CurrencyOption>): List<CurrencyOption> =
+        options
+            .filter { it.symbol.isNotBlank() && !it.symbol.equals(it.code, ignoreCase = true) }
+            .groupBy { it.symbol }
+            .values
+            .map { sharing -> sharing.minWith(compareBy({ ownerRank(it.code) }, { it.code })) }
+
+    private fun ownerRank(code: String): Int =
+        SYMBOL_OWNERS.indexOf(code).takeIf { it >= 0 } ?: Int.MAX_VALUE
+
+    /** Who a shared sign belongs to, most used first: "$" is the US dollar, "£" the pound. */
+    private val SYMBOL_OWNERS = listOf(
+        "USD", "EUR", "GBP", "JPY", "CNY", "INR", "RUB", "KRW", "SEK", "BRL", "MXN", "TRY", "PLN",
+        "UAH", "KZT", "ILS", "NGN", "PHP", "VND", "THB",
+    )
 
     fun option(code: String, locale: Locale): CurrencyOption {
         val currency = Currency.getInstance(code)
@@ -88,11 +110,6 @@ object AppCurrencyStore {
             ?: return true
         return pattern.trimStart().startsWith("¤")
     }
-
-    private fun regionCode(): String =
-        runCatching { Currency.getInstance(Locale.getDefault()).currencyCode }.getOrNull()
-            ?.takeIf { isKnown(it) }
-            ?: FALLBACK_CODE
 
     private fun isKnown(code: String): Boolean =
         runCatching { Currency.getInstance(code) }.isSuccess && !code.startsWith("X")

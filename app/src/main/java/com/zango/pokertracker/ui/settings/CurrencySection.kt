@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -29,10 +30,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.zango.pokertracker.R
 import com.zango.pokertracker.core.locale.CurrencyOption
@@ -130,14 +136,22 @@ private fun CurrencySheet(
                 onValueChange = { query = it },
                 label = stringResource(R.string.settings_currency_search),
             )
-            LazyColumn(modifier = Modifier.fillMaxWidth()) {
+            // A fixed viewport with rows of one fixed height, and the pull left over at the end of
+            // the list kept from the sheet: past the last row the sheet took that pull as a drag,
+            // and the list and the sheet shoved each other up and down.
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .nestedScroll(KeepLeftoverUpwardScroll),
+            ) {
                 items(shown, key = { it.code }) { option ->
                     val selected = option.code == currentCode
                     Surface(
                         onClick = { onSelect(option.code) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .defaultMinSize(minHeight = MinTouchTarget),
+                            .height(CurrencyRowHeight),
                         shape = MaterialTheme.shapes.small,
                         color = if (selected) {
                             MaterialTheme.colorScheme.primaryContainer
@@ -154,6 +168,21 @@ private fun CurrencySheet(
             }
         }
     }
+}
+
+/** Tall enough for the name and the code under it, whatever font a rare symbol falls back to. */
+private val CurrencyRowHeight = 64.dp
+
+/**
+ * Takes the upward scroll and fling the list could not use once at its end, so they never reach
+ * the sheet. Downward leftovers still pass, so pulling the list down from its top closes the sheet.
+ */
+private val KeepLeftoverUpwardScroll = object : NestedScrollConnection {
+    override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset =
+        if (available.y < 0f) Offset(0f, available.y) else Offset.Zero
+
+    override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity =
+        if (available.y < 0f) Velocity(0f, available.y) else Velocity.Zero
 }
 
 /** What sits at the end of a currency line. */
